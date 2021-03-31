@@ -1,0 +1,19 @@
+# rtdb structure
+- metrics
+  - sounds - (same for all objects, only difference is actual metrics)
+    - sound id
+      - saves - (same for all metrics)
+        - timestamp start - (stores earliest timestamp before sound doc updated) (ok to store with uids since always different lengths, also makes cleanup after update easier since deletes everything)
+          - [push id]: Timestamp - (timestamp user updated metric, smallest one is only important one & will be listed first)
+        - [push id]: bool - (true if added, false if removed)
+      - downloads - (only one that uses uid, to prevent duplicate entries)
+        - ...
+        - [user id]: bool - (can only be true -> can't un-download something)
+      - parent lists
+        - ...
+      - other metric
+        - ...
+  - users
+    - ...
+  - lists
+    - ...
