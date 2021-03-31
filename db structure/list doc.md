@@ -56,7 +56,7 @@ legal process is as follows:
   - if name infringing, change name
   - if image file infringing, replace image
   - delete list
-- if user doesn't respond during 4 day time period, list will be moved to quarantine if name , user doc "received [copyright or trademark] notices" & "times [image file, audio file, or text] reported" will increment, & "cant upload [image file, audio file, or text] until" will be incremented accordingly. If user has received more than 3 violations:
+- if user doesn't respond during 4 day time period, if image infringing then image will be removed, & if name infringing list will be moved to quarantine, user doc "received [copyright or trademark] notices" & "times [image file, audio file, or text] reported" will increment, & "cant upload [image file, audio file, or text] until" will be incremented accordingly. If user has received more than 3 violations:
   - if can't upload until is in future, then add (2 days) to timestamp
   - if can't upload until isn't set or already passed, set to (current timestamp) + (# of violations) * (2 days)
 - while list is in quarantine, user can still:
@@ -67,3 +67,4 @@ legal process is as follows:
 - if counter notice is sent, list will be moved back, and reprimands will be undone (will undo incremented user doc fields & will remove (2 days) from "cant upload _ until"), notice will be considerend resolved, & notice sender will be notified. Message sent to notice sender will say something like "User has sent a counter notice, we have to revert changes. Any further requests will have to be pursued legally. Upon reception of a court order to remove said content we can't really do anything else"
 - if user changes name or deletes list while list is in quarantine, their punishment won't be undone, but the list will be resurrected
 - if court order is received to remove content afterwards, then need to remove & punish user. This guarantees that list was uploaded illegally, so remove is only option, no quarantine this time.
+
