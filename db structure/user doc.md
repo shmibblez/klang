@@ -1,7 +1,10 @@
 # user doc structure
 - info
   - id: string
-  - name: string
+  - name
+    - name: string - (user's username)
+    - search keys: {[key]: true}
+    - timestamp updated: Timestamp - (for algorithm versioning & update limiting)
   - tags: string[] - (for filtering searches)
   - tag history: {[tag]: int} - (stores which tags user has used & how many times. Most used ones only are indexed)
   - description: string - (optional)
@@ -17,9 +20,6 @@
   - hidden: bool
   - search keys: string - (for checking whether user profile is explicit or hidden. There are 4 possible keys: "hidden & explicit", "hidden & not_explicit", "not_hidden & explicit", "not_hidden & not_explicit")
   - random seeds: {[int]: double} - (for random searches, key is random seed num, there will be 4 random seeds. Will have following structure: {1: [random num], 2: [random num], 3: [random num], 4: [random num]})
-- search keys
-  - search keys: {[key]: true}
-  - timestamp updated: Timestamp - (for algorithm versioning)
 - metrics (all follow same structure)
   - soonest stale: Timestamp - (smallest stale timestamp, for rejuvinating stale metrics)
   - followers
@@ -57,10 +57,18 @@
 
 # user doc general stuff
 - any time user doc is updated, random seeds are too, for randomization purposes
+- username can only be updated once every 6 months (if timestamp_now - timestamp_name_updated > 6 months)
 - pretty much all fields are same as sound doc, only differences are 
   - image files instead of sound files
   - legal fields & limitations
   - tags only contain tags user has used the most. This is stored in tag history. This is to prevent too many composite tag combos since there will be lots of them
+
+## updating duplicate docs in followers sub-collection
+- when user updates their username, it updates it at the following locations
+  - here (the main user doc)
+  - in their follower sub-collection doc duplicates (for sorting queries)
+  - rtdb uid-username key-value pair
+- other than that, no other reason to update them
 
 ## user doc queries
 ### search keys (not composite since not ordering)
@@ -93,3 +101,14 @@ legal process
   - if can't upload until isn't set or already passed, set to (current timestamp) + (# of violations) * (2 days)
 - in this case user can't respond after 7 day period since changes will be un-revertable
 - if user sends counter notice, notice will be considered resolved, & notice sender will be notified. Message sent to notice sender will say something like "User has sent a counter notice, we have to revert changes. Any further requests will have to be pursued legally. Upon reception of a court order to remove said content we can't really do anything else"
+
+## user deletion
+- when user deletes account:
+  - their user doc is marked as hidden & not explicit
+  - their profile image is deleted
+  - their username in rtdb is set to "0" (string of char "0"). In app will show "deleted" in red
+  - their sounds & lists will not be deleted, they'll still exist
+  - their saved sounds & lists docs will be deleted, they'll be removed from all sound sub-docs that contain them (since only 100 get-all should be quick & easy), & all saved lists & sound save counts will be decremented
+  - following docs are deleted, following count is set to 0, all users now deleted user was following have follower count push false in rtdb (to decrease follower count)
+  - follower sub-collection with duplicate docs are kept for showing user in other user's following lists
+- if user goes to deleted user's account, it won't show profile image or username (username will show "deleted" in red), but it will still show deleted user's ringtones. Might show last username in light grey after it, ex: "deleted - chabz", with "deleted" in red and "- chabz" in light grey

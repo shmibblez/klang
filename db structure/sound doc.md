@@ -1,7 +1,10 @@
 # sound doc structure
 - info
   - id: string
-  - name: string
+  - name
+    - name: string
+    - search keys: {[key]: true}
+    - timestamp updated: Timestamp - (for algorithm versioning & update limiting)
   - tags: string[] - (for filtering searches)
   - description: string - (optional)
   - source url: string - (optional)
@@ -16,9 +19,6 @@
   - hidden: bool
   - search keys: string - (for checking whether sound is explicit or hidden. There are 4 possible keys: "hidden & explicit", "hidden & not_explicit", "not_hidden & explicit", "not_hidden & not_explicit")
   - random seeds: {[int]: double} - (for random searches, key is random seed num, there will be 4 random seeds. Will have following structure: {1: [random num], 2: [random num], 3: [random num], 4: [random num]})
-- search keys
-  - search keys: {[key]: true}
-  - timestamp updated: Timestamp - (for algorithm versioning)
 - metrics (all follow same structure)
   - soonest stale: Timestamp - (smallest stale timestamp, for rejuvinating stale metrics)
   - downloads

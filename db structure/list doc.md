@@ -1,7 +1,10 @@
 # list doc structure
 - info
   - id: string
-  - name: string
+  - name
+    - name: string
+    - search keys: {[key]: true}
+    - timestamp updated: Timestamp - (for algorithm versioning & update limiting)
   - tags: string[] - (for filtering searches)
   - description: string - (optional)
   - source url: string - (optional)
@@ -16,9 +19,6 @@
   - hidden: bool
   - search keys: string - (for checking whether list is explicit or hidden. There are 4 possible keys: "hidden & explicit", "hidden & not_explicit", "not_hidden & explicit", "not_hidden & not_explicit")
   - random seeds: {[int]: double} - (for random searches, key is random seed num, there will be 4 random seeds. Will have following structure: {1: [random num], 2: [random num], 3: [random num], 4: [random num]})
-- search keys
-  - search keys: {[key]: true}
-  - timestamp updated: Timestamp - (for algorithm versioning)
 - metrics (all follow same structure)
   - soonest stale: Timestamp - (smallest stale timestamp, for rejuvinating stale metrics)
   - downloads
@@ -66,5 +66,5 @@ legal process is as follows:
   - delete list
 - if counter notice is sent, list will be moved back, and reprimands will be undone (will undo incremented user doc fields & will remove (2 days) from "cant upload _ until"), notice will be considerend resolved, & notice sender will be notified. Message sent to notice sender will say something like "User has sent a counter notice, we have to revert changes. Any further requests will have to be pursued legally. Upon reception of a court order to remove said content we can't really do anything else"
 - if user changes name or deletes list while list is in quarantine, their punishment won't be undone, but the list will be resurrected
-- if court order is received to remove content afterwards, then need to remove & punish user. This guarantees that list was uploaded illegally, so remove is only option, no quarantine this time.
+- if court order is received to remove content afterwards, then need to remove list & punish user (temporarily restrict content addition). This guarantees that list was uploaded illegally, so remove is only option, no quarantine this time.
 
