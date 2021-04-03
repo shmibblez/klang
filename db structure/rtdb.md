@@ -3,7 +3,7 @@
   - [uid]: string - (stores all user usernames, allows changing usernames easily)
 - metrics
   - sounds - (same for all objects, only difference is actual metrics)
-    - sound id
+    - [sound id]
       - saves - (same for all metrics)
         - timestamp start- (stores earliest timestamp before sound doc updated) (ok to store with uids since always different lengths, also makes cleanup after update easier since deletes everything)
           - [push id]: Timestamp - (timestamp user updated metric, smallest one is only important one & will be listed first)

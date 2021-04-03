@@ -2,7 +2,7 @@ export class Root {
   static readonly info = "i";
   static readonly properties = "p";
   static readonly metrics = "m";
-  static readonly legal = "l";
+  static readonly legal = "f";
 }
 
 export class Info {
@@ -16,14 +16,15 @@ export class Info {
   static readonly timestamp_created = "tc";
   static readonly timestamp_updated = "tu";
   static readonly storage = "st";
-  static readonly file_bucket = "fb";
-  static readonly file_path = "fp";
+  static readonly audio_file_bucket = "ab";
+  static readonly audio_file_path = "ap";
+  static readonly image_file_bucket = "ib";
+  static readonly image_file_path = "ip";
 }
 
 export class Properties {
   static readonly explicit = "xp";
   static readonly hidden = "hn";
-  static readonly search_keys = "sk";
 }
 
 export class Metrics {
@@ -36,18 +37,18 @@ export class Metrics {
   static readonly following = "fw";
   static readonly sounds_created = "sc";
   static readonly lists_created = "lc";
-
   static readonly total = "tl";
+  static readonly this_day = "td";
   static readonly this_week = "tw";
   static readonly this_month = "tm";
   static readonly this_year = "ty";
-  static readonly this_decade = "td";
+  static readonly this_decade = "tD";
   static readonly this_century = "tC";
   static readonly this_millenium = "tM";
   static readonly week_stale = "ws";
   static readonly month_stale = "ms";
   static readonly year_stale = "ys";
-  static readonly decade_stale = "ds";
+  static readonly decade_stale = "Ds";
   static readonly century_stale = "Cs";
   static readonly millenium_stale = "Ms";
 }
@@ -58,4 +59,37 @@ export class Legal {
   static readonly times_audio_file_reported = "tar";
   static readonly times_image_file_reported = "tir";
   static readonly times_text_reported = "ttr";
+}
+
+export class DuplicateChild {
+  static readonly ids = "ids";
+}
+
+export class Following {
+  static readonly following = "fw";
+  static readonly follower = "fr";
+  static readonly timestamp_followed = "tf";
+}
+
+export class RTDB {
+  static readonly username = "n";
+  static readonly metrics = "m";
+  static readonly users = "u";
+  static readonly lists = "l";
+}
+
+export class FunctionParams {
+  static readonly email = "e";
+  static readonly email_confirmation = "ec";
+  static readonly password = "p";
+  static readonly password_confirmation = "pc";
+}
+
+export class ErrorCodes {
+  static readonly invalid_username = "iu";
+  static readonly invalid_email = "ie";
+  static readonly emails_dont_match = "ed";
+  static readonly invalid_uid = "id";
+  static readonly invalid_pswd = "ip";
+  static readonly pswds_dont_match = "pd";
 }
