@@ -8,7 +8,6 @@
   - tags: string[] - (for filtering searches)
   - tag history: {[tag]: int} - (stores which tags user has used & how many times. Most used ones only are indexed)
   - description: string - (optional)
-  - creator id: string
   - timestamp created: Timestamp
   - timestamp updated: Timestamp
   - device tokens: string[] - (array of device tokens, for sending notifications)

@@ -31,3 +31,11 @@ export class PswdsDontMatchError extends HttpsError {
     super("invalid-argument", ErrorCodes.pswds_dont_match, details);
   }
 }
+/**
+ * error thrown when something failed unexpectedly
+ */
+export class MissionFailedError extends HttpsError {
+  constructor(details?: string) {
+    super("invalid-argument", ErrorCodes.mission_failed, details);
+  }
+}

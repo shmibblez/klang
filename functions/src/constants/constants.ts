@@ -25,6 +25,8 @@ export class Info {
 export class Properties {
   static readonly explicit = "xp";
   static readonly hidden = "hn";
+  static readonly search_keys = "sk";
+  static readonly random_seeds = "rs";
 }
 
 export class Metrics {
@@ -71,6 +73,11 @@ export class Following {
   static readonly timestamp_followed = "tf";
 }
 
+export class Username {
+  static readonly username = "n";
+  static readonly uid = "d";
+}
+
 export class RTDB {
   static readonly username = "n";
   static readonly metrics = "m";
@@ -92,4 +99,12 @@ export class ErrorCodes {
   static readonly invalid_uid = "id";
   static readonly invalid_pswd = "ip";
   static readonly pswds_dont_match = "pd";
+  static readonly mission_failed = "mf";
+}
+
+export class Coll {
+  static readonly sounds = "s";
+  static readonly users = "u";
+  static readonly lists = "l";
+  static readonly usernames = "n";
 }

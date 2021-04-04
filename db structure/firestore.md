@@ -19,6 +19,8 @@
     - [list doc id] - (doc)
       - saves - (collection)
         - [list doc num] - (doc)
+  - usernames - (collection)
+    - [username] - (doc)
 
 ## sounds.[sound doc id].lists & sounds.[sound doc id].saves sub-collections
 - these collections store docs that store sound doc duplicates along with array of list ids & save ids. This means that doc id needs to be random, & need to keep track of which docs are full & which ones aren't

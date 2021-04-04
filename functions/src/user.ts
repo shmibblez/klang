@@ -1,5 +1,14 @@
 import * as functions from "firebase-functions";
-import { FunctionParams, Info } from "./constants/constants";
+import * as admin from "firebase-admin";
+import {
+  Coll,
+  FunctionParams,
+  Info,
+  Properties,
+  Root,
+  RTDB,
+  Username,
+} from "./constants/constants";
 import {
   EmailsDontMatchError,
   InvalidEmailError,
@@ -7,8 +16,14 @@ import {
   InvalidUidError,
   InvalidUsernameError,
   PswdsDontMatchError,
+  MissionFailedError,
 } from "./constants/errors";
 import { isEmailOk, isPswdOk, isUidOk, isUsernameOk } from "./field_checks";
+import {
+  indexProperties,
+  indexUsername,
+  randomSeeds,
+} from "./field_generators";
 
 export const setEmailKey = functions.https.onCall((data, context) => {
   data;
@@ -47,11 +62,13 @@ export const setEmailKey = functions.https.onCall((data, context) => {
  */
 export const create_user = functions.https.onCall(async (data, ctxt) => {
   const raw_username: unknown = data[Info.item_name];
-  const raw_uid: unknown = data[Info.id] ?? null;
+  const raw_uid: unknown = data[Info.id] ?? undefined;
   const raw_email: unknown = data[FunctionParams.email];
   const raw_email_conf: unknown = data[FunctionParams.email_confirmation];
   const raw_pswd: unknown = data[FunctionParams.password];
   const raw_pswd_conf: unknown = data[FunctionParams.password_confirmation];
+
+  /** {@link phase_1: check params} */
 
   if (!isUsernameOk(raw_username)) throw new InvalidUsernameError();
   if (!isEmailOk(raw_email)) throw new InvalidEmailError();
@@ -60,15 +77,67 @@ export const create_user = functions.https.onCall(async (data, ctxt) => {
   if (!isPswdOk(raw_pswd)) throw new InvalidPswdError();
   if (raw_pswd != raw_pswd_conf) throw new PswdsDontMatchError();
 
-  const createAuthPromise = 0; // create auth instance
-  const setUsernamePromise = 0; // set username in rtdb here
-  const createUserDocPromise = 0; // create user here
+  /** {@link phase_2: create auth instance} */
+
+  // create auth instance
+  const user = await admin.auth().createUser({
+    email: raw_email as string,
+    emailVerified: false, // need to do email verification
+    uid: raw_uid as string,
+    password: raw_pswd as string,
+  });
+
+  /** {@link phase_3: set username in rtdb & create user & username doc} */
+
+  // user doc data
+  const user_doc_data = {
+    [Root.info]: {
+      [Info.id]: user.uid,
+      [Info.item_name]: {
+        [Info.item_name]: raw_username as string,
+        [Info.search_keys]: indexUsername(raw_username as string),
+        [Info.timestamp_updated]: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      [Info.timestamp_created]: admin.firestore.FieldValue.serverTimestamp(),
+      [Info.timestamp_updated]: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    [Root.properties]: {
+      [Properties.explicit]: false,
+      [Properties.hidden]: false,
+      [Properties.search_keys]: indexProperties(false, false),
+      [Properties.random_seeds]: randomSeeds(),
+    },
+  };
+  // username doc data
+  const username_doc_data = {
+    [Username.username]: raw_username,
+    [Username.uid]: user.uid,
+  };
+
+  const user_doc_ref = admin.firestore().doc(Coll.users + "/" + user.uid);
+  const username_doc_ref = admin
+    .firestore()
+    .doc(Coll.usernames + "/" + raw_username);
+
+  // TODO: how to make sure no utf-8 errors when creating keys?
+  // create user & username docs
+  const create_user_and_username = admin
+    .firestore()
+    .runTransaction(async (t) => {
+      t.create(user_doc_ref, user_doc_data);
+      t.create(username_doc_ref, username_doc_data);
+    });
+
+  // set username in rtdb
+  const set_username_rtdb = admin
+    .database()
+    .ref(RTDB.username + "/" + user.uid)
+    .set(raw_username as string);
 
   // perform all operations asynchronously, and if any failed undo successful ones. Order is maintained so
   const ops = await Promise.allSettled([
-    createAuthPromise,
-    setUsernamePromise,
-    createUserDocPromise,
+    set_username_rtdb,
+    create_user_and_username,
   ]);
   const failed_ops: number[] = [];
   const success_ops: number[] = [];
@@ -85,16 +154,25 @@ export const create_user = functions.https.onCall(async (data, ctxt) => {
     for (const i of success_ops) {
       switch (i) {
         case 1:
-          // undo here
+          // set username success, need to undo
+          undo_promises.push(
+            admin
+              .database()
+              .ref(RTDB.username + "/" + user.uid)
+              .remove()
+          );
           break;
 
         case 2:
-          // undo here
+          // created user & username doc, need to undo
+          undo_promises.push(user_doc_ref.delete());
+          undo_promises.push(username_doc_ref.delete());
           break;
       }
     }
+    undo_promises.push(admin.auth().deleteUser(user.uid));
     // undo successful ops
     await Promise.all(undo_promises);
-    throw new UnknownError();
+    throw new MissionFailedError();
   }
 });
