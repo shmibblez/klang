@@ -41,6 +41,7 @@ samples, guidance on mobile development, and a full API reference.
 | user sign up         | yes              | no               |       |
 | user sign in         | n/a              | no               |       |
 | create sound         | no               | no               |       |
+| set user image       | no               | no               |       |
 | saved sounds         | no               | no               |       |
 | edit sound           | no               | no               |       |
 | sound metric updates | no               | n/a              |       |
@@ -50,8 +51,12 @@ samples, guidance on mobile development, and a full API reference.
 | content reporting    | no               | no               |       |
 | delete user          | no               | no               |       |
 
+
 # future features
 | stuff to do          | done server side | done client side | notes                                     |
 | -------------------- | ---------------- | ---------------- | ----------------------------------------- |
 | lists                | not yet          | not yet          |                                           |
+| set list image       | not yet          | not yet          |                                           |
+| create / update list | not yet          | not yet          |                                           |
+| add sound to list    | not yet          | not yet          |                                           |
 | deleted user cleanup | not yet          | not yet          | can be done if storage costs get too high |

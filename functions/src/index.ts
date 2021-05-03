@@ -13,3 +13,4 @@ admin.initializeApp();
 
 // export functions
 export { create_user as cu } from "./user";
+export { file_uploaded as fu } from "./storage";
