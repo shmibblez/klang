@@ -38,10 +38,20 @@ export const file_uploaded = functions.storage
         case "sound": // TODO: add storage path constants, remove string literal
           await onSoundUpload(uid, object);
           break;
+
+        default:
+          await deleteFile();
+          break;
       }
     } catch (e) {
-      // in case something goes wrong, delete file
-      //TODO
+      await deleteFile();
+      console.error("file_uploaded: something failed: ", e);
+    }
+
+    return Promise.resolve();
+
+    async function deleteFile() {
+      // TODO: in case something goes wrong, delete file, make sure to catch & log error in case failed
     }
   });
 
