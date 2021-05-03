@@ -13,8 +13,8 @@
         - saved lists - (doc)
       - following
         - [followed user id] - (doc)
-      - followers
-        - [user doc num] - (doc)
+      <!-- - followers --> not doing this -> not worth it
+        <!-- - [user doc num] - (doc) -->
   - lists - (collection)
     - [list doc id] - (doc)
       - saves - (collection)

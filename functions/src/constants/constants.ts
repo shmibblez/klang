@@ -102,6 +102,7 @@ export class ErrorCodes {
   static readonly mission_failed = "mf";
 }
 
+// collection names
 export class Coll {
   static readonly sounds = "s";
   static readonly users = "u";

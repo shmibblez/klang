@@ -10,3 +10,6 @@
 // The Firebase Admin SDK to access Firestore.
 import * as admin from "firebase-admin";
 admin.initializeApp();
+
+// export functions
+export { create_user as cu } from "./user";

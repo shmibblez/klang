@@ -14,6 +14,12 @@
   - storage
     - image file bucket: string - (cloud storage bucket)
     - image file path: string - (cloud storage path)
+- deleted
+  - timestamp deleted: timestamp - (timestamp user deleted their profile)
+  - deletion complete: bool - (for querying deleted user profiles for cleanup)
+  - following deleted: bool - (whether finished unfollowing all followers)
+  - saved sounds deleted: bool - (whether finished unsaving saved sounds)
+  - saved lists deleted: bool - (whether finished unsaving saved lists)
 - properties
   - explicit: bool
   - hidden: bool
@@ -103,11 +109,16 @@ legal process
 
 ## user deletion
 - when user deletes account:
+  - deleted.timestamp_deleted is set & deleted.deletion_complete is set to false
   - their user doc is marked as hidden & not explicit
   - their profile image is deleted
-  - their username in rtdb is set to "0" (string of char "0"). In app will show "deleted" in red
+  <!-- - their username in rtdb is set to "0" (string of char "0"). In app will show "deleted" in red  --> why set id to 0? In case user signs in again won't work, allows usernames to be recycled though if not in use
   - their sounds & lists will not be deleted, they'll still exist
   - their saved sounds & lists docs will be deleted, they'll be removed from all sound sub-docs that contain them (since only 100 get-all should be quick & easy), & all saved lists & sound save counts will be decremented
   - following docs are deleted, following count is set to 0, all users now deleted user was following have follower count push false in rtdb (to decrease follower count)
   - follower sub-collection with duplicate docs are kept for showing user in other user's following lists
 - if user goes to deleted user's account, it won't show profile image or username (username will show "deleted" in red), but it will still show deleted user's ringtones. Might show last username in light grey after it, ex: "deleted - chabz", with "deleted" in red and "- chabz" in light grey
+- periodic function will query where user deleted.deletion_complete is false, deleted.timestamp_deleted < (now - 1 month), and do necessary cleanup. this can be done later, if need to reduce storage space
+- user can sign in when profile marked deleted
+  - deleted field in their user doc will be removed so cleanup doesn't continue
+  - profile will be marked as not hidden & not explicit
