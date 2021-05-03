@@ -10,6 +10,7 @@
   - description: string - (optional)
   - timestamp created: Timestamp
   - timestamp updated: Timestamp
+  - timestamp last active: Timestamp
   - device tokens: string[] - (array of device tokens, for sending notifications)
   - storage
     - image file bucket: string - (cloud storage bucket)
