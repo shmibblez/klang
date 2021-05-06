@@ -8,7 +8,6 @@ import { tagsFromStr } from "./field_generators";
 /**
  *
  * TODO: setup rules to only allow sound uploads to [uid]/[file_type]/[item_name]
- * TODO: [file_type] in above path can be "sound", "user_image", or "list_image"
  * TODO: rules must enforce all doc field requirements, and users can only upload to their path, and there needs to be upload limits
  *
  * does stuff depending on file type uploaded
