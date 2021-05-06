@@ -95,6 +95,7 @@ async function onSoundUpload(
   const raw_explicit: boolean =
     obj.metadata![Properties.explicit] == "0" ? false : true;
 
+  // TODO: setup initDocData (currently returns empty obj)
   const sound_doc_data = FirestoreSound.initDocData({
     name: raw_name,
     tags: tags,
