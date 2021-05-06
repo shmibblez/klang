@@ -1,6 +1,8 @@
 import { randomBytes } from "crypto";
 import Graphemer from "graphemer";
+import { Lengths } from "./constants/constants";
 import { reg_strings } from "./constants/regex";
+import { isTagOk } from "./field_checks";
 
 export function indexUsername(s: string) {
   const splitter = new Graphemer();
@@ -114,4 +116,39 @@ export function randomSeeds() {
     }
     return Math.trunc(num);
   }
+}
+
+export function tagsFromStr(t: string): string[] {
+  let tags = t.split(",");
+  tags.length = Lengths.sound_tags_max;
+  tags = tags.map((tag) => tag.trim().replace(/\s{2,}/g, " "));
+  tags = tags.filter((tag) => isTagOk(tag));
+  return tags;
+}
+
+// IMPORTANT: only 3 tags can be indexed, can keep it simple
+export function indexTags(t: string[]) {
+  let tags: string[] = t;
+  tags.length = Lengths.sound_tags_max;
+  tags = tags.map((tag) => tag.trim().replace(/\s{2,}/g, " "));
+  tags = tags.filter((tag) => isTagOk(tag));
+  tags = tags.sort((a, b) => a.localeCompare(b, "en-US"));
+
+  if (tags.length <= 0) return [];
+  const indx: string[] = [];
+  if (tags.length >= 1) {
+    indx.push(tags[0]);
+  }
+  if (tags.length >= 2) {
+    indx.push(tags[1]);
+    indx.push(tags[0] + "|" + tags[1]);
+  }
+  if (tags.length >= 3) {
+    indx.push(tags[2]);
+    indx.push(tags[0] + "|" + tags[2]);
+    indx.push(tags[1] + "|" + tags[2]);
+    indx.push(tags[0] + "|" + tags[1] + "|" + tags[2]);
+  }
+
+  return indx;
 }

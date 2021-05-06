@@ -109,3 +109,24 @@ export class Coll {
   static readonly lists = "l";
   static readonly usernames = "n";
 }
+
+export class StoragePaths {
+  static readonly sound = "s";
+  static readonly list = "l";
+  static readonly user = "u";
+  static readonly sound_file_name = "a";
+  static readonly list_image_name = "i";
+  static readonly user_image_name = "i";
+}
+
+export class Lengths {
+  static readonly description_min_length = 0;
+  static readonly description_max_length = 420;
+  static readonly username_min_length = 4;
+  static readonly username_max_length = 17;
+  static readonly id_min_length = 7;
+  static readonly id_max_length = 21;
+  static readonly tag_min_length = 3;
+  static readonly tag_max_length = 17;
+  static readonly sound_tags_max = 3;
+}

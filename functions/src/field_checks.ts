@@ -1,3 +1,7 @@
+import { Lengths } from "./constants/constants";
+
+import { URL } from "url";
+
 /**
  *
  * @param n username
@@ -12,10 +16,28 @@ export function isEmailOk(e: unknown): boolean {
 export function isUidOk(uid: unknown): boolean {
   return typeof uid === "string" && Rex.uid_regex.test(uid ?? "");
 }
-export function isPswdOk(p: unknown) {
+export function isPswdOk(p: unknown): boolean {
   return typeof p == "string" && Rex.password_regex.test(p);
 }
-
+export function isDescriptionOk(d: unknown): boolean {
+  return (
+    typeof d == "string" &&
+    (d.length >= 0 ||
+      Lengths.description_max_length <= Lengths.description_max_length)
+  );
+}
+export function isUrlOk(u: unknown): boolean {
+  if (typeof u != "string") return false;
+  try {
+    new URL(u);
+    return true;
+  } catch {
+    return false;
+  }
+}
+export function isTagOk(t: unknown) {
+  return typeof t == "string" && Rex.tag_regex.test(t);
+}
 /**
  * regex for checking values
  */
@@ -24,4 +46,5 @@ export class Rex {
   static readonly email_regex = /^([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|"(\[]!#-[^-~\s\t]|(\\[\t\s-~]))+")@[0-9A-Za-z]([0-9A-Za-z-]{0,61}[0-9A-Za-z])?(\.[0-9A-Za-z]([0-9A-Za-z-]{0,61}[0-9A-Za-z])?)+$/; // checks basic allowed email format
   static readonly uid_regex = /^[A-Za-z0-9]{5,28}$/; // checks if chars allowed and within allowed length
   static readonly password_regex = /^.{5,100}$/; // checks if within allowed length
+  static readonly tag_regex = /^[A-Za-z _-]{3,17}$/; // checks if chars allowed and within allowed length, still need to trim and remove duplicate spaces
 }
