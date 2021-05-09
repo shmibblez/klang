@@ -10,6 +10,7 @@ export class Info {
   static readonly item_name: string = "nm";
   static readonly search_keys = "sk";
   static readonly tags = "tg";
+  static readonly tag_keys = "tk";
   static readonly description = "dt";
   static readonly source_url = "rl";
   static readonly creator_id = "cd";

@@ -28,6 +28,7 @@ export function isDescriptionOk(d: unknown): boolean {
 }
 export function isUrlOk(u: unknown): boolean {
   if (typeof u != "string") return false;
+  if (u.length <= 0) return true;
   try {
     new URL(u);
     return true;

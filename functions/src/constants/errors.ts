@@ -36,6 +36,6 @@ export class PswdsDontMatchError extends HttpsError {
  */
 export class MissionFailedError extends HttpsError {
   constructor(details?: string) {
-    super("invalid-argument", ErrorCodes.mission_failed, details);
+    super("unknown", ErrorCodes.mission_failed, details);
   }
 }

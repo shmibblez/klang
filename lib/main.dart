@@ -1,4 +1,9 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() {
   runApp(MyApp());
@@ -22,92 +27,139 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text("klang"),
+        ),
+        body: _initialSetup(),
+        bottomNavigationBar: BottomNavigationBar(
+          items: [], // TODO: bottom nav setup
+        ),
+      ),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+// TODO: copy stuff from ringfone that works
+// - add dependencies
+// - what to use, hooks, bloc, or provider?
+// - determine app structure
+// also, how does navigator handle lifecycle
+// which one's best for app structure?
+// specs:
+// - everything depends on whether user signed in or not
+// - how to reload active pages, but only reload background pages when shown again -> ex: if user
+//   profile page in background, and user signs out, don't immediately reload page to show sign in, only reload when page shown
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
+// structure:
+// - top level: stack with loading bloc and touch enabled cubit ->
+//   - loading bloc has 3 states: loading, loaded, and error. Once loaded that's it. Error shows option to try reloading
+//   - touch enabled cubit can have 2 states: touch_enabled and touch_disabled. It allows other pages to block screen from touch (when signing in, etc)
+// - 1st sub level: auth cubit
+//   - there's a root provider that provides an auth cubit that contains auth_stream -> this is emitted to listeners
+//   - auth cubit also handles all auth info - login, logout, and emits auth state: logged_in, logged_out, and logout_error, login_error
+// - 2nd sub level: nav and page containers
+//   - here scaffold with app bar and bottom nav is housed
+//   - bottom nav has page containers
+// - 3d sub level: page containers
+//   - each page container has it's own navigator that houses pages
+//   - everything provider in 1st level provides needs to be re-provided by page container navigator so it's children can access it
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+Widget _initialSetup() {
+  StreamController<FirebaseApp> snapshotStream = StreamController();
 
-  final String title;
-
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
+  return StreamBuilder(
+    stream: snapshotStream.stream,
+    builder: (context, snap) {
+      switch (snap.connectionState) {
+        case ConnectionState.done:
+          {
+            if (snap.hasError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("failed to load, retry?"),
+                  action: SnackBarAction(
+                      label: "retry",
+                      onPressed: () {
+                        snapshotStream.sink
+                            .addStream(Firebase.initializeApp().asStream());
+                      }),
+                ),
+              );
+              return Container();
+            }
+            snapshotStream.close();
+            return Root();
+          }
+        case ConnectionState.active:
+        case ConnectionState.waiting:
+        default: // loading
+          return Center(child: CircularProgressIndicator());
+      }
+    },
+  );
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+/// states for auth cubit
+enum AuthState { logged_in, logged_out, login_error, logout_error }
+enum LoginResult {
+  success,
+  invalid_email,
+  user_disabled,
+  user_not_found,
+  wrong_password,
+  error,
+}
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+class AuthCubit extends Cubit<AuthState> {
+  AuthCubit(AuthState initialState) : super(initialState);
+
+  StreamController<AuthState> _streamController = StreamController();
+  StreamSink<AuthState> get authStreamSink => _streamController.sink;
+  Stream<AuthState> get authStream => _streamController.stream;
+
+  Future<LoginResult> login(String email, String password) async {
+    if (state == AuthState.logged_in) return LoginResult.success;
+    try {
+      await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+      return LoginResult.success;
+    } catch (e) {
+      switch ((e as FirebaseAuthException).code) {
+        case "invalid-email":
+          return LoginResult.invalid_email;
+        case "user-disabled":
+          return LoginResult.user_disabled;
+        case "user-not-found":
+          return LoginResult.user_not_found;
+        case "wrong-password":
+          return LoginResult.wrong_password;
+        default: // should not happen
+          throw "unknown FirebaseAuthException code -> \"${(e as FirebaseAuthException).code}\"";
+          return LoginResult.error;
+      }
+    }
   }
 
   @override
+  Future<void> close() {
+    _streamController.close();
+    return super.close();
+  }
+}
+
+class Root extends StatefulWidget {
+  Root({Key key}) : super(key: key);
+
+  @override
+  _RootState createState() => _RootState();
+}
+
+class _RootState extends State<Root> {
+  @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    return Stack(
+      children: [],
     );
   }
 }

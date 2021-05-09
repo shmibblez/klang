@@ -6,6 +6,7 @@
     - search keys: {[key]: true}
     - timestamp updated: Timestamp - (for algorithm versioning & update limiting)
   - tags: string[] - (for filtering searches)
+  - tag_keys: string[] - (tags indexed for searching)
   - description: string - (optional)
   - source url: string - (optional)
   - creator id: string

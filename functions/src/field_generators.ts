@@ -4,7 +4,14 @@ import { Lengths } from "./constants/constants";
 import { reg_strings } from "./constants/regex";
 import { isTagOk } from "./field_checks";
 
-export function indexUsername(s: string) {
+/**
+ *
+ * @param s string to index
+ * @returns {[string pair]: true} -> map of indexed string pairs
+ *
+ * used to index usernames and item names
+ */
+export function indexName(s: string) {
   const splitter = new Graphemer();
   const keys: { [k: string]: true } = {};
 

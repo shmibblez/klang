@@ -1,9 +1,10 @@
 import * as functions from "firebase-functions";
-import { Info, Properties, StoragePaths } from "./constants/constants";
+import { Coll, Info, Properties, StoragePaths } from "./constants/constants";
 import * as admin from "firebase-admin";
 import { isDescriptionOk, isUrlOk } from "./field_checks";
 import { FirestoreSound } from "./data_models/sound";
 import { tagsFromStr } from "./field_generators";
+import { MissionFailedError } from "./constants/errors";
 
 /**
  *
@@ -32,11 +33,11 @@ export const file_uploaded = functions.storage
   .object()
   .onFinalize(async (object) => {
     try {
-      const [uid, file_type] = object.name?.split("/") ?? [];
+      const [uid, file_type, id] = object.name?.split("/") ?? [];
 
       switch (file_type) {
         case StoragePaths.sound:
-          await onSoundUpload(uid, object);
+          await onSoundUpload(id, uid, object);
           break;
 
         case StoragePaths.user:
@@ -59,8 +60,15 @@ export const file_uploaded = functions.storage
 
     return Promise.resolve();
 
+    /**
+     * deletes file in case anything fails
+     */
     async function deleteFile() {
-      // TODO: in case something goes wrong, delete file, make sure to catch & log error in case failed
+      try {
+        await admin.storage().bucket(object.bucket).file(object.name!).delete();
+      } catch (e) {
+        console.error("file_uploaded: failed to delete file: ", e);
+      }
     }
   });
 
@@ -72,36 +80,50 @@ export const file_uploaded = functions.storage
  * @param obj cloud storage obj
  */
 async function onSoundUpload(
+  id: string,
   uid: string,
   obj: functions.storage.ObjectMetadata
 ) {
-  // all data is already sanitized, was subject to storage rules check
-  // TODO: some data is optional & can't be checked with regex in rules, like tags, so make sure to check those here & set default values in case don't pass checks
-  //.
-  // name is always ok
   const raw_name: string = obj.metadata![Info.item_name];
   // comma separated tag strings, ex: ringtone,metronome sound,nice
   const raw_tags_str: string = obj.metadata![Info.tags];
   const tags = tagsFromStr(raw_tags_str);
-  let raw_description: string = obj.metadata![Info.description];
+  // optional, if not ok then empty
+  let raw_description: string | undefined = obj.metadata![Info.description];
   if (!isDescriptionOk(raw_description)) {
-    raw_description = ""; // TODO: set value to one that won't get stored in firestore, undefined maybe? (investigate or test later)
+    raw_description = undefined;
   }
-  let raw_source_url: string = obj.metadata![Info.source_url];
+  // optional, if not ok then empty
+  let raw_source_url: string | undefined = obj.metadata![Info.source_url];
   if (!isUrlOk(raw_source_url)) {
-    raw_source_url = "";
+    raw_source_url = undefined;
   }
-  // 1 or 0 string
+  // 1 or 0 string, defaults to true if other string
   const raw_explicit: boolean =
     obj.metadata![Properties.explicit] == "0" ? false : true;
 
-  // TODO: setup initDocData (currently returns empty obj)
+  // remember: sounds don't store creator username, only creator uid
+
+  const sound_doc_path = Coll.sounds + "/" + id;
   const sound_doc_data = FirestoreSound.initDocData({
+    obj: obj,
+    id: id,
     name: raw_name,
     tags: tags,
     description: raw_description,
+    source_url: raw_source_url,
+    creator_id: uid,
     explicit: raw_explicit,
   });
 
-  // remember: sounds don't store creator username, only creator uid
+  // create sound doc
+  // if throws error sound file will be deleted anyway -> error will be caught by top-level try/catch
+  try {
+    await admin.firestore().doc(sound_doc_path).create(sound_doc_data);
+  } catch (e) {
+    console.log("file_uploaded: failed to create sound doc: ", e);
+    throw new MissionFailedError();
+  }
+
+  return Promise.resolve();
 }

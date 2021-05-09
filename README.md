@@ -40,7 +40,7 @@ samples, guidance on mobile development, and a full API reference.
 | -------------------- | ---------------- | ---------------- | ----- |
 | user sign up         | yes              | no               |       |
 | user sign in         | n/a              | no               |       |
-| create sound         | no               | no               |       |
+| create sound         | yes              | no               |       |
 | set user image       | no               | no               |       |
 | saved sounds         | no               | no               |       |
 | edit sound           | no               | no               |       |

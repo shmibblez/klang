@@ -1,6 +1,6 @@
 import { Root, Info, Properties, Username } from "../constants/constants";
 import {
-  indexUsername,
+  indexName,
   indexProperties,
   randomSeeds,
 } from "../field_generators";
@@ -44,7 +44,7 @@ export class FirestoreUser {
         [Info.id]: uid,
         [Info.item_name]: {
           [Info.item_name]: username,
-          [Info.search_keys]: indexUsername(username),
+          [Info.search_keys]: indexName(username),
           [Info.timestamp_updated]: admin.firestore.FieldValue.serverTimestamp(),
         },
         [Info.timestamp_created]: admin.firestore.FieldValue.serverTimestamp(),
