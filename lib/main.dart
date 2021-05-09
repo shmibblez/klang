@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:klang/pages/error.dart';
 
 void main() {
   runApp(MyApp());
@@ -27,15 +28,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text("klang"),
-        ),
-        body: _initialSetup(),
-        bottomNavigationBar: BottomNavigationBar(
-          items: [], // TODO: bottom nav setup
-        ),
-      ),
+      home: Scaffold(body: _InitialSetup()),
     );
   }
 }
@@ -65,43 +58,59 @@ class MyApp extends StatelessWidget {
 //   - each page container has it's own navigator that houses pages
 //   - everything provider in 1st level provides needs to be re-provided by page container navigator so it's children can access it
 
-Widget _initialSetup() {
-  StreamController<FirebaseApp> snapshotStream = StreamController();
-
-  return StreamBuilder(
-    stream: snapshotStream.stream,
-    builder: (context, snap) {
-      switch (snap.connectionState) {
-        case ConnectionState.done:
-          {
-            if (snap.hasError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("failed to load, retry?"),
-                  action: SnackBarAction(
-                      label: "retry",
-                      onPressed: () {
-                        snapshotStream.sink
-                            .addStream(Firebase.initializeApp().asStream());
-                      }),
-                ),
-              );
-              return Container();
-            }
-            snapshotStream.close();
-            return Root();
-          }
-        case ConnectionState.active:
-        case ConnectionState.waiting:
-        default: // loading
-          return Center(child: CircularProgressIndicator());
-      }
-    },
-  );
+class _InitialSetup extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() {
+    return _InitialSetupState();
+  }
 }
 
-/// states for auth cubit
-enum AuthState { logged_in, logged_out, login_error, logout_error }
+class _InitialSetupState extends State<_InitialSetup> {
+  StreamController<FirebaseApp> snapshotStream = StreamController();
+
+  @override
+  void initState() {
+    super.initState();
+    snapshotStream.sink.addStream(Firebase.initializeApp().asStream());
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    snapshotStream.close();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: snapshotStream.stream,
+      builder: (context, snap) {
+        switch (snap.connectionState) {
+          case ConnectionState.done:
+            {
+              if (snap.hasError) {
+                return ErrorPage(
+                  onHandleError: () {
+                    // retry
+                    snapshotStream.sink.addStream(
+                      Firebase.initializeApp().asStream(),
+                    );
+                  },
+                );
+              }
+              snapshotStream.close();
+              return Root();
+            }
+          case ConnectionState.active:
+          case ConnectionState.waiting:
+          default: // loading
+            return Center(child: CircularProgressIndicator());
+        }
+      },
+    );
+  }
+}
+
 enum LoginResult {
   success,
   invalid_email,
@@ -111,15 +120,29 @@ enum LoginResult {
   error,
 }
 
-class AuthCubit extends Cubit<AuthState> {
-  AuthCubit(AuthState initialState) : super(initialState);
+class UserState {
+  UserState(this.user) {
+    // uid = user?.uid;
+    // loggedIn = user?.uid != null && !user.isAnonymous;
+  }
+  User user;
+  String get uid => user?.uid;
+  bool get loggedIn => user?.uid != null && !user.isAnonymous;
+}
 
-  StreamController<AuthState> _streamController = StreamController();
-  StreamSink<AuthState> get authStreamSink => _streamController.sink;
-  Stream<AuthState> get authStream => _streamController.stream;
+class AuthCubit extends Cubit<UserState> {
+  AuthCubit(UserState initialState, Stream<User> userStream)
+      : super(initialState) {
+    _streamController.sink
+        .addStream(userStream.map((event) => UserState(event)));
+  }
+
+  StreamController<UserState> _streamController = StreamController();
+  StreamSink<UserState> get authStreamSink => _streamController.sink;
+  Stream<UserState> get authStream => _streamController.stream;
 
   Future<LoginResult> login(String email, String password) async {
-    if (state == AuthState.logged_in) return LoginResult.success;
+    if (state.uid != null) return LoginResult.success;
     try {
       await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
@@ -158,8 +181,30 @@ class Root extends StatefulWidget {
 class _RootState extends State<Root> {
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("klang"),
+      ),
+      body: Root(),
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: "home",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_box_rounded),
+            label: "account",
+          ),
+        ], // TODO: bottom nav setup
+      ),
     );
+
+    //  Stack(
+    //   // TODO: here will go root scaffold & page containers, and TouchEnabled bloc to enable/disable touch events
+    //   //.
+    //   // FIXME: test before adding more stuff below
+    //   children: [],
+    // );
   }
 }
