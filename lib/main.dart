@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: Scaffold(body: _InitialSetup()),
+      home: _InitialSetup(),
     );
   }
 }
@@ -85,9 +85,12 @@ class _InitialSetupState extends State<_InitialSetup> {
     return StreamBuilder(
       stream: snapshotStream.stream,
       builder: (context, snap) {
+        debugPrint("data: ${snap.data}");
         switch (snap.connectionState) {
           case ConnectionState.done:
+          case ConnectionState.active:
             {
+              debugPrint("done");
               if (snap.hasError) {
                 return ErrorPage(
                   onHandleError: () {
@@ -101,8 +104,10 @@ class _InitialSetupState extends State<_InitialSetup> {
               snapshotStream.close();
               return Root();
             }
-          case ConnectionState.active:
+            return Center(child: CircularProgressIndicator());
           case ConnectionState.waiting:
+            debugPrint("waiting");
+            return Center(child: CircularProgressIndicator());
           default: // loading
             return Center(child: CircularProgressIndicator());
         }
@@ -185,7 +190,11 @@ class _RootState extends State<Root> {
       appBar: AppBar(
         title: Text("klang"),
       ),
-      body: Root(),
+      body: Stack(
+        children: [
+          
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         items: [
           BottomNavigationBarItem(
