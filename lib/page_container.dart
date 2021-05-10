@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 
 // determines page to show as first page
-enum DefaultPage { home, search, add, profile }
+enum DefaultPage { home, search, add, shuffle, profile }
 
 class PageContainer extends StatelessWidget {
   PageContainer({@required this.defaultPage});
@@ -14,6 +14,8 @@ class PageContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     // TODO: create navigator here & return child page depending on default
     // remember all children need to have provider as child, how to do that?
-    return Container();
+    return Center(
+      child: Text("$defaultPage"),
+    );
   }
 }

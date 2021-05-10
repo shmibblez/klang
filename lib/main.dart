@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:klang/page_container.dart';
 import 'package:klang/pages/error.dart';
 
 void main() {
@@ -102,7 +103,7 @@ class _InitialSetupState extends State<_InitialSetup> {
                 );
               }
               snapshotStream.close();
-              return Root();
+              return _blocSetup();
             }
             return Center(child: CircularProgressIndicator());
           case ConnectionState.waiting:
@@ -112,6 +113,23 @@ class _InitialSetupState extends State<_InitialSetup> {
             return Center(child: CircularProgressIndicator());
         }
       },
+    );
+  }
+
+  Widget _blocSetup() {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          lazy: false,
+          create: (_) =>
+              AuthCubit(null, FirebaseAuth.instance.authStateChanges()),
+        ),
+        BlocProvider(
+          lazy: true,
+          create: (_) => TouchEnabledCubit(false),
+        )
+      ],
+      child: Root(),
     );
   }
 }
@@ -176,6 +194,19 @@ class AuthCubit extends Cubit<UserState> {
   }
 }
 
+class TouchEnabledCubit extends Cubit<bool> {
+  TouchEnabledCubit(bool touchEnabled) : super(touchEnabled);
+
+  enableTouch() {
+    emit(true);
+  }
+
+  disableTouch() {
+    emit(false);
+  }
+}
+
+// root provides auth and also sets up botton nav and container pages
 class Root extends StatefulWidget {
   Root({Key key}) : super(key: key);
 
@@ -184,6 +215,21 @@ class Root extends StatefulWidget {
 }
 
 class _RootState extends State<Root> {
+  int _selectedPageIndx = 0;
+  PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedPageIndx);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _pageController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -192,15 +238,57 @@ class _RootState extends State<Root> {
       ),
       body: Stack(
         children: [
-          
+          // page container container
+          PageView(
+            controller: _pageController,
+            physics: NeverScrollableScrollPhysics(),
+            children: [
+              PageContainer(defaultPage: DefaultPage.home),
+              PageContainer(defaultPage: DefaultPage.search),
+              PageContainer(defaultPage: DefaultPage.add),
+              // PageContainer(defaultPage: DefaultPage.shuffle),
+              PageContainer(defaultPage: DefaultPage.profile),
+            ],
+          ),
+          // used for enabling/disabling touch
+          BlocBuilder<TouchEnabledCubit, bool>(
+            builder: (_, touchEnabled) {
+              return IgnorePointer(child: Container());
+            },
+          ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        unselectedItemColor: Colors.grey[400],
+        selectedItemColor: Colors.grey[900],
+        onTap: (newPageIndx) => {
+          if (newPageIndx != _selectedPageIndx)
+            {
+              setState(() {
+                _selectedPageIndx = newPageIndx;
+                _pageController.jumpToPage(_selectedPageIndx);
+              })
+            }
+        },
+        currentIndex: _selectedPageIndx,
+        elevation: 0,
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: "home",
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: "search",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.add),
+            label: "add",
+          ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(Icons.shuffle),
+          //   label: "shuffle",
+          // ),
           BottomNavigationBarItem(
             icon: Icon(Icons.account_box_rounded),
             label: "account",
