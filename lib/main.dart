@@ -243,11 +243,36 @@ class _RootState extends State<Root> {
             controller: _pageController,
             physics: NeverScrollableScrollPhysics(),
             children: [
-              PageContainer(defaultPage: DefaultPage.home),
-              PageContainer(defaultPage: DefaultPage.search),
-              PageContainer(defaultPage: DefaultPage.add),
-              // PageContainer(defaultPage: DefaultPage.shuffle),
-              PageContainer(defaultPage: DefaultPage.profile),
+              Router(
+                // backButtonDispatcher: , TODO: setup root back button dispatcher, could setup list that keeps main bottom nav order, and if no page to pop for current nav container, set previous item in bottom nav order list as active screen. If bottom nav order list empty and back requested exit app
+                routerDelegate:
+                    PageRouterDelegate(defaultPage: DefaultPage.home),
+                routeInformationParser: PageRouteInformationParser(),
+              ),
+              Router(
+                // backButtonDispatcher: , TODO: setup root back button dispatcher
+                routerDelegate:
+                    PageRouterDelegate(defaultPage: DefaultPage.search),
+                routeInformationParser: PageRouteInformationParser(),
+              ),
+              Router(
+                // backButtonDispatcher: , TODO: setup root back button dispatcher
+                routerDelegate:
+                    PageRouterDelegate(defaultPage: DefaultPage.add),
+                routeInformationParser: PageRouteInformationParser(),
+              ),
+              // Router(
+              //   // backButtonDispatcher: , TODO: setup root back button dispatcher
+              //   routerDelegate:
+              //       PageRouterDelegate(defaultPage: DefaultPage.shuffle),
+              //   routeInformationParser: PageRouteInformationParser(),
+              // ),
+              Router(
+                // backButtonDispatcher: , TODO: setup root back button dispatcher
+                routerDelegate:
+                    PageRouterDelegate(defaultPage: DefaultPage.user),
+                routeInformationParser: PageRouteInformationParser(),
+              ),
             ],
           ),
           // used for enabling/disabling touch

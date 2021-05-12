@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-class UserPage extends StatelessWidget {
+class SearchPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Text("user page"),
+      child: Text("search page"),
     );
   }
 }
