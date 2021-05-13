@@ -246,32 +246,45 @@ class _RootState extends State<Root> {
               Router(
                 // backButtonDispatcher: , TODO: setup root back button dispatcher, could setup list that keeps main bottom nav order, and if no page to pop for current nav container, set previous item in bottom nav order list as active screen. If bottom nav order list empty and back requested exit app
                 routerDelegate:
-                    PageRouterDelegate(defaultPage: DefaultPage.home),
+                    PageRouterDelegate(initialPage: InitialPage.home),
                 routeInformationParser: PageRouteInformationParser(),
+                routeInformationProvider: PageRouteInformationProvider(
+                  routeInformation: RouteInformation(location: "/home"),
+                )..value = RouteInformation(location: "/search"),
               ),
               Router(
                 // backButtonDispatcher: , TODO: setup root back button dispatcher
                 routerDelegate:
-                    PageRouterDelegate(defaultPage: DefaultPage.search),
+                    PageRouterDelegate(initialPage: InitialPage.search),
                 routeInformationParser: PageRouteInformationParser(),
+                routeInformationProvider: PageRouteInformationProvider(
+                  routeInformation: RouteInformation(location: "/search"),
+                ),
               ),
               Router(
                 // backButtonDispatcher: , TODO: setup root back button dispatcher
                 routerDelegate:
-                    PageRouterDelegate(defaultPage: DefaultPage.add),
+                    PageRouterDelegate(initialPage: InitialPage.add),
                 routeInformationParser: PageRouteInformationParser(),
+                routeInformationProvider: PageRouteInformationProvider(
+                  routeInformation: RouteInformation(location: "/add"),
+                ),
               ),
               // Router(
               //   // backButtonDispatcher: , TODO: setup root back button dispatcher
               //   routerDelegate:
               //       PageRouterDelegate(defaultPage: DefaultPage.shuffle),
               //   routeInformationParser: PageRouteInformationParser(),
+              //   routeInformationProvider: PageRouteInformationProvider(routeInformation: RouteInformation(location: "/")),
               // ),
               Router(
                 // backButtonDispatcher: , TODO: setup root back button dispatcher
                 routerDelegate:
-                    PageRouterDelegate(defaultPage: DefaultPage.user),
+                    PageRouterDelegate(initialPage: InitialPage.user),
                 routeInformationParser: PageRouteInformationParser(),
+                routeInformationProvider: PageRouteInformationProvider(
+                  routeInformation: RouteInformation(location: "/user"),
+                ),
               ),
             ],
           ),
