@@ -11,6 +11,11 @@ klang means sound in german
 - pages are in charge of handling sign in info, ex: profile page shows log in if user not logged in, also needs to handle sign up if user doesn't have account
   - need to check if user signed in every time user page is shown, ex: user is in signup page, log in page is in stack before it, and user signs up. When signup is complete, need to make sure that user page showing login refreshes & shows user profile after being recovered from navigator stack
 
+# nav structure
+- there is a root page that has bottom nav - there is only 1 instance
+- there are other pages that can originate from this root page, but they're fullscreen
+- this allows navigating to pages from url
+
 # db requests
 - app calls function, function gets db data & sends to app - this happens for every data request
   - this is much more flexible since allows filtering data & only getting specific fields which is especially important, for example, when querying for saved sounds (not from saved sounds id list)

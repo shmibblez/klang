@@ -5,7 +5,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:klang/page_container.dart';
+import 'package:klang/pages/add.dart';
 import 'package:klang/pages/error.dart';
+import 'package:klang/pages/home.dart';
+import 'package:klang/pages/search.dart';
+import 'package:klang/pages/user.dart';
 
 void main() {
   runApp(MyApp());
@@ -15,35 +19,9 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: _InitialSetup(),
-    );
+    return _InitialSetup();
   }
 }
-
-// TODO: copy stuff from ringfone that works
-// - add dependencies
-// - what to use, hooks, bloc, or provider?
-// - determine app structure
-// also, how does navigator handle lifecycle
-// which one's best for app structure?
-// specs:
-// - everything depends on whether user signed in or not
-// - how to reload active pages, but only reload background pages when shown again -> ex: if user
-//   profile page in background, and user signs out, don't immediately reload page to show sign in, only reload when page shown
 
 // structure:
 // - top level: stack with loading bloc and touch enabled cubit ->
@@ -127,6 +105,10 @@ class _InitialSetupState extends State<_InitialSetup> {
         BlocProvider(
           lazy: true,
           create: (_) => TouchEnabledCubit(false),
+        ),
+        BlocProvider(
+          lazy: false,
+          create: (_) => BottomNavCubit(BottomNavItem.home),
         )
       ],
       child: Root(),
@@ -206,6 +188,35 @@ class TouchEnabledCubit extends Cubit<bool> {
   }
 }
 
+enum BottomNavItem { home, search, add, /*shuffle,*/ user }
+
+class BottomNavCubit extends Cubit<BottomNavItem> {
+  BottomNavCubit(BottomNavItem initialState) : super(initialState);
+
+  setActiveItem(BottomNavItem ni) {
+    debugPrint("--setting bottom nav cubit active item, item: $ni");
+    // if (ni != state)
+    emit(ni);
+  }
+
+  int mapActiveItemToIndx() {
+    switch (state) {
+      case BottomNavItem.home:
+        return 0;
+
+      case BottomNavItem.search:
+        return 1;
+      case BottomNavItem.add:
+        return 2;
+      // case BottomNavItem.shuffle:
+      //   return 3;
+      case BottomNavItem.user:
+        return 3;
+        break;
+    }
+  }
+}
+
 // root provides auth and also sets up botton nav and container pages
 class Root extends StatefulWidget {
   Root({Key key}) : super(key: key);
@@ -215,23 +226,77 @@ class Root extends StatefulWidget {
 }
 
 class _RootState extends State<Root> {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      routerDelegate: PageRouterDelegate(),
+      routeInformationParser: PageRouteInformationParser(),
+      // routeInformationProvider: PageRouteInformationProvider(
+      //   routeInformation: RouteInformation(location: "/home"),
+      // ),
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        // This is the theme of your application.
+        //
+        // Try running your application with "flutter run". You'll see the
+        // application has a blue toolbar. Then, without quitting the app, try
+        // changing the primarySwatch below to Colors.green and then invoke
+        // "hot reload" (press "r" in the console where you ran "flutter run",
+        // or simply save your changes to "hot reload" in a Flutter IDE).
+        // Notice that the counter didn't reset back to zero; the application
+        // is not restarted.
+        primarySwatch: Colors.blue,
+      ),
+    );
+  }
+}
+
+class KlangMainPage extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() {
+    return _KlangMainPageState();
+  }
+}
+
+class _KlangMainPageState extends State<KlangMainPage>
+    with AutomaticKeepAliveClientMixin {
   int _selectedPageIndx = 0;
   PageController _pageController;
+  StreamSubscription<BottomNavItem> _bottomNavListener;
 
   @override
   void initState() {
+    debugPrint("-KlangMainPageState initState called");
     super.initState();
     _pageController = PageController(initialPage: _selectedPageIndx);
+    final BottomNavCubit bottomNavCubit = BlocProvider.of<BottomNavCubit>(
+      context,
+      listen: false,
+    );
+    _bottomNavListener = bottomNavCubit.stream.listen(
+      (event) {
+        debugPrint(
+            "--bottom nav selected index changed, old index: $_selectedPageIndx");
+        setState(() {
+          _selectedPageIndx = bottomNavCubit.mapActiveItemToIndx();
+        });
+        debugPrint("----new index: $_selectedPageIndx");
+        _pageController.jumpToPage(_selectedPageIndx);
+      },
+    );
+    _selectedPageIndx = bottomNavCubit.mapActiveItemToIndx();
   }
 
   @override
   void dispose() {
     super.dispose();
     _pageController.dispose();
+    _bottomNavListener.cancel();
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       appBar: AppBar(
         title: Text("klang"),
@@ -243,49 +308,21 @@ class _RootState extends State<Root> {
             controller: _pageController,
             physics: NeverScrollableScrollPhysics(),
             children: [
-              Router(
-                // backButtonDispatcher: , TODO: setup root back button dispatcher, could setup list that keeps main bottom nav order, and if no page to pop for current nav container, set previous item in bottom nav order list as active screen. If bottom nav order list empty and back requested exit app
-                routerDelegate:
-                    PageRouterDelegate(initialPage: InitialPage.home),
-                routeInformationParser: PageRouteInformationParser(),
-                routeInformationProvider: PageRouteInformationProvider(
-                  routeInformation: RouteInformation(location: "/home"),
-                )..value = RouteInformation(location: "/search"),
-              ),
-              Router(
-                // backButtonDispatcher: , TODO: setup root back button dispatcher
-                routerDelegate:
-                    PageRouterDelegate(initialPage: InitialPage.search),
-                routeInformationParser: PageRouteInformationParser(),
-                routeInformationProvider: PageRouteInformationProvider(
-                  routeInformation: RouteInformation(location: "/search"),
-                ),
-              ),
-              Router(
-                // backButtonDispatcher: , TODO: setup root back button dispatcher
-                routerDelegate:
-                    PageRouterDelegate(initialPage: InitialPage.add),
-                routeInformationParser: PageRouteInformationParser(),
-                routeInformationProvider: PageRouteInformationProvider(
-                  routeInformation: RouteInformation(location: "/add"),
-                ),
-              ),
               // Router(
-              //   // backButtonDispatcher: , TODO: setup root back button dispatcher
+              //   // backButtonDispatcher: , TODO: setup root back button dispatcher, could setup list that keeps main bottom nav order, and if no page to pop for current nav container, set previous item in bottom nav order list as active screen. If bottom nav order list empty and back requested exit app
+              //.
               //   routerDelegate:
-              //       PageRouterDelegate(defaultPage: DefaultPage.shuffle),
+              //       PageRouterDelegate(initialPage: InitialPage.home),
               //   routeInformationParser: PageRouteInformationParser(),
-              //   routeInformationProvider: PageRouteInformationProvider(routeInformation: RouteInformation(location: "/")),
+              //   routeInformationProvider: PageRouteInformationProvider(
+              //     routeInformation: RouteInformation(location: "/home"),
+              //   ),
               // ),
-              Router(
-                // backButtonDispatcher: , TODO: setup root back button dispatcher
-                routerDelegate:
-                    PageRouterDelegate(initialPage: InitialPage.user),
-                routeInformationParser: PageRouteInformationParser(),
-                routeInformationProvider: PageRouteInformationProvider(
-                  routeInformation: RouteInformation(location: "/user"),
-                ),
-              ),
+              HomePage(),
+              SearchPage(),
+              AddPage(),
+              // ShufflePage(),
+              UserPage(uid: null),
             ],
           ),
           // used for enabling/disabling touch
@@ -299,14 +336,35 @@ class _RootState extends State<Root> {
       bottomNavigationBar: BottomNavigationBar(
         unselectedItemColor: Colors.grey[400],
         selectedItemColor: Colors.grey[900],
-        onTap: (newPageIndx) => {
-          if (newPageIndx != _selectedPageIndx)
-            {
-              setState(() {
-                _selectedPageIndx = newPageIndx;
-                _pageController.jumpToPage(_selectedPageIndx);
-              })
-            }
+        onTap: (newPageIndx) {
+          // if (newPageIndx != _selectedPageIndx)
+          //   {
+          //     setState(() {
+          //       _selectedPageIndx = newPageIndx;
+          //       _pageController.jumpToPage(_selectedPageIndx);
+          //     })
+          //   }
+          String newPageName;
+          switch (newPageIndx) {
+            case 0:
+              newPageName = "home";
+              break;
+            case 1:
+              newPageName = "search";
+              break;
+            case 2:
+              newPageName = "add";
+              break;
+            // case 3:
+            //   newPageName = "shuffle";
+            //   break;
+            case 3:
+              newPageName = "user";
+              break;
+          }
+          (Router.of(context).routerDelegate as PageRouterDelegate)
+              .setNewRoutePath(PageRoutePath.main(newPageName));
+          // Navigator.of(context).pushNamed("/search")
         },
         currentIndex: _selectedPageIndx,
         elevation: 0,
@@ -334,12 +392,8 @@ class _RootState extends State<Root> {
         ], // TODO: bottom nav setup
       ),
     );
-
-    //  Stack(
-    //   // TODO: here will go root scaffold & page containers, and TouchEnabled bloc to enable/disable touch events
-    //   //.
-    //   // FIXME: test before adding more stuff below
-    //   children: [],
-    // );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
