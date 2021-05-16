@@ -6,8 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:klang/page_container.dart';
 import 'package:klang/pages/add.dart';
+import 'package:klang/pages/auth_page.dart';
 import 'package:klang/pages/error.dart';
 import 'package:klang/pages/home.dart';
+import 'package:klang/pages/log_in.dart';
 import 'package:klang/pages/search.dart';
 import 'package:klang/pages/user.dart';
 
@@ -104,7 +106,7 @@ class _InitialSetupState extends State<_InitialSetup> {
         ),
         BlocProvider(
           lazy: true,
-          create: (_) => TouchEnabledCubit(false),
+          create: (_) => TouchEnabledCubit(true),
         ),
         BlocProvider(
           lazy: false,
@@ -199,11 +201,26 @@ class BottomNavCubit extends Cubit<BottomNavItem> {
     emit(ni);
   }
 
-  int mapActiveItemToIndx() {
+  static String mapIndxToName(int indx) {
+    switch (indx) {
+      case 0:
+        return "home";
+      case 1:
+        return "search";
+      case 2:
+        return "add";
+      // case 3:
+      //   return "shuffle";
+      case 3:
+        return "user";
+    }
+    throw "bottom nav indx out of range, max is 3, received \"$indx\"";
+  }
+
+  int activeItemIndx() {
     switch (state) {
       case BottomNavItem.home:
         return 0;
-
       case BottomNavItem.search:
         return 1;
       case BottomNavItem.add:
@@ -212,8 +229,8 @@ class BottomNavCubit extends Cubit<BottomNavItem> {
       //   return 3;
       case BottomNavItem.user:
         return 3;
-        break;
     }
+    throw "unknown active item \"$state\"";
   }
 }
 
@@ -228,25 +245,47 @@ class Root extends StatefulWidget {
 class _RootState extends State<Root> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerDelegate: PageRouterDelegate(),
-      routeInformationParser: PageRouteInformationParser(),
-      // routeInformationProvider: PageRouteInformationProvider(
-      //   routeInformation: RouteInformation(location: "/home"),
-      // ),
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        MaterialApp.router(
+          routeInformationProvider: PageRouteInformationProvider(
+            routeInformation: RouteInformation(location: "/home"),
+          ),
+          routerDelegate: PageRouterDelegate(),
+          routeInformationParser: PageRouteInformationParser(),
+          // routeInformationProvider: PageRouteInformationProvider(
+          //   routeInformation: RouteInformation(location: "/home"),
+          // ),
+          title: 'Flutter Demo',
+          theme: ThemeData(
+            // This is the theme of your application.
+            //
+            // Try running your application with "flutter run". You'll see the
+            // application has a blue toolbar. Then, without quitting the app, try
+            // changing the primarySwatch below to Colors.green and then invoke
+            // "hot reload" (press "r" in the console where you ran "flutter run",
+            // or simply save your changes to "hot reload" in a Flutter IDE).
+            // Notice that the counter didn't reset back to zero; the application
+            // is not restarted.
+            primarySwatch: Colors.blue,
+          ),
+        ), // used for enabling/disabling touch
+        BlocBuilder<TouchEnabledCubit, bool>(
+          builder: (_, touchEnabled) {
+            return Offstage(
+              offstage: touchEnabled,
+              child: AbsorbPointer(
+                child: Container(
+                  color: Color(0x55555555),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                absorbing: !touchEnabled,
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -278,13 +317,12 @@ class _KlangMainPageState extends State<KlangMainPage>
         debugPrint(
             "--bottom nav selected index changed, old index: $_selectedPageIndx");
         setState(() {
-          _selectedPageIndx = bottomNavCubit.mapActiveItemToIndx();
+          _selectedPageIndx = bottomNavCubit.activeItemIndx();
+          _pageController.jumpToPage(_selectedPageIndx);
         });
-        debugPrint("----new index: $_selectedPageIndx");
-        _pageController.jumpToPage(_selectedPageIndx);
       },
     );
-    _selectedPageIndx = bottomNavCubit.mapActiveItemToIndx();
+    _selectedPageIndx = bottomNavCubit.activeItemIndx();
   }
 
   @override
@@ -301,35 +339,27 @@ class _KlangMainPageState extends State<KlangMainPage>
       appBar: AppBar(
         title: Text("klang"),
       ),
-      body: Stack(
+      body: PageView(
+        controller: _pageController,
+        physics: NeverScrollableScrollPhysics(),
         children: [
-          // page container container
-          PageView(
-            controller: _pageController,
-            physics: NeverScrollableScrollPhysics(),
-            children: [
-              // Router(
-              //   // backButtonDispatcher: , TODO: setup root back button dispatcher, could setup list that keeps main bottom nav order, and if no page to pop for current nav container, set previous item in bottom nav order list as active screen. If bottom nav order list empty and back requested exit app
-              //.
-              //   routerDelegate:
-              //       PageRouterDelegate(initialPage: InitialPage.home),
-              //   routeInformationParser: PageRouteInformationParser(),
-              //   routeInformationProvider: PageRouteInformationProvider(
-              //     routeInformation: RouteInformation(location: "/home"),
-              //   ),
-              // ),
-              HomePage(),
-              SearchPage(),
-              AddPage(),
-              // ShufflePage(),
-              UserPage(uid: null),
-            ],
-          ),
-          // used for enabling/disabling touch
-          BlocBuilder<TouchEnabledCubit, bool>(
-            builder: (_, touchEnabled) {
-              return IgnorePointer(child: Container());
-            },
+          // Router(
+          //   // backButtonDispatcher: , TODO: setup root back button dispatcher, could setup list that keeps main bottom nav order, and if no page to pop for current nav container, set previous item in bottom nav order list as active screen. If bottom nav order list empty and back requested exit app
+          //.
+          //   routerDelegate:
+          //       PageRouterDelegate(initialPage: InitialPage.home),
+          //   routeInformationParser: PageRouteInformationParser(),
+          //   routeInformationProvider: PageRouteInformationProvider(
+          //     routeInformation: RouteInformation(location: "/home"),
+          //   ),
+          // ),
+          HomePage(),
+          SearchPage(),
+          AddPage(),
+          // ShufflePage(),
+          AuthPage(
+            child: UserPage(uid: null),
+            authFallbackPage: LoginPage(showAppBar: false),
           ),
         ],
       ),
@@ -337,34 +367,10 @@ class _KlangMainPageState extends State<KlangMainPage>
         unselectedItemColor: Colors.grey[400],
         selectedItemColor: Colors.grey[900],
         onTap: (newPageIndx) {
-          // if (newPageIndx != _selectedPageIndx)
-          //   {
-          //     setState(() {
-          //       _selectedPageIndx = newPageIndx;
-          //       _pageController.jumpToPage(_selectedPageIndx);
-          //     })
-          //   }
-          String newPageName;
-          switch (newPageIndx) {
-            case 0:
-              newPageName = "home";
-              break;
-            case 1:
-              newPageName = "search";
-              break;
-            case 2:
-              newPageName = "add";
-              break;
-            // case 3:
-            //   newPageName = "shuffle";
-            //   break;
-            case 3:
-              newPageName = "user";
-              break;
-          }
           (Router.of(context).routerDelegate as PageRouterDelegate)
-              .setNewRoutePath(PageRoutePath.main(newPageName));
-          // Navigator.of(context).pushNamed("/search")
+              .setNewRoutePath(PageRoutePath.main(
+            BottomNavCubit.mapIndxToName(newPageIndx),
+          ));
         },
         currentIndex: _selectedPageIndx,
         elevation: 0,
@@ -389,7 +395,7 @@ class _KlangMainPageState extends State<KlangMainPage>
             icon: Icon(Icons.account_box_rounded),
             label: "account",
           ),
-        ], // TODO: bottom nav setup
+        ],
       ),
     );
   }
