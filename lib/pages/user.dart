@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:klang/page_container.dart';
+import 'package:klang/pages/klang_page.dart';
 
-// TODO: if uid is null then either show current user's profile, or sign in / sign up
-class UserPage extends StatelessWidget {
+class UserPage extends StatelessWidget implements KlangPage {
   UserPage({@required this.uid});
 
   final String uid;
@@ -12,4 +13,7 @@ class UserPage extends StatelessWidget {
       child: Text("user page"),
     );
   }
+
+  @override
+  PageRoutePath get route => PageRoutePath.user(uid);
 }

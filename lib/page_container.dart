@@ -2,44 +2,53 @@
 // only exception is settings page container, that one will have special paths
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:klang/constants.dart';
 import 'package:klang/main.dart';
 import 'package:klang/pages/auth_page.dart';
 import 'package:klang/pages/create_account.dart';
+import 'package:klang/pages/klang_page.dart';
+import 'package:klang/pages/log_in.dart';
 import 'package:klang/pages/search_results.dart';
 import 'package:klang/pages/unknown.dart';
 import 'package:klang/pages/user.dart';
 
-class PageRouteInformationProvider extends RouteInformationProvider {
-  PageRouteInformationProvider({@required this.routeInformation});
+// class PageRouteInformationProvider extends RouteInformationProvider
+//     with ChangeNotifier {
+//   PageRouteInformationProvider({RouteInformation initialRouteInformation})
+//       : _value = initialRouteInformation;
 
-  RouteInformation routeInformation;
+//   RouteInformation _value;
 
-  // TODO: setup router below (read RouteInformationProvider by hovering above it above)
-  // after setup complete, figure out how to push new paths with log_in page (create account button)
+//   @override
+//   void routerReportsNewRouteInformation(RouteInformation routeInformation) {
+//     super.routerReportsNewRouteInformation(routeInformation);
+//     // PlatformRouteInformationProvider;
+//     debugPrint("****new route info reported");
+//     if (this._value == routeInformation) return;
+//     SystemNavigator.routeInformationUpdated(
+//       location: routeInformation.location,
+//       state: routeInformation.state,
+//     );
+//     this._value = routeInformation;
+//     notifyListeners();
+//   }
 
-  @override
-  void routerReportsNewRouteInformation(RouteInformation routeInformation) {
-    // TODO: implement routerReportsNewRouteInformation
-    super.routerReportsNewRouteInformation(routeInformation);
-  }
+//   @override
+//   void addListener(VoidCallback listener) {
+//     super.addListener(listener);
+//   }
 
-  @override
-  void addListener(VoidCallback listener) {
-    // TODO: implement addListener
-  }
+//   @override
+//   void removeListener(VoidCallback listener) {
+//     super.removeListener(listener);
+//   }
 
-  @override
-  void removeListener(VoidCallback listener) {
-    // TODO: implement removeListener
-  }
+//   @override
+//   RouteInformation get value => _value;
+// }
 
-  @override
-  RouteInformation get value => routeInformation;
-}
-
-// TODO: how to push to right navigator? Need to make right bottom nav active and then push route
 class PageRouteInformationParser extends RouteInformationParser<PageRoutePath> {
   @override
   Future<PageRoutePath> parseRouteInformation(
@@ -47,7 +56,8 @@ class PageRouteInformationParser extends RouteInformationParser<PageRoutePath> {
     final paths = Uri.parse(routeInformation.location).pathSegments;
 
     debugPrint(
-        "--parsing route info, path: ${routeInformation.location}, paths: $paths");
+      "**parsing route info, path: ${routeInformation.location}, paths: $paths",
+    );
 
     PageRoutePath pageRoutePath;
 
@@ -95,6 +105,7 @@ class PageRouteInformationParser extends RouteInformationParser<PageRoutePath> {
 
   @override
   RouteInformation restoreRouteInformation(PageRoutePath path) {
+    debugPrint("restoring route info");
     return RouteInformation(location: "/" + path.elements.join("/"));
     // return super.restoreRouteInformation(path);
   }
@@ -102,41 +113,50 @@ class PageRouteInformationParser extends RouteInformationParser<PageRoutePath> {
 
 class PageRouterDelegate extends RouterDelegate<PageRoutePath>
     with ChangeNotifier, PopNavigatorRouterDelegateMixin<PageRoutePath> {
-  final List<Widget> _pages = [];
+  final List<KlangPage> _pages = [];
   final KlangMainPage _mainPage = KlangMainPage();
   BuildContext _context;
   static final _navigatorKey = GlobalKey<NavigatorState>();
+  // final List<PageRoutePath> _mainPageRoutes = [];
 
   @override
-  // TODO: implement currentConfiguration
-  PageRoutePath get currentConfiguration => super.currentConfiguration;
+  PageRoutePath get currentConfiguration => _pages.last.route;
 
   @override
   Widget build(BuildContext context) {
     if (_pages.length <= 0) {
       _pages.add(_mainPage);
     }
-    debugPrint("-PageRouterDelegate rebuilt");
+    debugPrint("**PageRouterDelegate rebuilt");
     _context = context;
     return Navigator(
       // first page is always initialPage
       key: navigatorKey,
-      pages: [
-        ..._pages.map((w) => MaterialPage(child: w)),
-      ],
+      pages: _pages.map((w) => MaterialPage(child: w as Widget)).toList(),
       onPopPage: (route, result) {
-        debugPrint("--popped page");
+        debugPrint("&&popped page");
         if (!route.didPop(result)) return false;
         if (_pages.length > 1) {
           if (_pages.length > 2 && _pages[_pages.length - 2] is AuthPage) {
             (_pages[_pages.length - 2] as AuthPage).resumeListening();
           }
           _pages.removeLast();
+          notifyListeners();
+          // if (_pages.last is KlangMainPagePlaceholder) {
+          //   BottomNavItem i = BottomNavCubit.mapNameToItem(
+          //     _pages.last.route.elements[0],
+          //   );
+          //   _pages.removeLast();
+          //   _pages.add(_mainPage);
+          //   BlocProvider.of<BottomNavCubit>(_context, listen: false)
+          //       .setActiveItem(i);
+          // }
+          // _pagePaths.removeLast();
           if (!(_pages.last is KlangMainPage))
             navigatorKey.currentState.finalizeRoute(route);
           return true;
         }
-        return false;
+        return true;
       },
     );
   }
@@ -146,7 +166,7 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
 
   @override
   Future<void> setNewRoutePath(PageRoutePath path) {
-    debugPrint("--setting new route path, elements: ${path.elements}");
+    debugPrint("**setting new route path, elements: ${path.elements}");
     if (path.elements.length <= 0) {
       _makeMainPageActiveWith(BottomNavItem.home);
     } else if (_pages.last is AuthPage) {
@@ -200,25 +220,50 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
         );
         notifyListeners();
         break;
+      case "login":
+        _pages.add(
+          AuthPage(
+            child: UserPage(uid: null),
+            authFallbackPage: LoginPage(),
+          ),
+        );
+        notifyListeners();
+        break;
       default:
         _pages.add(UnknownPage());
         notifyListeners();
         break;
     }
-
-    debugPrint("----just added page, _pages.length: ${_pages.length}");
+    debugPrint("****just added page, _pages.length: ${_pages.length}");
     return null;
   }
+
+  // TODO: navigation doesn't pop when on MainPage, and adds pages when on other pages like SearchResultsPage
+  // might be because when pop/press back button, the following happens
+  // route Info Parsed -> route Path Set
+  // since when route path set I add pages, need to figure out way to know if "route Path Set" was added normally or set through pop so don't add it again if popped
+  //
+  // if don't add page in SetNewRoutePath, then also don't notify SystemNavigator
+  //
+  // NOTE: this can all be done later, as long as it works for now should be ok
 
   void _makeMainPageActiveWith(BottomNavItem i) {
     if (_pages.last is KlangMainPage) {
       BlocProvider.of<BottomNavCubit>(_context, listen: false).setActiveItem(i);
+      SystemNavigator.routeInformationUpdated(
+        location: BottomNavCubit.mapItemToName(i), //routeInformation.location,
+        // state: routeInformation.state,
+      );
       return;
     }
     int indx = _pages.indexWhere((element) => element is KlangMainPage);
     if (indx >= 0) {
       _pages.removeAt(indx);
-      _pages.insert(indx, KlangMainPagePlaceholder());
+      _pages.insert(
+          indx,
+          KlangMainPagePlaceholder(
+            route: PageRoutePath.main(BottomNavCubit.mapItemToName(i)),
+          ));
     }
     if (_pages.last is KlangMainPagePlaceholder) {
       _pages.removeLast();
@@ -227,12 +272,28 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
       _pages.add(_mainPage);
     }
     BlocProvider.of<BottomNavCubit>(_context, listen: false).setActiveItem(i);
+    SystemNavigator.routeInformationUpdated(
+      location: BottomNavCubit.mapItemToName(i), //routeInformation.location,
+      // state: routeInformation.state,
+    );
   }
+
+  // // gets selected bottom nav item name
+  // String _activeMainPageItem() {
+  //   int indx = BlocProvider.of<BottomNavCubit>(_context).activeItemIndx();
+  //   return BottomNavCubit.mapIndxToName(indx);
+  // }
 }
 
-class KlangMainPagePlaceholder extends Container {}
+class KlangMainPagePlaceholder extends Container implements KlangPage {
+  KlangMainPagePlaceholder({@required PageRoutePath route}) : _path = route;
+  final PageRoutePath _path;
+  @override
+  PageRoutePath get route => _path;
+}
 
 class PageRoutePath {
+  bool popped = false;
   static final List<String> rootPaths = [
     "", // main page
     "home",
@@ -245,12 +306,18 @@ class PageRoutePath {
   List<String> elements;
 
   /// [sub] should be a root path other than ""
-  PageRoutePath.main(String sub) : elements = [sub];
+  PageRoutePath.main(String sub, {bool popped})
+      : elements = [sub],
+        popped = popped;
 
   PageRoutePath.home() : elements = ["home"];
 
   PageRoutePath.search(KlangContentType ct, String searchStr)
-      : elements = ["search", _contentTypeToStr(ct), searchStr];
+      : elements = [
+          "search",
+          if (ct != null) _contentTypeToStr(ct),
+          if (ct != null && searchStr != null) searchStr,
+        ];
 
   PageRoutePath.add() : elements = ["add"];
 
@@ -262,6 +329,10 @@ class PageRoutePath {
   PageRoutePath.unknown() : elements = ["404"];
 
   PageRoutePath.createAccount() : elements = ["createAccount"];
+
+  PageRoutePath.login() : elements = ["login"];
+
+  PageRoutePath.error() : elements = ["error"];
 
   static String _contentTypeToStr(KlangContentType ct) {
     switch (ct) {

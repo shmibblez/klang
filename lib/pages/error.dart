@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:klang/page_container.dart';
+import 'package:klang/pages/klang_page.dart';
 
-class ErrorPage extends StatelessWidget {
+class ErrorPage extends StatelessWidget implements KlangPage {
   ErrorPage({@required this.onHandleError});
 
   final void Function() onHandleError;
@@ -21,4 +23,7 @@ class ErrorPage extends StatelessWidget {
       ),
     );
   }
+
+  @override
+  PageRoutePath get route => PageRoutePath.error();
 }

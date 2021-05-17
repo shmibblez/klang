@@ -9,6 +9,7 @@ import 'package:klang/pages/add.dart';
 import 'package:klang/pages/auth_page.dart';
 import 'package:klang/pages/error.dart';
 import 'package:klang/pages/home.dart';
+import 'package:klang/pages/klang_page.dart';
 import 'package:klang/pages/log_in.dart';
 import 'package:klang/pages/search.dart';
 import 'package:klang/pages/user.dart';
@@ -66,12 +67,10 @@ class _InitialSetupState extends State<_InitialSetup> {
     return StreamBuilder(
       stream: snapshotStream.stream,
       builder: (context, snap) {
-        debugPrint("data: ${snap.data}");
         switch (snap.connectionState) {
           case ConnectionState.done:
           case ConnectionState.active:
             {
-              debugPrint("done");
               if (snap.hasError) {
                 return ErrorPage(
                   onHandleError: () {
@@ -87,7 +86,6 @@ class _InitialSetupState extends State<_InitialSetup> {
             }
             return Center(child: CircularProgressIndicator());
           case ConnectionState.waiting:
-            debugPrint("waiting");
             return Center(child: CircularProgressIndicator());
           default: // loading
             return Center(child: CircularProgressIndicator());
@@ -195,10 +193,14 @@ enum BottomNavItem { home, search, add, /*shuffle,*/ user }
 class BottomNavCubit extends Cubit<BottomNavItem> {
   BottomNavCubit(BottomNavItem initialState) : super(initialState);
 
+  static BottomNavItem _selectedItem;
+  static BottomNavItem get selectedItem => _selectedItem;
+
   setActiveItem(BottomNavItem ni) {
     debugPrint("--setting bottom nav cubit active item, item: $ni");
     // if (ni != state)
     emit(ni);
+    BottomNavCubit._selectedItem = ni;
   }
 
   static String mapIndxToName(int indx) {
@@ -215,6 +217,38 @@ class BottomNavCubit extends Cubit<BottomNavItem> {
         return "user";
     }
     throw "bottom nav indx out of range, max is 3, received \"$indx\"";
+  }
+
+  static String mapItemToName(BottomNavItem i) {
+    switch (i) {
+      case BottomNavItem.home:
+        return "home";
+      case BottomNavItem.search:
+        return "search";
+      case BottomNavItem.add:
+        return "add";
+      // case BottomNavItem.shuffle:
+      //   return "shuffle";
+      case BottomNavItem.user:
+        return "user";
+    }
+    throw "unknown BottomNavItem received: $i";
+  }
+
+  static BottomNavItem mapNameToItem(String name) {
+    switch (name) {
+      case "home":
+        return BottomNavItem.home;
+      case "search":
+        return BottomNavItem.search;
+      case "add":
+        return BottomNavItem.add;
+      // case "shuffle":
+      //   return BottomNavItem.shuffle;
+      case "user":
+        return BottomNavItem.user;
+    }
+    throw "unknown BottomNavItem name: \"$name\"";
   }
 
   int activeItemIndx() {
@@ -249,14 +283,11 @@ class _RootState extends State<Root> {
       alignment: Alignment.center,
       children: [
         MaterialApp.router(
-          routeInformationProvider: PageRouteInformationProvider(
-            routeInformation: RouteInformation(location: "/home"),
-          ),
+          // routeInformationProvider: PageRouteInformationProvider(
+          //   initialRouteInformation: RouteInformation(location: "/home"),
+          // ),
           routerDelegate: PageRouterDelegate(),
           routeInformationParser: PageRouteInformationParser(),
-          // routeInformationProvider: PageRouteInformationProvider(
-          //   routeInformation: RouteInformation(location: "/home"),
-          // ),
           title: 'Flutter Demo',
           theme: ThemeData(
             // This is the theme of your application.
@@ -290,10 +321,21 @@ class _RootState extends State<Root> {
   }
 }
 
-class KlangMainPage extends StatefulWidget {
+class KlangMainPage extends StatefulWidget implements KlangPage {
+  // KlangMainPage({GlobalKey<_KlangMainPageState> key})
+  //     : super(key: key ?? GlobalKey<_KlangMainPageState>());
+
   @override
   State<StatefulWidget> createState() {
     return _KlangMainPageState();
+  }
+
+  @override
+  PageRoutePath get route {
+    return PageRoutePath.main(
+      BottomNavCubit.mapItemToName(
+          BottomNavCubit.selectedItem ?? BottomNavItem.home),
+    );
   }
 }
 
@@ -305,7 +347,7 @@ class _KlangMainPageState extends State<KlangMainPage>
 
   @override
   void initState() {
-    debugPrint("-KlangMainPageState initState called");
+    debugPrint("||KlangMainPageState initState called");
     super.initState();
     _pageController = PageController(initialPage: _selectedPageIndx);
     final BottomNavCubit bottomNavCubit = BlocProvider.of<BottomNavCubit>(
@@ -315,7 +357,8 @@ class _KlangMainPageState extends State<KlangMainPage>
     _bottomNavListener = bottomNavCubit.stream.listen(
       (event) {
         debugPrint(
-            "--bottom nav selected index changed, old index: $_selectedPageIndx");
+          "||||bottom nav selected index changed, old index: $_selectedPageIndx",
+        );
         setState(() {
           _selectedPageIndx = bottomNavCubit.activeItemIndx();
           _pageController.jumpToPage(_selectedPageIndx);
@@ -334,8 +377,10 @@ class _KlangMainPageState extends State<KlangMainPage>
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("||||KlangMainPage rebuilt");
     super.build(context);
     return Scaffold(
+      key: widget.key,
       appBar: AppBar(
         title: Text("klang"),
       ),
@@ -343,16 +388,6 @@ class _KlangMainPageState extends State<KlangMainPage>
         controller: _pageController,
         physics: NeverScrollableScrollPhysics(),
         children: [
-          // Router(
-          //   // backButtonDispatcher: , TODO: setup root back button dispatcher, could setup list that keeps main bottom nav order, and if no page to pop for current nav container, set previous item in bottom nav order list as active screen. If bottom nav order list empty and back requested exit app
-          //.
-          //   routerDelegate:
-          //       PageRouterDelegate(initialPage: InitialPage.home),
-          //   routeInformationParser: PageRouteInformationParser(),
-          //   routeInformationProvider: PageRouteInformationProvider(
-          //     routeInformation: RouteInformation(location: "/home"),
-          //   ),
-          // ),
           HomePage(),
           SearchPage(),
           AddPage(),
@@ -369,8 +404,7 @@ class _KlangMainPageState extends State<KlangMainPage>
         onTap: (newPageIndx) {
           (Router.of(context).routerDelegate as PageRouterDelegate)
               .setNewRoutePath(PageRoutePath.main(
-            BottomNavCubit.mapIndxToName(newPageIndx),
-          ));
+                  BottomNavCubit.mapIndxToName(newPageIndx)));
         },
         currentIndex: _selectedPageIndx,
         elevation: 0,

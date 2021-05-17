@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:klang/main.dart';
+import 'package:klang/page_container.dart';
+import 'package:klang/pages/klang_page.dart';
 
 /// [value] stores whether listening or not
 class _AuthPageDelegate extends ValueNotifier<bool> {
@@ -25,11 +27,11 @@ class _AuthPageDelegate extends ValueNotifier<bool> {
 /// shows [authFallbackPage] when user signs out
 /// allows setting whether to listen to auth changes or not, based on whether is active
 /// after being paused, when listening is resumed last value is retrieved and update
-class AuthPage extends StatefulWidget {
+class AuthPage extends StatefulWidget implements KlangPage {
   AuthPage({this.child, this.authFallbackPage});
 
-  final Widget child;
-  final Widget authFallbackPage;
+  final KlangPage child;
+  final KlangPage authFallbackPage;
   final _AuthPageDelegate authDelegate = _AuthPageDelegate(isListening: true);
 
   @override
@@ -44,6 +46,9 @@ class AuthPage extends StatefulWidget {
   void stopListening() {
     authDelegate.stopListening();
   }
+
+  @override
+  PageRoutePath get route => child.route;
 }
 
 class _AuthPageState extends State<AuthPage> {
@@ -74,7 +79,7 @@ class _AuthPageState extends State<AuthPage> {
 
   @override
   Widget build(BuildContext context) {
-    return _loggedIn ? widget.child : widget.authFallbackPage;
+    return (_loggedIn ? widget.child : widget.authFallbackPage) as Widget;
   }
 
   @override

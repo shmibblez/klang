@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:klang/constants.dart';
+import 'package:klang/page_container.dart';
+import 'package:klang/pages/klang_page.dart';
 
-class SearchResultsPage extends StatelessWidget {
+class SearchResultsPage extends StatelessWidget implements KlangPage {
   SearchResultsPage({@required this.contentType, @required this.searchStr});
 
   final KlangContentType contentType;
@@ -15,4 +17,7 @@ class SearchResultsPage extends StatelessWidget {
       ),
     );
   }
+
+  @override
+  PageRoutePath get route => PageRoutePath.search(contentType, searchStr);
 }

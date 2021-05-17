@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:klang/main.dart';
+import 'package:klang/page_container.dart';
+import 'package:klang/pages/klang_page.dart';
 
-class CreateAccountPage extends StatefulWidget {
+class CreateAccountPage extends StatefulWidget implements KlangPage {
   @override
   State<StatefulWidget> createState() {
     return _CreateAccountPageState();
   }
+
+  @override
+  PageRoutePath get route => PageRoutePath.createAccount();
 }
 
 class _CreateAccountPageState extends State<CreateAccountPage> {
