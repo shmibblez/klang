@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:history/history.dart';
 import 'package:klang/page_container.dart';
 import 'package:klang/pages/add.dart';
 import 'package:klang/pages/auth_page.dart';
@@ -194,11 +195,9 @@ class BottomNavCubit extends Cubit<BottomNavItem> {
   BottomNavCubit(BottomNavItem initialState) : super(initialState);
 
   static BottomNavItem _selectedItem;
-  static BottomNavItem get selectedItem => _selectedItem;
+  static BottomNavItem get selectedItem => _selectedItem ?? BottomNavItem.home;
 
   setActiveItem(BottomNavItem ni) {
-    debugPrint("--setting bottom nav cubit active item, item: $ni");
-    // if (ni != state)
     emit(ni);
     BottomNavCubit._selectedItem = ni;
   }
@@ -282,24 +281,31 @@ class _RootState extends State<Root> {
     return Stack(
       alignment: Alignment.center,
       children: [
-        MaterialApp.router(
-          // routeInformationProvider: PageRouteInformationProvider(
-          //   initialRouteInformation: RouteInformation(location: "/home"),
-          // ),
-          routerDelegate: PageRouterDelegate(),
-          routeInformationParser: PageRouteInformationParser(),
-          title: 'Flutter Demo',
-          theme: ThemeData(
-            // This is the theme of your application.
-            //
-            // Try running your application with "flutter run". You'll see the
-            // application has a blue toolbar. Then, without quitting the app, try
-            // changing the primarySwatch below to Colors.green and then invoke
-            // "hot reload" (press "r" in the console where you ran "flutter run",
-            // or simply save your changes to "hot reload" in a Flutter IDE).
-            // Notice that the counter didn't reset back to zero; the application
-            // is not restarted.
-            primarySwatch: Colors.blue,
+        WillPopScope(
+          onWillPop: () async {
+            // debugPrint("//////////onWillPop called");
+            return false;
+          },
+          child: MaterialApp.router(
+            backButtonDispatcher: PageBackButtonDispatcher(),
+            // routeInformationProvider: PageRouteInformationProvider(
+            //   initialRouteInformation: RouteInformation(location: "/home"),
+            // ),
+            routerDelegate: PageRouterDelegate(),
+            routeInformationParser: PageRouteInformationParser(),
+            title: 'Flutter Demo',
+            theme: ThemeData(
+              // This is the theme of your application.
+              //
+              // Try running your application with "flutter run". You'll see the
+              // application has a blue toolbar. Then, without quitting the app, try
+              // changing the primarySwatch below to Colors.green and then invoke
+              // "hot reload" (press "r" in the console where you ran "flutter run",
+              // or simply save your changes to "hot reload" in a Flutter IDE).
+              // Notice that the counter didn't reset back to zero; the application
+              // is not restarted.
+              primarySwatch: Colors.blue,
+            ),
           ),
         ), // used for enabling/disabling touch
         BlocBuilder<TouchEnabledCubit, bool>(
@@ -332,9 +338,9 @@ class KlangMainPage extends StatefulWidget implements KlangPage {
 
   @override
   PageRoutePath get route {
+    debugPrint("*selected BottomNavCubit item: ${BottomNavCubit.selectedItem}");
     return PageRoutePath.main(
-      BottomNavCubit.mapItemToName(
-          BottomNavCubit.selectedItem ?? BottomNavItem.home),
+      BottomNavCubit.mapItemToName(BottomNavCubit.selectedItem),
     );
   }
 }
@@ -347,7 +353,7 @@ class _KlangMainPageState extends State<KlangMainPage>
 
   @override
   void initState() {
-    debugPrint("||KlangMainPageState initState called");
+    debugPrint("KlangMainPageState.initState()");
     super.initState();
     _pageController = PageController(initialPage: _selectedPageIndx);
     final BottomNavCubit bottomNavCubit = BlocProvider.of<BottomNavCubit>(
@@ -356,9 +362,6 @@ class _KlangMainPageState extends State<KlangMainPage>
     );
     _bottomNavListener = bottomNavCubit.stream.listen(
       (event) {
-        debugPrint(
-          "||||bottom nav selected index changed, old index: $_selectedPageIndx",
-        );
         setState(() {
           _selectedPageIndx = bottomNavCubit.activeItemIndx();
           _pageController.jumpToPage(_selectedPageIndx);
@@ -377,7 +380,8 @@ class _KlangMainPageState extends State<KlangMainPage>
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("||||KlangMainPage rebuilt");
+    debugPrint(
+        "KlangMainPage.build(), history size: ${BrowserHistory().length}");
     super.build(context);
     return Scaffold(
       key: widget.key,
@@ -402,6 +406,7 @@ class _KlangMainPageState extends State<KlangMainPage>
         unselectedItemColor: Colors.grey[400],
         selectedItemColor: Colors.grey[900],
         onTap: (newPageIndx) {
+          if (_selectedPageIndx == newPageIndx) return;
           (Router.of(context).routerDelegate as PageRouterDelegate)
               .setNewRoutePath(PageRoutePath.main(
                   BottomNavCubit.mapIndxToName(newPageIndx)));

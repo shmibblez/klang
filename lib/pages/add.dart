@@ -11,5 +11,5 @@ class AddPage extends StatelessWidget implements KlangPage {
   }
 
   @override
-  PageRoutePath get route => PageRoutePath.main("add");
+  PageRoutePath get route => PageRoutePath.main("/add");
 }

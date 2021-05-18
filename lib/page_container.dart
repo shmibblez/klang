@@ -1,9 +1,11 @@
 // since all page containers will need same routes, only need 1
 // only exception is settings page container, that one will have special paths
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:history/history.dart';
 import 'package:klang/constants.dart';
 import 'package:klang/main.dart';
 import 'package:klang/pages/auth_page.dart';
@@ -25,7 +27,6 @@ import 'package:klang/pages/user.dart';
 //   void routerReportsNewRouteInformation(RouteInformation routeInformation) {
 //     super.routerReportsNewRouteInformation(routeInformation);
 //     // PlatformRouteInformationProvider;
-//     debugPrint("****new route info reported");
 //     if (this._value == routeInformation) return;
 //     SystemNavigator.routeInformationUpdated(
 //       location: routeInformation.location,
@@ -49,6 +50,32 @@ import 'package:klang/pages/user.dart';
 //   RouteInformation get value => _value;
 // }
 
+class PageBackButtonDispatcher extends RootBackButtonDispatcher {
+  @override
+  Future<bool> invokeCallback(Future<bool> defaultValue) {
+    debugPrint("PageBackButtonDispatcher.invokeCallback()");
+    return super.invokeCallback(defaultValue);
+  }
+
+  @override
+  void addCallback(ValueGetter<Future<bool>> callback) {
+    debugPrint("PageBackButtonDispatcher.addCallback()");
+    super.addCallback(callback);
+  }
+
+  @override
+  void removeCallback(ValueGetter<Future<bool>> callback) {
+    debugPrint("PageBackButtonDispatcher.removeCallback()");
+    super.removeCallback(callback);
+  }
+
+  @override
+  Future<bool> didPopRoute() {
+    debugPrint("PageBackButtonDispatcher.didPopRoute()");
+    return super.didPopRoute();
+  }
+}
+
 class PageRouteInformationParser extends RouteInformationParser<PageRoutePath> {
   @override
   Future<PageRoutePath> parseRouteInformation(
@@ -56,29 +83,33 @@ class PageRouteInformationParser extends RouteInformationParser<PageRoutePath> {
     final paths = Uri.parse(routeInformation.location).pathSegments;
 
     debugPrint(
-      "**parsing route info, path: ${routeInformation.location}, paths: $paths",
-    );
+        "PageRouteInformationParser.parseRouteInformation(), paths: $paths");
 
     PageRoutePath pageRoutePath;
 
     if (paths.length <= 0)
-      pageRoutePath = PageRoutePath.main("home");
+      pageRoutePath =
+          PageRoutePath.main("home", fromParseRouteInformation: true);
     else
       switch (paths[0]) {
         case "home":
-          pageRoutePath = PageRoutePath.main("home");
+          pageRoutePath =
+              PageRoutePath.main("home", fromParseRouteInformation: true);
           break;
         case "search":
           final ct =
               paths.length >= 2 ? KlangContentTypeFromStr[paths[1]] : null;
           final searchStr = paths.length >= 3 ? paths[2] : null;
           if (ct == null || searchStr == null || searchStr.length <= 0)
-            pageRoutePath = PageRoutePath.main("search");
+            pageRoutePath =
+                PageRoutePath.main("search", fromParseRouteInformation: true);
           else
-            pageRoutePath = PageRoutePath.search(ct, searchStr);
+            pageRoutePath = PageRoutePath.search(ct, searchStr,
+                fromParseRouteInformation: true);
           break;
         case "add":
-          pageRoutePath = PageRoutePath.main("add");
+          pageRoutePath =
+              PageRoutePath.main("add", fromParseRouteInformation: true);
           break;
         // case "shuffle":
         //   final ct = KlangContentTypeFromStr[path.elements[1]];
@@ -88,15 +119,19 @@ class PageRouteInformationParser extends RouteInformationParser<PageRoutePath> {
         case "user":
           final String uid = paths.length >= 2 ? paths[1] : null;
           if (uid == null || uid.length <= 0)
-            pageRoutePath = PageRoutePath.main("user");
+            pageRoutePath =
+                PageRoutePath.main("user", fromParseRouteInformation: true);
           else
-            pageRoutePath = PageRoutePath.user(uid);
+            pageRoutePath =
+                PageRoutePath.user(uid, fromParseRouteInformation: true);
           break;
         case "createAccount":
-          pageRoutePath = PageRoutePath.createAccount();
+          pageRoutePath =
+              PageRoutePath.createAccount(fromParseRouteInformation: true);
           break;
         default:
-          pageRoutePath = PageRoutePath.unknown();
+          pageRoutePath =
+              PageRoutePath.unknown(fromParseRouteInformation: true);
           break;
       }
 
@@ -105,7 +140,8 @@ class PageRouteInformationParser extends RouteInformationParser<PageRoutePath> {
 
   @override
   RouteInformation restoreRouteInformation(PageRoutePath path) {
-    debugPrint("restoring route info");
+    debugPrint(
+        "PageRouteInformationParser.restoreRouteInformation(), paths: ${path.elements}");
     return RouteInformation(location: "/" + path.elements.join("/"));
     // return super.restoreRouteInformation(path);
   }
@@ -117,7 +153,17 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
   final KlangMainPage _mainPage = KlangMainPage();
   BuildContext _context;
   static final _navigatorKey = GlobalKey<NavigatorState>();
+  final BrowserHistory _history = BrowserHistory();
+  int _historySize = 1;
+
   // final List<PageRoutePath> _mainPageRoutes = [];
+
+  @override
+  Future<bool> popRoute() {
+    debugPrint("PageRouterDelegate.popRoute()----------------");
+    return SynchronousFuture(true);
+    // return super.popRoute();
+  }
 
   @override
   PageRoutePath get currentConfiguration => _pages.last.route;
@@ -127,14 +173,14 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
     if (_pages.length <= 0) {
       _pages.add(_mainPage);
     }
-    debugPrint("**PageRouterDelegate rebuilt");
+    debugPrint("PageRouterDelegate.build(), # pages: ${_pages.length}");
     _context = context;
     return Navigator(
       // first page is always initialPage
       key: navigatorKey,
       pages: _pages.map((w) => MaterialPage(child: w as Widget)).toList(),
       onPopPage: (route, result) {
-        debugPrint("&&popped page");
+        debugPrint("PageRouterDelegate.Navigator.onPopPage()");
         if (!route.didPop(result)) return false;
         if (_pages.length > 1) {
           if (_pages.length > 2 && _pages[_pages.length - 2] is AuthPage) {
@@ -166,12 +212,36 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
 
   @override
   Future<void> setNewRoutePath(PageRoutePath path) {
-    debugPrint("**setting new route path, elements: ${path.elements}");
-    if (path.elements.length <= 0) {
-      _makeMainPageActiveWith(BottomNavItem.home);
-    } else if (_pages.last is AuthPage) {
-      (_pages.last as AuthPage).stopListening();
+    debugPrint("PageRouterDelegate.setNewRoutePath(), paths: ${path.elements}");
+    // if (path.fromParseRouteInformation) {
+    //   if (path.isMain) {
+    //     debugPrint("-popped main path, changing selected item");
+    //     _makeMainPageActiveWith(BottomNavCubit.mapNameToItem(path.elements[0]));
+    //     return null;
+    //   } else if (path.toString() ==
+    //       _pages[_pages.length - 2].route.toString()) {
+
+    //     _pages.removeLast();
+    //     notifyListeners();
+    //     return null;
+    //   }
+    // }
+    debugPrint("action index: ${_history.action.index}");
+    if (_history.length == _historySize) {
+      // _history.
     }
+    // if back stack popped
+    // if (_history.length > 1 && _history.length == _historySize) {
+    //   return null;
+    // } else if (_history.length <= 0) {
+    //   _makeMainPageActiveWith(BottomNavItem.home);
+    // }
+    // // history.length;
+    // debugPrint("-browser history length: ${_history.length}");
+    // debugPrint("-browser history current location: ${_history.location}");
+    // if (_pages.last is AuthPage) {
+    //   (_pages.last as AuthPage).stopListening();
+    // }
     switch (path.elements[0]) {
       case "":
       case "home":
@@ -234,7 +304,6 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
         notifyListeners();
         break;
     }
-    debugPrint("****just added page, _pages.length: ${_pages.length}");
     return null;
   }
 
@@ -245,13 +314,18 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
   //
   // if don't add page in SetNewRoutePath, then also don't notify SystemNavigator
   //
-  // NOTE: this can all be done later, as long as it works for now should be ok
+  // NOTE: this can all be done later, as long as it works for now should be ok (auth might be off, along with other things, so, who knows?s)
+  //
+  // also: global key duplicate error with KlangMainPage may be because it's stored in variable and in Navigator _pages widget tree
+  // fix: store static final root-level mainPageKey in Root widget, and add KlangMainPage widget with key instead of storing in variable and adding that
+  // - do this after successfuly setting up navigation though, shouldn't influence how it works, just causes unecessary rebuilds
 
   void _makeMainPageActiveWith(BottomNavItem i) {
     if (_pages.last is KlangMainPage) {
-      BlocProvider.of<BottomNavCubit>(_context, listen: false).setActiveItem(i);
+      if (BottomNavCubit.selectedItem == i) return;
+      BlocProvider.of<BottomNavCubit>(_context).setActiveItem(i);
       SystemNavigator.routeInformationUpdated(
-        location: BottomNavCubit.mapItemToName(i), //routeInformation.location,
+        location: _pages.last.route.toString(), //routeInformation.location,
         // state: routeInformation.state,
       );
       return;
@@ -273,7 +347,7 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
     }
     BlocProvider.of<BottomNavCubit>(_context, listen: false).setActiveItem(i);
     SystemNavigator.routeInformationUpdated(
-      location: BottomNavCubit.mapItemToName(i), //routeInformation.location,
+      location: _pages.last.route.toString(), //routeInformation.location,
       // state: routeInformation.state,
     );
   }
@@ -293,9 +367,9 @@ class KlangMainPagePlaceholder extends Container implements KlangPage {
 }
 
 class PageRoutePath {
-  bool popped = false;
+  bool fromParseRouteInformation = false;
   static final List<String> rootPaths = [
-    "", // main page
+    // "", // main page
     "home",
     "search",
     "add",
@@ -306,33 +380,57 @@ class PageRoutePath {
   List<String> elements;
 
   /// [sub] should be a root path other than ""
-  PageRoutePath.main(String sub, {bool popped})
+  PageRoutePath.main(String sub, {bool fromParseRouteInformation = false})
       : elements = [sub],
-        popped = popped;
+        this.fromParseRouteInformation = fromParseRouteInformation;
 
-  PageRoutePath.home() : elements = ["home"];
+  PageRoutePath.home({bool fromParseRouteInformation = false})
+      : elements = ["home"],
+        this.fromParseRouteInformation = fromParseRouteInformation;
 
-  PageRoutePath.search(KlangContentType ct, String searchStr)
+  PageRoutePath.search(KlangContentType ct, String searchStr,
+      {bool fromParseRouteInformation = false})
       : elements = [
           "search",
           if (ct != null) _contentTypeToStr(ct),
           if (ct != null && searchStr != null) searchStr,
-        ];
+        ],
+        this.fromParseRouteInformation = fromParseRouteInformation;
 
-  PageRoutePath.add() : elements = ["add"];
+  PageRoutePath.add({bool fromParseRouteInformation = false})
+      : elements = ["add"],
+        this.fromParseRouteInformation = fromParseRouteInformation;
 
-  PageRoutePath.shuffle(KlangContentType ct)
-      : elements = ["shuffle", _contentTypeToStr(ct)];
+  PageRoutePath.shuffle(KlangContentType ct,
+      {bool fromParseRouteInformation = false})
+      : elements = ["shuffle", _contentTypeToStr(ct)],
+        this.fromParseRouteInformation = fromParseRouteInformation;
 
-  PageRoutePath.user(String uid) : elements = ["user", "$uid"];
+  PageRoutePath.user(String uid, {bool fromParseRouteInformation = false})
+      : elements = ["user", if (uid != null) "$uid"],
+        this.fromParseRouteInformation = fromParseRouteInformation;
 
-  PageRoutePath.unknown() : elements = ["404"];
+  PageRoutePath.unknown({bool fromParseRouteInformation = false})
+      : elements = ["404"],
+        this.fromParseRouteInformation = fromParseRouteInformation;
 
-  PageRoutePath.createAccount() : elements = ["createAccount"];
+  PageRoutePath.createAccount({bool fromParseRouteInformation = false})
+      : elements = ["createAccount"],
+        this.fromParseRouteInformation = fromParseRouteInformation;
 
-  PageRoutePath.login() : elements = ["login"];
+  PageRoutePath.login({bool fromParseRouteInformation = false})
+      : elements = ["login"],
+        this.fromParseRouteInformation = fromParseRouteInformation;
 
-  PageRoutePath.error() : elements = ["error"];
+  PageRoutePath.error({bool fromParseRouteInformation = false})
+      : elements = ["error"],
+        this.fromParseRouteInformation = fromParseRouteInformation;
+
+  bool get isMain {
+    if (this.elements[0] == "search" && this.elements.length >= 3) return false;
+    if (this.elements[0] == "user" && this.elements.length >= 2) return false;
+    return rootPaths.contains(this.elements[0]);
+  }
 
   static String _contentTypeToStr(KlangContentType ct) {
     switch (ct) {
@@ -344,250 +442,9 @@ class PageRoutePath {
         return "this should not happen";
     }
   }
+
+  @override
+  String toString() {
+    return "/" + this.elements.join("/");
+  }
 }
-
-/**
- * 
- * 
- * 
- * OLD CODE, for each bottom nav main page has it's own navigator and stack
- * 
- * 
- * 
- */
-
-// // since all page containers will need same routes, only need 1
-// // only exception is settings page container, that one will have special paths
-// import 'package:flutter/material.dart';
-// import 'package:flutter/services.dart';
-// import 'package:klang/constants.dart';
-// import 'package:klang/pages/add.dart';
-// import 'package:klang/pages/home.dart';
-// import 'package:klang/pages/search.dart';
-// import 'package:klang/pages/search_results.dart';
-// import 'package:klang/pages/unknown.dart';
-// import 'package:klang/pages/user.dart';
-
-// // determines page to show as first page
-// enum InitialPage { home, search, add, user /*shuffle*/ }
-
-// class PageRouteInformationProvider extends RouteInformationProvider {
-//   PageRouteInformationProvider({@required this.routeInformation});
-
-//   RouteInformation routeInformation;
-
-//   @override
-//   void addListener(VoidCallback listener) {
-//     // TODO: implement addListener
-//   }
-
-//   @override
-//   void removeListener(VoidCallback listener) {
-//     // TODO: implement removeListener
-//   }
-
-//   @override
-//   RouteInformation get value => routeInformation;
-
-//   set value(RouteInformation ri) {
-//     this.routeInformation = ri;
-//   }
-// }
-
-// // TODO: how to push to right navigator? Need to make right bottom nav active and then push route
-// class PageRouteInformationParser extends RouteInformationParser<PageRoutePath> {
-//   @override
-//   Future<PageRoutePath> parseRouteInformation(
-//       RouteInformation routeInformation) {
-//     final paths = Uri.parse(routeInformation.location).pathSegments;
-
-//     PageRoutePath pageRoutePath;
-
-//     if (paths.length <= 0)
-//       pageRoutePath = PageRoutePath.unknown();
-//     else
-//       switch (paths[0]) {
-//         case "home":
-//           pageRoutePath = PageRoutePath.home();
-//           break;
-//         case "search":
-//           pageRoutePath = PageRoutePath.search(
-//             paths.length >= 2 ? KlangContentTypeFromStr[paths[1]] : null,
-//             paths.length >= 3 ? paths[2] : null,
-//           );
-//           break;
-//         case "add":
-//           pageRoutePath = PageRoutePath.add();
-//           break;
-//         // case "shuffle":
-//         //   final ct = KlangContentTypeFromStr[path.elements[1]];
-//         //   // default content type will be sound
-//         //   _pages.add(ShufflePage(contentType: ct));
-//         //   break;
-//         case "user":
-//           pageRoutePath =
-//               PageRoutePath.user(paths.length >= 2 ? paths[1] : null);
-//           break;
-//         default:
-//           pageRoutePath = PageRoutePath.unknown();
-//           break;
-//       }
-
-//     return Future<PageRoutePath>.value(pageRoutePath);
-//   }
-
-//   @override
-//   RouteInformation restoreRouteInformation(PageRoutePath path) {
-//     return RouteInformation(location: "/" + path.elements.join("/"));
-//     // return super.restoreRouteInformation(path);
-//   }
-// }
-
-// class PageRouterDelegate extends RouterDelegate<PageRoutePath>
-//     with ChangeNotifier, PopNavigatorRouterDelegateMixin<PageRoutePath> {
-//   PageRouterDelegate({@required this.initialPage});
-
-//   final InitialPage initialPage;
-//   final List<Widget> _pages = [];
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Navigator(
-//       // first page is always initialPage
-//       key: navigatorKey,
-//       pages: [
-//         MaterialPage(child: _getInitialPage()),
-//         ..._pages.map((w) => MaterialPage(child: w)),
-//       ],
-//       onPopPage: (route, result) {
-//         if (!route.didPop(result)) return false;
-
-//         return true;
-//       },
-//     );
-//   }
-
-//   @override
-//   GlobalKey<NavigatorState> get navigatorKey => GlobalKey<NavigatorState>();
-
-//   @override
-//   Future<void> setNewRoutePath(PageRoutePath path) {
-//     if (path.elements.length <= 0)
-//       _pages.add(UnknownPage());
-//     else
-//       switch (path.elements[0]) {
-//         case "home":
-//           _pages.add(HomePage());
-//           notifyListeners();
-//           break;
-//         case "search":
-//           final ct = path.elements.length >= 2
-//               ? KlangContentTypeFromStr[path.elements[1]]
-//               : null;
-//           if (ct == null)
-//             _pages.add(SearchPage());
-//           else
-//             _pages.add(
-//               SearchResultsPage(
-//                 contentType: ct,
-//                 searchStr: path.elements.length >= 3 ? path.elements[2] : null,
-//               ),
-//             );
-//           break;
-//         case "add":
-//           _pages.add(AddPage());
-//           break;
-//         // case "shuffle":
-//         //   final ct = KlangContentTypeFromStr[path.elements[1]];
-//         //   // default content type will be sound
-//         //   _pages.add(ShufflePage(contentType: ct));
-//         //   break;
-//         case "user":
-//           _pages.add(UserPage(
-//               uid: path.elements.length >= 2 ? path.elements[1] : null));
-//           break;
-//         default:
-//           _pages.add(UnknownPage());
-//           break;
-//       }
-
-//     SystemNavigator.routeInformationUpdated(location: "location");
-//     SystemNavigator.routeUpdated(routeName: "", previousRouteName: "");
-
-//     debugPrint("--just added page, _pages.length: ${_pages.length}");
-//     notifyListeners();
-//     return null;
-//   }
-
-//   Widget _getInitialPage() {
-//     switch (this.initialPage) {
-//       case InitialPage.home:
-//         return HomePage();
-//       case InitialPage.search:
-//         return SearchPage();
-//       case InitialPage.add:
-//         return AddPage();
-//       // case DefaultPage.shuffle:
-//       //   return ShufflePage();
-//       case InitialPage.user:
-//         return UserPage(uid: null);
-//       default:
-//         return UnknownPage();
-//     }
-//   }
-
-//   String _initialPageName() {
-//     switch (this.initialPage) {
-//       case InitialPage.home:
-//         return "home";
-//       case InitialPage.search:
-//         return "search";
-//       case InitialPage.add:
-//         return "add";
-//       // case InitialPage.shuffle:
-//       //   return "home";
-//       case InitialPage.user:
-//         return "user";
-//         break;
-//       default:
-//         return "this should not happen";
-//     }
-//   }
-// }
-
-// class PageRoutePath {
-//   static final List<String> rootPaths = [
-//     "home",
-//     "search",
-//     "add",
-//     "shuffle",
-//     "user",
-//   ];
-//   // slash separated url elements
-//   List<String> elements;
-
-//   PageRoutePath.home() : elements = ["home"];
-
-//   PageRoutePath.search(KlangContentType ct, String searchStr)
-//       : elements = ["search", _contentTypeToStr(ct), searchStr];
-
-//   PageRoutePath.add() : elements = ["add"];
-
-//   PageRoutePath.shuffle(KlangContentType ct)
-//       : elements = ["shuffle", _contentTypeToStr(ct)];
-
-//   PageRoutePath.user(String uid) : elements = ["user", "uid"];
-
-//   PageRoutePath.unknown() : elements = ["404"];
-
-//   static String _contentTypeToStr(KlangContentType ct) {
-//     switch (ct) {
-//       case KlangContentType.user:
-//         return "user";
-//       case KlangContentType.sound:
-//         return "sound";
-//       default:
-//         return "this should not happen";
-//     }
-//   }
-// }
