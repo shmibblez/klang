@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:history/history.dart';
 import 'package:klang/page_container.dart';
@@ -110,7 +111,11 @@ class _InitialSetupState extends State<_InitialSetup> {
         BlocProvider(
           lazy: false,
           create: (_) => BottomNavCubit(BottomNavItem.home),
-        )
+        ),
+        BlocProvider(
+          lazy: false,
+          create: (_) => PageNavCubit(PageRoutePath.home()),
+        ),
       ],
       child: Root(),
     );
@@ -235,7 +240,7 @@ class BottomNavCubit extends Cubit<BottomNavItem> {
   }
 
   static BottomNavItem mapNameToItem(String name) {
-    switch (name) {
+    switch (name.toLowerCase()) {
       case "home":
         return BottomNavItem.home;
       case "search":
@@ -267,6 +272,17 @@ class BottomNavCubit extends Cubit<BottomNavItem> {
   }
 }
 
+class PageNavCubit extends Cubit<PageRoutePath> {
+  PageNavCubit(PageRoutePath initialState) : super(initialState);
+
+  PageRoutePath get currentPageRoutePath => state;
+
+  void newPageRoutePath(PageRoutePath path) {
+    if (path == state) return;
+    emit(path);
+  }
+}
+
 // root provides auth and also sets up botton nav and container pages
 class Root extends StatefulWidget {
   Root({Key key}) : super(key: key);
@@ -287,23 +303,10 @@ class _RootState extends State<Root> {
             return false;
           },
           child: MaterialApp.router(
-            backButtonDispatcher: PageBackButtonDispatcher(),
-            // routeInformationProvider: PageRouteInformationProvider(
-            //   initialRouteInformation: RouteInformation(location: "/home"),
-            // ),
             routerDelegate: PageRouterDelegate(),
             routeInformationParser: PageRouteInformationParser(),
             title: 'Flutter Demo',
             theme: ThemeData(
-              // This is the theme of your application.
-              //
-              // Try running your application with "flutter run". You'll see the
-              // application has a blue toolbar. Then, without quitting the app, try
-              // changing the primarySwatch below to Colors.green and then invoke
-              // "hot reload" (press "r" in the console where you ran "flutter run",
-              // or simply save your changes to "hot reload" in a Flutter IDE).
-              // Notice that the counter didn't reset back to zero; the application
-              // is not restarted.
               primarySwatch: Colors.blue,
             ),
           ),
@@ -408,7 +411,7 @@ class _KlangMainPageState extends State<KlangMainPage>
         onTap: (newPageIndx) {
           if (_selectedPageIndx == newPageIndx) return;
           (Router.of(context).routerDelegate as PageRouterDelegate)
-              .setNewRoutePath(PageRoutePath.main(
+              .addPageRoutePath(PageRoutePath.main(
                   BottomNavCubit.mapIndxToName(newPageIndx)));
         },
         currentIndex: _selectedPageIndx,

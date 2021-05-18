@@ -56,7 +56,7 @@ class _LoginPageState extends State<LoginPage> {
               OutlinedButton(
                 onPressed: () {
                   (Router.of(context).routerDelegate as PageRouterDelegate)
-                      .setNewRoutePath(PageRoutePath.createAccount());
+                      .addPageRoutePath(PageRoutePath.createAccount());
                 },
                 child: Text("create account"),
               ),
