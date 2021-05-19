@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:history/history.dart';
 import 'package:klang/constants.dart';
 import 'package:klang/main.dart';
 import 'package:klang/pages/auth_page.dart';
@@ -136,7 +135,7 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
     return Navigator(
       // first page is always initialPage
       key: navigatorKey,
-      pages: _pages.map((w) => MaterialPage(child: w as Widget)).toList(),
+      pages: _pages.map((w) => MaterialPage(child: w)).toList(),
       onPopPage: (route, result) {
         debugPrint("PageRouterDelegate.Navigator.onPopPage()");
         if (!route.didPop(result)) return false;
@@ -237,8 +236,6 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
     _pages.add(_genPageFrom(path));
     notifyListeners();
     // }
-    // TODO: for other platforms, main page can only be base page/first page (no url, no way to make it not first)
-    // this means KlangMainPagePlaceholder can be removed
 
     return null;
   }
@@ -273,18 +270,6 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
         return UnknownPage();
     }
   }
-
-  // TODO: navigation doesn't pop when on MainPage, and adds pages when on other pages like SearchResultsPage
-  // might be because when pop/press back button, the following happens
-  // route Info Parsed -> route Path Set
-  // since when route path set I add pages, need to figure out way to know if "route Path Set" was added normally or set through pop so don't add it again if popped
-  //
-  // NOTE: this can all be done later, as long as it works for now should be ok (auth might be off, along with other things, so, who knows?s)
-  //
-  // also: global key duplicate error with KlangMainPage may be because it's stored in variable and in Navigator _pages widget tree
-  // fix: store static final root-level mainPageKey in Root widget, and add KlangMainPage widget with key instead of storing in variable and adding that
-  // - do this after successfuly setting up navigation though, shouldn't influence how it works, just causes unecessary rebuilds
-  //.
 
   /// for platforms that aren't web
   void _makeMainPageActiveNotWeb(BottomNavItem i) {

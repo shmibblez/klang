@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:klang/main.dart';
-import 'package:klang/page_container.dart';
+import 'package:klang/page_router.dart';
 import 'package:klang/pages/klang_page.dart';
 
 class CreateAccountPage extends StatefulWidget implements KlangPage {

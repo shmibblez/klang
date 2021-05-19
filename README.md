@@ -43,6 +43,7 @@ samples, guidance on mobile development, and a full API reference.
 # checklist
 | stuff to do          | done server side | done client side | notes |
 | -------------------- | ---------------- | ---------------- | ----- |
+| navigation           | n/a              | yes              |       |
 | user sign up         | yes              | no               |       |
 | user sign in         | n/a              | no               |       |
 | create sound         | yes              | no               |       |

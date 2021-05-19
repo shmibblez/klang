@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:klang/constants.dart';
-import 'package:klang/page_container.dart';
+import 'package:klang/page_router.dart';
 import 'package:klang/pages/klang_page.dart';
 
 class SearchResultsPage extends StatelessWidget implements KlangPage {
