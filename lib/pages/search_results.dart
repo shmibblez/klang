@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:klang/constants.dart';
+import 'package:klang/constants/constants.dart';
 import 'package:klang/page_router.dart';
 import 'package:klang/pages/klang_page.dart';
 

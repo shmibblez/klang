@@ -23,7 +23,7 @@ export function isDescriptionOk(d: unknown): boolean {
   return (
     typeof d == "string" &&
     (d.length >= 0 ||
-      Lengths.description_max_length <= Lengths.description_max_length)
+      Lengths.max_description_length <= Lengths.max_description_length)
   );
 }
 export function isUrlOk(u: unknown): boolean {

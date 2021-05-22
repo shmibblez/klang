@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:klang/constants.dart';
+import 'package:klang/constants/constants.dart';
 import 'package:klang/main.dart';
 import 'package:klang/pages/auth_page.dart';
 import 'package:klang/pages/create_account.dart';

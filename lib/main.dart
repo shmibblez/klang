@@ -113,7 +113,7 @@ class _InitialSetupState extends State<_InitialSetup> {
         ),
         BlocProvider(
           lazy: false,
-          create: (_) => PageNavCubit(PageRoutePath.home()),
+          create: (_) => SnackbarCubit(),
         ),
       ],
       child: Root(),
@@ -121,14 +121,14 @@ class _InitialSetupState extends State<_InitialSetup> {
   }
 }
 
-enum LoginResult {
-  success,
-  invalid_email,
-  user_disabled,
-  user_not_found,
-  wrong_password,
-  error,
-}
+// enum LoginResult {
+//   success,
+//   invalid_email,
+//   user_disabled,
+//   user_not_found,
+//   wrong_password,
+//   error,
+// }
 
 class UserState {
   UserState(this.user) {
@@ -151,28 +151,28 @@ class AuthCubit extends Cubit<UserState> {
   StreamSink<UserState> get authStreamSink => _streamController.sink;
   Stream<UserState> get authStream => _streamController.stream;
 
-  Future<LoginResult> login(String email, String password) async {
-    if (state.uid != null) return LoginResult.success;
-    try {
-      await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
-      return LoginResult.success;
-    } catch (e) {
-      switch ((e as FirebaseAuthException).code) {
-        case "invalid-email":
-          return LoginResult.invalid_email;
-        case "user-disabled":
-          return LoginResult.user_disabled;
-        case "user-not-found":
-          return LoginResult.user_not_found;
-        case "wrong-password":
-          return LoginResult.wrong_password;
-        default: // should not happen
-          throw "unknown FirebaseAuthException code -> \"${(e as FirebaseAuthException).code}\"";
-          return LoginResult.error;
-      }
-    }
-  }
+  // Future<LoginResult> login(String email, String password) async {
+  //   if (state.uid != null) return LoginResult.success;
+  //   try {
+  //     await FirebaseAuth.instance
+  //         .signInWithEmailAndPassword(email: email, password: password);
+  //     return LoginResult.success;
+  //   } catch (e) {
+  //     switch ((e as FirebaseAuthException).code) {
+  //       case "invalid-email":
+  //         return LoginResult.invalid_email;
+  //       case "user-disabled":
+  //         return LoginResult.user_disabled;
+  //       case "user-not-found":
+  //         return LoginResult.user_not_found;
+  //       case "wrong-password":
+  //         return LoginResult.wrong_password;
+  //       default: // should not happen
+  //         throw "unknown FirebaseAuthException code -> \"${(e as FirebaseAuthException).code}\"";
+  //         return LoginResult.error;
+  //     }
+  //   }
+  // }
 
   @override
   Future<void> close() {
@@ -181,6 +181,7 @@ class AuthCubit extends Cubit<UserState> {
   }
 }
 
+// TODO: add optional message param
 class TouchEnabledCubit extends Cubit<bool> {
   TouchEnabledCubit(bool touchEnabled) : super(touchEnabled);
 
@@ -271,15 +272,30 @@ class BottomNavCubit extends Cubit<BottomNavItem> {
   }
 }
 
-class PageNavCubit extends Cubit<PageRoutePath> {
-  PageNavCubit(PageRoutePath initialState) : super(initialState);
+enum MessageType { error, info }
 
-  PageRoutePath get currentPageRoutePath => state;
+class SnackbarMessage {
+  SnackbarMessage(this.mt, this.message);
+  final MessageType mt;
+  final String message;
 
-  void newPageRoutePath(PageRoutePath path) {
-    if (path == state) return;
-    emit(path);
+  @override
+  operator ==(Object o) {
+    return o is SnackbarMessage && o.mt == this.mt && o.message == this.message;
   }
+
+  @override
+  int get hashCode => "$mt$message".hashCode;
+}
+
+class SnackbarCubit extends Cubit<SnackbarMessage> {
+  SnackbarCubit() : super(null);
+
+  void newMessage(MessageType mt, String msg) {
+    if (msg != state.message && mt != state.mt) emit(state);
+  }
+
+  String get currentMessage => state.message;
 }
 
 // root provides auth and also sets up botton nav and container pages

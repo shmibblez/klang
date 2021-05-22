@@ -127,7 +127,7 @@ export function randomSeeds() {
 
 export function tagsFromStr(t: string): string[] {
   let tags = t.split(",");
-  tags.length = Lengths.sound_tags_max;
+  tags.length = Lengths.max_sound_tags;
   tags = tags.map((tag) => tag.trim().replace(/\s{2,}/g, " "));
   tags = tags.filter((tag) => isTagOk(tag));
   return tags;
@@ -136,7 +136,7 @@ export function tagsFromStr(t: string): string[] {
 // IMPORTANT: only 3 tags can be indexed, can keep it simple
 export function indexTags(t: string[]) {
   let tags: string[] = t;
-  tags.length = Lengths.sound_tags_max;
+  tags.length = Lengths.max_sound_tags;
   tags = tags.map((tag) => tag.trim().replace(/\s{2,}/g, " "));
   tags = tags.filter((tag) => isTagOk(tag));
   tags = tags.sort((a, b) => a.localeCompare(b, "en-US"));

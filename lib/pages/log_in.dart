@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:klang/constants/regex.dart';
+import 'package:klang/http_helper.dart';
+import 'package:klang/main.dart';
 import 'package:klang/page_router.dart';
 import 'package:klang/pages/klang_page.dart';
+import 'package:klang/presets.dart';
 
 class LoginPage extends StatefulWidget implements KlangPage {
   LoginPage({this.showAppBar = true});
@@ -26,21 +31,27 @@ class _LoginPageState extends State<LoginPage> {
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
+          scrollDirection: Axis.vertical,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // email
-              TextFormField(
+              KlangTextFormField(
+                "email",
                 controller: _emailController,
                 validator: (email) {
                   if (email == null || email.length <= 0) {
                     return "please enter email";
                   }
+                  if (KlangRegex.email.hasMatch(email)) {
+                    return "invalid email, need to check for typos";
+                  }
                   return null;
                 },
               ),
               // password
-              TextFormField(
+              KlangTextFormField(
+                "password",
                 controller: _pswdController,
                 validator: (pswd) {
                   if (pswd == null || pswd.length <= 0) {
@@ -49,21 +60,41 @@ class _LoginPageState extends State<LoginPage> {
                   return null;
                 },
               ),
-              ElevatedButton(
-                onPressed: () {},
-                child: Text("log in"),
+              KlangFormButtonPrimary(
+                "log in",
+                onPressed: _onSubmit,
               ),
-              OutlinedButton(
+              KlangFormButtonSecondary(
+                "create account",
                 onPressed: () {
                   (Router.of(context).routerDelegate as PageRouterDelegate)
                       .addPageRoutePath(PageRoutePath.createAccount());
                 },
-                child: Text("create account"),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  void _onSubmit() async {
+    // if any field not ok, return
+    if (!_formKey.currentState.validate()) {
+      return;
+    }
+
+    BlocProvider.of<TouchEnabledCubit>(context).disableTouch();
+
+    // if login succeeds, should reload automatically thanks to AuthCubit
+    LoginResult r = await FirePP.login(
+        email: _emailController.text, password: _pswdController.text);
+
+    BlocProvider.of<TouchEnabledCubit>(context).enableTouch();
+
+    String rm = FirePP.translateLoginResult(r);
+    ScaffoldMessenger.of(context).showSnackBar(
+      r == LoginResult.success ? SuccessSnackbar(rm) : ErrorSnackbar(rm),
     );
   }
 }

@@ -96,10 +96,8 @@ export class FunctionParams {
 export class ErrorCodes {
   static readonly invalid_username = "iu";
   static readonly invalid_email = "ie";
-  static readonly emails_dont_match = "ed";
   static readonly invalid_uid = "id";
   static readonly invalid_pswd = "ip";
-  static readonly pswds_dont_match = "pd";
   static readonly mission_failed = "mf";
 }
 
@@ -121,13 +119,15 @@ export class StoragePaths {
 }
 
 export class Lengths {
-  static readonly description_min_length = 0;
-  static readonly description_max_length = 420;
-  static readonly username_min_length = 4;
-  static readonly username_max_length = 17;
-  static readonly id_min_length = 7;
-  static readonly id_max_length = 21;
-  static readonly tag_min_length = 3;
-  static readonly tag_max_length = 17;
-  static readonly sound_tags_max = 3;
+  static readonly min_description_length = 0;
+  static readonly max_description_length = 420;
+  static readonly min_username_length = 4;
+  static readonly max_username_length = 17;
+  static readonly min_uid_length = 7;
+  static readonly max_uid_length = 21;
+  static readonly min_tag_length = 3;
+  static readonly max_tag_length = 17;
+  static readonly max_sound_tags = 3;
+  static readonly min_pswd_length = 5;
+  static readonly max_pswd_length = 100;
 }
