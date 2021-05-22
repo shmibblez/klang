@@ -40,10 +40,10 @@ class _LoginPageState extends State<LoginPage> {
                 "email",
                 controller: _emailController,
                 validator: (email) {
-                  if (email == null || email.length <= 0) {
+                  if (email.length <= 0) {
                     return "please enter email";
                   }
-                  if (KlangRegex.email.hasMatch(email)) {
+                  if (!KlangRegex.email.hasMatch(email)) {
                     return "invalid email, need to check for typos";
                   }
                   return null;
@@ -54,7 +54,7 @@ class _LoginPageState extends State<LoginPage> {
                 "password",
                 controller: _pswdController,
                 validator: (pswd) {
-                  if (pswd == null || pswd.length <= 0) {
+                  if (pswd.length <= 0) {
                     return "please enter password";
                   }
                   return null;

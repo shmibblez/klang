@@ -44,7 +44,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 "email",
                 controller: _emailController,
                 validator: (email) {
-                  if (email == null || email.length <= 0) {
+                  if (email.length <= 0) {
                     return "please enter email";
                   }
                   if (!KlangRegex.email.hasMatch(email)) {
@@ -58,6 +58,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 "confirm email",
                 controller: _confEmailController,
                 validator: (emailConf) {
+                  if (emailConf.length <= 0) {
+                    return "please confirm email";
+                  }
                   if (emailConf != _emailController.text) {
                     return "emails must match";
                   }
@@ -69,14 +72,12 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 "username",
                 controller: _usernameController,
                 validator: (username) {
-                  if (username != null || username.length > 0) {
-                    if (username.length < Lengths.min_username_length)
-                      return "too short, min length is ${Lengths.min_username_length}";
-                    if (username.length > Lengths.max_username_length)
-                      return "too long, max length is ${Lengths.max_username_length}";
-                    if (!KlangRegex.username.hasMatch(username))
-                      return "not cool, can only contain letters (A-Z), dash, and underscore";
-                  }
+                  if (KlangRegex.username_banished_chars.hasMatch(username))
+                    return "can only contain letters (A-Z), dash, and underscore";
+                  if (username.length < Lengths.min_username_length)
+                    return "too short, min length is ${Lengths.min_username_length} characters";
+                  if (username.length > Lengths.max_username_length)
+                    return "too long, max length is ${Lengths.max_username_length} characters";
                   return null;
                 },
               ),
@@ -85,13 +86,13 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 "uid (optional)",
                 controller: _uidController,
                 validator: (uid) {
-                  if (uid != null || uid.length > 0) {
+                  if (uid.length > 0) {
+                    if (KlangRegex.uid_banished_chars.hasMatch(uid))
+                      return "can only contain letters (A-Z)";
                     if (uid.length < Lengths.min_uid_length)
-                      return "too short, min length is ${Lengths.min_uid_length}";
+                      return "too short, min length is ${Lengths.min_uid_length} characters";
                     if (uid.length > Lengths.max_uid_length)
-                      return "too long, max length is ${Lengths.max_uid_length}";
-                    if (!KlangRegex.uid.hasMatch(uid))
-                      return "not cool, can only contain letters (A-Z), dash, and underscore";
+                      return "too long, max length is ${Lengths.max_uid_length} characters";
                   }
                   return null;
                 },
@@ -101,8 +102,14 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 "password",
                 controller: _pswdController,
                 validator: (pswd) {
-                  if (pswd == null || pswd.length <= 0) {
+                  if (pswd.length <= 0) {
                     return "please enter password";
+                  }
+                  if (pswd.length < Lengths.min_pswd_length) {
+                    return "too short, min is ${Lengths.min_pswd_length} characters";
+                  }
+                  if (pswd.length > Lengths.max_pswd_length) {
+                    return "too long, max is ${Lengths.max_pswd_length} characters";
                   }
 
                   return null;
@@ -112,9 +119,12 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
               KlangTextFormField(
                 "confirmPassword",
                 controller: _confirmPswdController,
-                validator: (pswd) {
-                  if (pswd == null || pswd.length <= 0) {
-                    return "please enter password";
+                validator: (pswdConf) {
+                  if (pswdConf.length <= 0) {
+                    return "please confirm password";
+                  }
+                  if (pswdConf != _pswdController.text) {
+                    return "passwords must match";
                   }
                   return null;
                 },

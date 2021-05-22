@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:history/history.dart';
 import 'package:klang/page_router.dart';
 import 'package:klang/pages/add.dart';
 import 'package:klang/pages/auth_page.dart';
@@ -100,8 +99,10 @@ class _InitialSetupState extends State<_InitialSetup> {
       providers: [
         BlocProvider(
           lazy: false,
-          create: (_) =>
-              AuthCubit(null, FirebaseAuth.instance.authStateChanges()),
+          create: (_) => AuthCubit(
+            null,
+            FirebaseAuth.instance.authStateChanges(),
+          ),
         ),
         BlocProvider(
           lazy: true,
@@ -110,10 +111,6 @@ class _InitialSetupState extends State<_InitialSetup> {
         BlocProvider(
           lazy: false,
           create: (_) => BottomNavCubit(BottomNavItem.home),
-        ),
-        BlocProvider(
-          lazy: false,
-          create: (_) => SnackbarCubit(),
         ),
       ],
       child: Root(),
@@ -138,14 +135,31 @@ class UserState {
   User user;
   String get uid => user?.uid;
   bool get loggedIn => user?.uid != null && !user.isAnonymous;
+
+  @override
+  operator ==(Object o) {
+    return o is UserState && o.uid == this.uid && o?.loggedIn == this?.loggedIn;
+  }
+
+  @override
+  int get hashCode => "$uid$loggedIn".hashCode;
 }
 
 class AuthCubit extends Cubit<UserState> {
   AuthCubit(UserState initialState, Stream<User> userStream)
       : super(initialState) {
-    _streamController.sink
-        .addStream(userStream.map((event) => UserState(event)));
+    userStream.map<UserState>((event) {
+      _lastUser = event;
+      return UserState(event);
+    }).listen((event) {
+      debugPrint("-----new auth event, user signed in: ${event?.loggedIn}");
+      emit(event);
+    });
   }
+
+  User _lastUser;
+
+  bool get loggedIn => state?.loggedIn ?? UserState(_lastUser).loggedIn;
 
   StreamController<UserState> _streamController = StreamController();
   StreamSink<UserState> get authStreamSink => _streamController.sink;
@@ -154,11 +168,14 @@ class AuthCubit extends Cubit<UserState> {
   // Future<LoginResult> login(String email, String password) async {
   //   if (state.uid != null) return LoginResult.success;
   //   try {
+  //     if (FirePP._testing) {
+  //       await FirebaseAuth.instance.useEmulator("http://localhost:$_authPort");
+  //     }
   //     await FirebaseAuth.instance
   //         .signInWithEmailAndPassword(email: email, password: password);
   //     return LoginResult.success;
   //   } catch (e) {
-  //     switch ((e as FirebaseAuthException).code) {
+  //     switch ((e as FirebaseAuthException).message) {
   //       case "invalid-email":
   //         return LoginResult.invalid_email;
   //       case "user-disabled":
@@ -168,7 +185,7 @@ class AuthCubit extends Cubit<UserState> {
   //       case "wrong-password":
   //         return LoginResult.wrong_password;
   //       default: // should not happen
-  //         throw "unknown FirebaseAuthException code -> \"${(e as FirebaseAuthException).code}\"";
+  //         throw "unknown FirebaseAuthException code -> \"${(e as FirebaseAuthException).message}\"";
   //         return LoginResult.error;
   //     }
   //   }
@@ -272,32 +289,6 @@ class BottomNavCubit extends Cubit<BottomNavItem> {
   }
 }
 
-enum MessageType { error, info }
-
-class SnackbarMessage {
-  SnackbarMessage(this.mt, this.message);
-  final MessageType mt;
-  final String message;
-
-  @override
-  operator ==(Object o) {
-    return o is SnackbarMessage && o.mt == this.mt && o.message == this.message;
-  }
-
-  @override
-  int get hashCode => "$mt$message".hashCode;
-}
-
-class SnackbarCubit extends Cubit<SnackbarMessage> {
-  SnackbarCubit() : super(null);
-
-  void newMessage(MessageType mt, String msg) {
-    if (msg != state.message && mt != state.mt) emit(state);
-  }
-
-  String get currentMessage => state.message;
-}
-
 // root provides auth and also sets up botton nav and container pages
 class Root extends StatefulWidget {
   Root({Key key}) : super(key: key);
@@ -356,7 +347,7 @@ class KlangMainPage extends StatefulWidget implements KlangPage {
 
   @override
   PageRoutePath get route {
-    debugPrint("*selected BottomNavCubit item: ${BottomNavCubit.selectedItem}");
+    // debugPrint("*selected BottomNavCubit item: ${BottomNavCubit.selectedItem}");
     return PageRoutePath.main(
       BottomNavCubit.mapItemToName(BottomNavCubit.selectedItem),
     );
@@ -371,7 +362,7 @@ class _KlangMainPageState extends State<KlangMainPage>
 
   @override
   void initState() {
-    debugPrint("KlangMainPageState.initState()");
+    // debugPrint("KlangMainPageState.initState()");
     super.initState();
     _pageController = PageController(initialPage: _selectedPageIndx);
     final BottomNavCubit bottomNavCubit = BlocProvider.of<BottomNavCubit>(
@@ -398,8 +389,8 @@ class _KlangMainPageState extends State<KlangMainPage>
 
   @override
   Widget build(BuildContext context) {
-    debugPrint(
-        "KlangMainPage.build(), history size: ${BrowserHistory().length}");
+    // debugPrint(
+    //     "KlangMainPage.build(), history size: ${BrowserHistory().length}");
     super.build(context);
     return Scaffold(
       key: widget.key,
@@ -415,7 +406,7 @@ class _KlangMainPageState extends State<KlangMainPage>
           AddPage(),
           // ShufflePage(),
           AuthPage(
-            child: UserPage(uid: null),
+            child: UserPage(uid: null, showAppBar: false),
             authFallbackPage: LoginPage(showAppBar: false),
           ),
         ],

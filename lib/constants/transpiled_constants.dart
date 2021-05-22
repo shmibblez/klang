@@ -103,6 +103,7 @@ class ErrorCodes {
   static const String invalid_pswd = "ip";
   static const String pswds_dont_match = "pd";
   static const String mission_failed = "mf";
+  static const String internal = "internal";
 }
 
 // collection names
@@ -134,4 +135,6 @@ class Lengths {
   static const int max_sound_tags = 3;
   static const int min_pswd_length = 5;
   static const int max_pswd_length = 100;
+  static const int min_sound_name_length = 3;
+  static const int max_sound_name_length = 27;
 }

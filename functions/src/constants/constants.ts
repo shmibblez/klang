@@ -130,4 +130,6 @@ export class Lengths {
   static readonly max_sound_tags = 3;
   static readonly min_pswd_length = 5;
   static readonly max_pswd_length = 100;
+  static readonly min_sound_name_length = 3;
+  static readonly max_sound_name_length = 27;
 }

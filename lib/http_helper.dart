@@ -1,5 +1,11 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:klang/constants/transpiled_constants.dart';
 
@@ -18,12 +24,25 @@ enum CreateAccountResult {
   invalid_uid,
   invalid_pswd,
   missionFailed,
+  internal,
+}
+
+enum AddSoundResult {
+  success,
+  access_denied,
+  lost_connection,
+  upload_failed,
 }
 
 /// combo between Firebase and HTTP
 class FirePP {
-  static final bool _testing = true;
+  static final bool _testing = true && kDebugMode;
+  static final _authPort = "9099";
   static final _functionsPort = "5001";
+  static final _firestorePort = "8080";
+  static final _rtdbPort = "9000";
+  static final _hostingPort = "5000";
+  static final _storagePort = 9199;
 
   static String translateLoginResult(LoginResult l) {
     switch (l) {
@@ -54,15 +73,21 @@ class FirePP {
       case CreateAccountResult.invalid_pswd:
         return "invalid password";
       case CreateAccountResult.missionFailed:
+      case CreateAccountResult.internal:
         return "something went wrong, please try again later or if you can, send us an email describing what went wrong and we'll try to fix it asap";
     }
     throw "unknown CreateAccountResult: \"$c\"";
   }
 
   /// returns [LoginResult] to inform result
-  static Future<LoginResult> login(
-      {@required String email, @required String password}) async {
+  static Future<LoginResult> login({
+    @required String email,
+    @required String password,
+  }) async {
     try {
+      if (_testing) {
+        await FirebaseAuth.instance.useEmulator("http://localhost:$_authPort");
+      }
       await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
     } catch (e) {
@@ -73,7 +98,7 @@ class FirePP {
           return LoginResult.user_disabled;
         case "user-not-found":
           return LoginResult.user_not_found;
-        case "wrong_password":
+        case "wrong-password":
           return LoginResult.wrong_password;
         default:
           throw "unknown FirebaseAuthException error code: \"${(e as FirebaseAuthException).code}\"";
@@ -106,7 +131,8 @@ class FirePP {
     try {
       await functions.httpsCallable("cu").call(data);
     } catch (e) {
-      switch ((e as FirebaseFunctionsException).code) {
+      debugPrint("*received error: $e");
+      switch ((e as FirebaseFunctionsException).message) {
         case ErrorCodes.invalid_username:
           return CreateAccountResult.invalid_username;
         case ErrorCodes.invalid_email:
@@ -117,10 +143,32 @@ class FirePP {
           return CreateAccountResult.invalid_pswd;
         case ErrorCodes.mission_failed:
           return CreateAccountResult.missionFailed;
+        case ErrorCodes.internal:
+          return CreateAccountResult.internal;
         default:
-          throw "unknown error code when creating user: \"${(e as FirebaseFunctionsException).code}\"";
+          throw "unknown error code when creating user: \"${(e as FirebaseFunctionsException).message}\"";
       }
     }
     return CreateAccountResult.success;
+  }
+
+  static Future<AddSoundResult> addSound({
+    @required String name,
+    @required Uint8List fileBytes,
+  }) async {
+    // TODO: upload ringtone here
+    // can get uid here
+
+    // TODO: compress file bytes / convert to .m4a 248 kbps
+
+    FirebaseStorage storage = FirebaseStorage.instance;
+
+    if (_testing) {
+      storage.useEmulator(host: "localhost", port: _storagePort);
+    }
+
+    // storage.ref().put
+
+    return AddSoundResult.success;
   }
 }

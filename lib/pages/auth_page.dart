@@ -61,7 +61,11 @@ class _AuthPageState extends State<AuthPage> {
   void initState() {
     super.initState();
     _authCubit = BlocProvider.of<AuthCubit>(context);
-    _streamSubscription = _authCubit.stream.listen((event) {});
+    _streamSubscription = _authCubit.stream.listen((event) {
+      setState(() {
+        _loggedIn = event?.loggedIn;
+      });
+    });
     // if stop listening, pause stream listener,
     // if start listening, update based on last value and resume listening
     _authPageDelegateListener = () async {
@@ -74,7 +78,8 @@ class _AuthPageState extends State<AuthPage> {
       }
     };
     widget.authDelegate.addListener(_authPageDelegateListener);
-    _loggedIn = _authCubit.state?.loggedIn ?? false;
+    _loggedIn = _authCubit.loggedIn ?? false;
+    debugPrint("AuthPage.initState(), logged in: ${_authCubit.loggedIn}");
   }
 
   @override

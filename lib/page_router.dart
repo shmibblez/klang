@@ -55,8 +55,8 @@ class PageRouteInformationParser extends RouteInformationParser<PageRoutePath> {
       RouteInformation routeInformation) async {
     final paths = Uri.parse(routeInformation.location).pathSegments;
 
-    debugPrint(
-        "PageRouteInformationParser.parseRouteInformation(), paths: $paths");
+    // debugPrint(
+    //     "PageRouteInformationParser.parseRouteInformation(), paths: $paths");
 
     if (paths.length <= 0)
       return PageRoutePath.main("home");
@@ -94,8 +94,8 @@ class PageRouteInformationParser extends RouteInformationParser<PageRoutePath> {
 
   @override
   RouteInformation restoreRouteInformation(PageRoutePath path) {
-    debugPrint(
-        "PageRouteInformationParser.restoreRouteInformation(), paths: ${path.elements}");
+    // debugPrint(
+    //     "PageRouteInformationParser.restoreRouteInformation(), paths: ${path.elements}");
     return RouteInformation(location: "/" + path.elements.join("/"));
     // return super.restoreRouteInformation(path);
   }
@@ -110,7 +110,7 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
 
   @override
   Future<bool> popRoute() {
-    debugPrint("PageRouterDelegate.popRoute()----------------");
+    // debugPrint("PageRouterDelegate.popRoute()----------------");
     return SynchronousFuture(true);
     // return super.popRoute();
   }
@@ -130,14 +130,14 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
     if (_pages.isEmpty) {
       _pages.add(_mainPage);
     }
-    debugPrint("PageRouterDelegate.build(), # pages: ${_pages.length}");
+    // debugPrint("PageRouterDelegate.build(), # pages: ${_pages.length}");
     _context = context;
     return Navigator(
       // first page is always initialPage
       key: navigatorKey,
       pages: _pages.map((w) => MaterialPage(child: w)).toList(),
       onPopPage: (route, result) {
-        debugPrint("PageRouterDelegate.Navigator.onPopPage()");
+        // debugPrint("PageRouterDelegate.Navigator.onPopPage()");
         if (!route.didPop(result)) return false;
         if (_pages.length > 1) {
           if (_pages.length > 2 && _pages[_pages.length - 2] is AuthPage) {
@@ -169,7 +169,7 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
 
   @override
   Future<void> setNewRoutePath(PageRoutePath path) {
-    debugPrint("PageRouterDelegate.setNewRoutePath(), paths: ${path.elements}");
+    // debugPrint("PageRouterDelegate.setNewRoutePath(), paths: ${path.elements}");
 
     // if platform is web, gets called when page added or removed (going forward or backward in history)
     if (kIsWeb) {
