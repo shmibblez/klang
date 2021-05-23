@@ -86,7 +86,7 @@ async function onSoundUpload(
 ) {
   const raw_name: string = obj.metadata![Info.item_name];
   // comma separated tag strings, ex: ringtone,metronome sound,nice
-  const raw_tags_str: string = obj.metadata![Info.tags];
+  const raw_tags_str: string = obj.metadata![Info.tags] ?? "";
   const tags = tagsFromStr(raw_tags_str);
   // optional, if not ok then empty
   let raw_description: string | undefined = obj.metadata![Info.description];

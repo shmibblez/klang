@@ -152,20 +152,42 @@ class FirePP {
     return CreateAccountResult.success;
   }
 
+  /// [name] - sound name
+  /// [tags] (optional) - sound tags
+  /// [description] (optional) - sound description
+  /// [url] (optional) - sound source url if obtained from somewhere else
+  /// [uid] - creator id
+  /// [explicit] - whether sound is explicit
+  /// [fileBytes] - sound file's bytes
   static Future<AddSoundResult> addSound({
     @required String name,
+    @required List<String> tags,
+    @required String description,
+    @required String url,
+    @required String uid,
+    @required bool explicit,
     @required Uint8List fileBytes,
   }) async {
-    // TODO: upload ringtone here
-    // can get uid here
-
-    // TODO: compress file bytes / convert to .m4a 248 kbps
-
     FirebaseStorage storage = FirebaseStorage.instance;
 
     if (_testing) {
       storage.useEmulator(host: "localhost", port: _storagePort);
     }
+
+    // TODO: upload sound here
+
+    // TODO: compress file bytes / convert to .m4a 248 kbps, or just make sure file type valid, and edit when storage function called
+    // if going to edit, convert, or compress audio file in storage functions, need to set config for longer time & more storage ->
+    // need to make sure function can store sound file, temp (2x file size at least), and process doesn't get killed (at least 10 secs? need to check how long it takes to modify audio file)
+
+    // this means storage function will now:
+    // 1. make sure all fields good
+    // 2. modify audio file (convert to m4a, compress, cut if over max sound length)
+    // 3. add firestore doc
+    // if anything fails, how to inform user?
+    //    Potential solution: client-side add task that checks if sound doc exists after some seconds (if upload success), if it does, then show snackbar informing success, if not, show snackbar with error. How to get error?
+    //    Potential solution 2: send notification to user device informing result, here can easily report error reason or success, and can even show notification if user left app after upload
+    //.
 
     // storage.ref().put
 

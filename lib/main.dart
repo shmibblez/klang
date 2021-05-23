@@ -160,6 +160,7 @@ class AuthCubit extends Cubit<UserState> {
   User _lastUser;
 
   bool get loggedIn => state?.loggedIn ?? UserState(_lastUser).loggedIn;
+  String get uid => state?.uid ?? _lastUser?.uid;
 
   StreamController<UserState> _streamController = StreamController();
   StreamSink<UserState> get authStreamSink => _streamController.sink;

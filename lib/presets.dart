@@ -45,20 +45,28 @@ class KlangTextFormField extends StatelessWidget {
     this.label, {
     @required this.controller,
     @required this.validator,
+    this.key,
+    this.trailing,
   });
 
   final String label;
   final TextEditingController controller;
   final String Function(String) validator;
+  final Key key;
+  final IconButton trailing;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: KlangPadding.formTextFieldPadding,
       child: TextFormField(
+        key: key,
         controller: controller,
         validator: validator,
-        decoration: InputDecoration(labelText: label),
+        decoration: InputDecoration(
+          labelText: label,
+          suffixIcon: trailing,
+        ),
       ),
     );
   }
@@ -67,7 +75,7 @@ class KlangTextFormField extends StatelessWidget {
 class KlangFormButtonPrimary extends StatelessWidget {
   KlangFormButtonPrimary(
     this.text, {
-    this.onPressed,
+    @required this.onPressed,
   });
 
   final String text;
@@ -85,7 +93,7 @@ class KlangFormButtonPrimary extends StatelessWidget {
 class KlangFormButtonSecondary extends StatelessWidget {
   KlangFormButtonSecondary(
     this.text, {
-    this.onPressed,
+    @required this.onPressed,
   });
 
   final String text;

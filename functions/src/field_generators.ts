@@ -126,6 +126,7 @@ export function randomSeeds() {
 }
 
 export function tagsFromStr(t: string): string[] {
+  if (t.length <= 0) return [];
   let tags = t.split(",");
   tags.length = Lengths.max_sound_tags;
   tags = tags.map((tag) => tag.trim().replace(/\s{2,}/g, " "));

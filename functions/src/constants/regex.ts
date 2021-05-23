@@ -83,7 +83,7 @@ const c_g = {
  * strings for use with RegExp constructor
  */
 export const reg_strings = {
-  // allowed characters for ringtone & list names, with length limits too
+  // allowed characters for sound & list names, with length limits too
   ringtone_and_list_name_indexed_chars:
     `${c_g.alphanumeric}|${c_g.emoticons}|${c_g.misc_symbols}|${c_g.misc_symbols_and_pictographs_1}|${c_g.misc_symbols_and_pictographs_2}|` +
     `${c_g.supp_symbols_and_pictographs_1}|${c_g.supp_symbols_and_pictographs_2}|${c_g.supp_symbols_and_pictographs_3}|` +

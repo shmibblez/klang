@@ -132,4 +132,5 @@ export class Lengths {
   static readonly max_pswd_length = 100;
   static readonly min_sound_name_length = 3;
   static readonly max_sound_name_length = 27;
+  static readonly max_sound_file_size_bytes = 1000000;
 }
