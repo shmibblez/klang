@@ -40,6 +40,10 @@ For help getting started with Flutter, view our
 [online documentation](https://flutter.dev/docs), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 -->
+# important
+- doc ids can't match the regular expression `__.*__`
+  - need to add this check to fields that check/generate doc ids (user doc (uid), and sound name)
+
 # checklist
 | stuff to do          | done server side | done client side | notes |
 | -------------------- | ---------------- | ---------------- | ----- |

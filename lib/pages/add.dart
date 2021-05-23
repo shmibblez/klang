@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:klang/constants/regex.dart';
 import 'package:klang/constants/transpiled_constants.dart';
 import 'package:klang/http_helper.dart';
@@ -23,13 +24,14 @@ class AddPage extends StatefulWidget implements KlangPage {
 
 class _AddPageState extends State<AddPage> {
   final _formKey = GlobalKey<FormState>();
-  final _tagKey = GlobalKey<FormFieldState>();
+  // final _tagKey = GlobalKey<FormFieldState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _tagController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _urlController = TextEditingController();
-  final List<String> _tags = [];
+  final Set<String> _tags = Set();
   SelectedAudioFile _selectedAudioFile;
+  bool _explicit = false;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +43,6 @@ class _AddPageState extends State<AddPage> {
           children: [
             KlangTextFormField(
               "sound name",
-              key: _tagKey,
               controller: _nameController,
               validator: (name) {
                 if (name.length <= 0) {
@@ -55,54 +56,44 @@ class _AddPageState extends State<AddPage> {
                 }
                 return null;
               },
-              trailing: IconButton(
-                icon: Icon(Icons.cancel),
-                onPressed: () {
-                  _nameController.clear();
-                },
-              ),
             ),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              // crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.max,
               children: [
                 Expanded(
                   child: KlangTextFormField(
-                    "sound description",
+                    "add tag",
                     controller: _tagController,
-                    validator: (tag) {
-                      if (tag.length <= 0) {
-                        return null;
-                      }
-                      if (KlangRegex.tag_banished_chars.hasMatch(tag)) {
-                        return "tags may only contain (A-Z), underscores, dashes, and spaces";
-                      }
-                      if (tag.length < Lengths.min_tag_length) {
-                        return "too short, min tag length is ${Lengths.min_tag_length} characters";
-                      }
-                      if (tag.length > Lengths.max_tag_length) {
-                        return "too long, max tag length is ${Lengths.max_tag_length} characters";
-                      }
-                      if (_tags.length >= Lengths.max_sound_tags) {
-                        return "sounds may only have up to 3 tags";
-                      }
-                      return null;
-                    },
+                    validator: _tagValidator,
+                    trailing: IconButton(
+                      icon: Icon(Icons.cancel),
+                      onPressed: () {
+                        _tagController.clear();
+                      },
+                    ),
                   ),
                 ),
                 KlangFormButtonPrimary(
                   "add tag",
                   onPressed: () {
-                    // invalid tag, return
-                    if (!_tagKey.currentState.validate()) return;
-                    _tags.add(_tagController.text);
+                    // TODO: how to validate only tags when "add tag" pressed?
+                    // either: how to get widget state
+                    // or: multiple global keys in same widget tree
+                    _formKey.currentState.validate();
+                    if (_tagValidator(_tagController.text) != null) return;
+                    if (_tagController.text.length <= 0) return;
+                    setState(() {
+                      _tags.add(_tagController.text);
+                      _tagController.clear();
+                    });
                   },
                 ),
               ],
             ),
             // sound tags are displayed / removed here
             Wrap(
-              alignment: WrapAlignment.spaceBetween,
+              alignment: WrapAlignment.start,
               direction: Axis.horizontal,
               runSpacing: 8,
               spacing: 8,
@@ -137,19 +128,73 @@ class _AddPageState extends State<AddPage> {
                 return null;
               },
             ),
-
-            KlangFormButtonSecondary(
-              "select audio file",
+            KlangFormButtonPrimary(
+              _selectedAudioFile == null
+                  ? "select audio file"
+                  : "audio file selected",
               onPressed: _selectAudioFile,
             ),
+            if (_selectedAudioFile != null)
+              FutureBuilder(
+                future: _selectedAudioFile.duration,
+                builder: (_, AsyncSnapshot<Duration> snap) {
+                  switch (snap.connectionState) {
+                    case ConnectionState.done:
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("file info"),
+                          Text("name: ${_selectedAudioFile.name}"),
+                          Text("size: ${_selectedAudioFile.sizeStr}"),
+                          Text("duration: ${snap.data.inSeconds} seconds")
+                        ],
+                      );
+                    default:
+                      return Offstage(offstage: true);
+                  }
+                },
+              ),
+            Row(
+              children: [
+                Checkbox(
+                  value: _explicit,
+                  onChanged: (checked) {
+                    if (_explicit == checked) return;
+                    setState(() {
+                      _explicit = checked;
+                    });
+                  },
+                ),
+              ],
+            ),
             KlangFormButtonPrimary(
-              "add sound",
+              "upload",
               onPressed: _onSubmit,
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _tagValidator(String tag) {
+    if (tag.length <= 0) {
+      return null;
+    }
+    if (KlangRegex.tag_banished_chars.hasMatch(tag)) {
+      return "tags may only contain (A-Z), underscores, dashes, and spaces";
+    }
+    if (tag.length < Lengths.min_tag_length) {
+      return "too short, min tag length is ${Lengths.min_tag_length} characters";
+    }
+    if (tag.length > Lengths.max_tag_length) {
+      return "too long, max tag length is ${Lengths.max_tag_length} characters";
+    }
+    // if (_tags.length >= Lengths.max_sound_tags) {
+    //   return "sounds may only have up to 3 tags";
+    // }
+    return null;
   }
 
   List<Widget> _buildTags() {
@@ -164,7 +209,7 @@ class _AddPageState extends State<AddPage> {
         },
       ));
     }
-    return [];
+    return tagChips;
   }
 
   void _selectAudioFile() async {
@@ -178,7 +223,7 @@ class _AddPageState extends State<AddPage> {
     SelectedAudioFile sound = SelectedAudioFile(file);
 
     // if something wrong, show error, return, & don't update file
-    String notOkMessage = sound.getNotOkMessage();
+    String notOkMessage = await sound.getNotOkMessage();
     if (notOkMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(ErrorSnackbar(notOkMessage));
       return;
@@ -198,12 +243,12 @@ class _AddPageState extends State<AddPage> {
       return;
     }
     if (!_selectedAudioFile.isOk) return;
+    if (!(await _selectedAudioFile.isDurationOk)) return;
 
     final String uid = BlocProvider.of<AuthCubit>(context).uid;
     if (uid == null) return;
 
     BlocProvider.of<TouchEnabledCubit>(context).disableTouch();
-    // TODO: if all good call http function to upload sound
 
     AddSoundResult r = await FirePP.addSound(
       name: _nameController.text,
@@ -211,12 +256,20 @@ class _AddPageState extends State<AddPage> {
       description: _descController.text,
       url: _urlController.text,
       uid: uid,
-      explicit:
-          explicit, // TODO: add checkbox below sound file if sound file selected, if not don't show. Will be Checkbox with text inside Row
+      // TODO: add checkbox below sound file if sound file selected, if not don't show. Will be Checkbox with text inside Row
+      explicit: true,
       fileBytes: _selectedAudioFile.bytes,
     );
 
     BlocProvider.of<TouchEnabledCubit>(context).enableTouch();
+
+    if (r == AddSoundResult.success) {
+      // TODO: if success, replace current AddPage with new one & show scaffold message uploading with CircularProgressIndicator
+      // then when result notification received, show snackbar informing result
+      return;
+    }
+
+    // TODO: if not successful, show error message in snackbar
   }
 }
 
@@ -228,6 +281,9 @@ class SelectedAudioFile {
   String get name => _f.name;
   int get size => _f.size;
   Uint8List get bytes => _f.bytes;
+  Future<Duration> get duration => flutterSoundHelper.duration(
+        Uri.dataFromBytes(bytes).toString(),
+      );
 
   String get sizeStr => (size / 1000000).toString() + " MB";
 
@@ -235,10 +291,16 @@ class SelectedAudioFile {
 
   bool get isOk => this.isSizeOk;
 
-  String getNotOkMessage() {
+  Future<String> getNotOkMessage() async {
     if (!isSizeOk) {
       return "file too big, max file size is 1 MB, selected file size is ${size / 1000000.0} MB";
     }
+    if (!(await isDurationOk)) {
+      return "maximum duration is ${Lengths.max_sound_duration_millis / 1000} seconds, selected file duration is ${(await duration).inSeconds} seconds";
+    }
     return null;
   }
+
+  Future<bool> get isDurationOk => duration.then(
+      (value) => value.inMilliseconds < Lengths.max_sound_duration_millis);
 }

@@ -6,12 +6,11 @@ import {
   randomSeeds,
 } from "../field_generators";
 import * as admin from "firebase-admin";
-import * as functions from "firebase-functions";
 
 export class FirestoreSound {
   // generates initial sound doc data
   static initDocData({
-    obj,
+    // obj,
     id,
     name,
     tags,
@@ -19,8 +18,10 @@ export class FirestoreSound {
     source_url,
     creator_id,
     explicit,
+    fileBucket,
+    filePath,
   }: {
-    obj: functions.storage.ObjectMetadata;
+    // obj: functions.storage.ObjectMetadata;
     id: string;
     name: string;
     tags: string[];
@@ -28,6 +29,8 @@ export class FirestoreSound {
     source_url: string | undefined;
     creator_id: string;
     explicit: boolean;
+    fileBucket: string;
+    filePath: string;
   }): { [k: string]: unknown } {
     return {
       [Root.info]: {
@@ -35,7 +38,8 @@ export class FirestoreSound {
         [Info.item_name]: {
           [Info.item_name]: name,
           [Info.search_keys]: indexName(name),
-          [Info.timestamp_updated]: admin.firestore.FieldValue.serverTimestamp(),
+          [Info.timestamp_updated]:
+            admin.firestore.FieldValue.serverTimestamp(),
         },
         [Info.tags]: tags,
         [Info.tag_keys]: indexTags(tags),
@@ -45,8 +49,8 @@ export class FirestoreSound {
         [Info.timestamp_created]: admin.firestore.FieldValue.serverTimestamp(),
         [Info.timestamp_updated]: admin.firestore.FieldValue.serverTimestamp(),
         [Info.storage]: {
-          [Info.audio_file_bucket]: obj.bucket,
-          [Info.audio_file_path]: obj.name,
+          [Info.audio_file_bucket]: fileBucket, //obj.bucket,
+          [Info.audio_file_path]: filePath, // obj.name,
         },
       },
       [Root.properties]: {

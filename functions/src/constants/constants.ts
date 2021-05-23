@@ -91,6 +91,7 @@ export class FunctionParams {
   static readonly email_confirmation = "ec";
   static readonly password = "p";
   static readonly password_confirmation = "pc";
+  static readonly sound_file_bytes = "b";
 }
 
 export class ErrorCodes {
@@ -99,6 +100,8 @@ export class ErrorCodes {
   static readonly invalid_uid = "id";
   static readonly invalid_pswd = "ip";
   static readonly mission_failed = "mf";
+  static readonly unauthenticated = "ua";
+  static readonly no_sound = "ns";
 }
 
 // collection names
@@ -132,5 +135,7 @@ export class Lengths {
   static readonly max_pswd_length = 100;
   static readonly min_sound_name_length = 3;
   static readonly max_sound_name_length = 27;
-  static readonly max_sound_file_size_bytes = 1000000;
+  // max file size is 2.5 MB
+  static readonly max_sound_file_size_bytes = 2500000;
+  static readonly max_sound_duration_millis = 30000;
 }

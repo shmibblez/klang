@@ -19,6 +19,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  // static ValueKey<String> _initialSetupKey = ValueKey<String>("_InitialSetup");
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -96,6 +97,7 @@ class _InitialSetupState extends State<_InitialSetup> {
 
   Widget _blocSetup() {
     return MultiBlocProvider(
+      // key: MyApp._initialSetupKey,
       providers: [
         BlocProvider(
           lazy: false,
@@ -404,6 +406,10 @@ class _KlangMainPageState extends State<KlangMainPage>
         children: [
           HomePage(),
           SearchPage(),
+          // AuthPage(
+          //   child: AddPage(),
+          //   authFallbackPage: LoginPage(showAppBar: false),
+          // ),
           AddPage(),
           // ShufflePage(),
           AuthPage(

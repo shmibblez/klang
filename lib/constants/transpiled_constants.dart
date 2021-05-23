@@ -137,5 +137,7 @@ class Lengths {
   static const int max_pswd_length = 100;
   static const int min_sound_name_length = 3;
   static const int max_sound_name_length = 27;
-  static const int max_sound_file_size_bytes = 1000000;
+  // max file size is 2.5 MB
+  static const int max_sound_file_size_bytes = 2500000;
+  static const int max_sound_duration_millis = 30000;
 }
