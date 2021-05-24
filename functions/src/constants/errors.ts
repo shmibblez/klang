@@ -6,6 +6,16 @@ export class UnauthenticatedError extends HttpsError {
     super("unauthenticated", ErrorCodes.unauthenticated, details);
   }
 }
+export class UidTakenError extends HttpsError {
+  constructor(details?: string) {
+    super("already-exists", ErrorCodes.uid_taken, details);
+  }
+}
+export class EmailTakenError extends HttpsError {
+  constructor(details?: string) {
+    super("already-exists", ErrorCodes.email_taken, details);
+  }
+}
 export class InvalidUsernameError extends HttpsError {
   constructor(details?: string) {
     super("invalid-argument", ErrorCodes.invalid_username, details);

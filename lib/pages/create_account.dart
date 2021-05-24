@@ -9,6 +9,8 @@ import 'package:klang/pages/klang_page.dart';
 import 'package:klang/presets.dart';
 
 class CreateAccountPage extends StatefulWidget implements KlangPage {
+  final _formKey = GlobalKey<FormState>();
+
   @override
   State<StatefulWidget> createState() {
     return _CreateAccountPageState();
@@ -19,7 +21,6 @@ class CreateAccountPage extends StatefulWidget implements KlangPage {
 }
 
 class _CreateAccountPageState extends State<CreateAccountPage> {
-  final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _confEmailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
@@ -34,7 +35,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         title: Text("create account"),
       ),
       body: Form(
-        key: _formKey,
+        key: widget._formKey,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -142,7 +143,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
   void _onSubmit() async {
     // if any field not ok, return
-    if (!_formKey.currentState.validate()) {
+    if (!widget._formKey.currentState.validate()) {
       return;
     }
 

@@ -2,11 +2,13 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { Coll, FunctionParams, Info, RTDB } from "./constants/constants";
 import {
+  EmailTakenError,
   InvalidEmailError,
   InvalidPswdError,
   InvalidUidError,
   InvalidUsernameError,
   MissionFailedError,
+  UidTakenError,
 } from "./constants/errors";
 import { isEmailOk, isPswdOk, isUidOk, isUsernameOk } from "./field_checks";
 import { FirestoreUser, FirestoreUsername } from "./data_models/user";
@@ -73,8 +75,15 @@ export const create_user = functions.https.onCall(async (data, ctxt) => {
       password: raw_pswd as string,
     })
     .catch((e) => {
-      console.error("create_user: failed to create auth instance: ", e);
-      throw new MissionFailedError();
+      switch (e.code) {
+        case "auth/uid-already-exists":
+          throw new UidTakenError();
+        case "auth/email-already-exists":
+          throw new EmailTakenError();
+        default:
+          console.error("create_user: failed to create auth instance: ", e);
+          throw new MissionFailedError();
+      }
     });
 
   /** {@link phase_3: set username in rtdb & create user & username doc} */

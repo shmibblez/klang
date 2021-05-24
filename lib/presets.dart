@@ -45,14 +45,14 @@ class KlangTextFormField extends StatelessWidget {
     this.label, {
     @required this.controller,
     @required this.validator,
-    this.key,
+    GlobalKey<FormFieldState> key,
     this.trailing,
-  });
+  }) : this._key = key;
 
   final String label;
   final TextEditingController controller;
   final String Function(String) validator;
-  final Key key;
+  final Key _key;
   final IconButton trailing;
 
   @override
@@ -60,7 +60,7 @@ class KlangTextFormField extends StatelessWidget {
     return Padding(
       padding: KlangPadding.formTextFieldPadding,
       child: TextFormField(
-        key: key,
+        key: _key,
         controller: controller,
         validator: validator,
         decoration: InputDecoration(

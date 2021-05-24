@@ -104,6 +104,9 @@ class ErrorCodes {
   static const String pswds_dont_match = "pd";
   static const String mission_failed = "mf";
   static const String internal = "internal";
+  static const String no_sound = "ns";
+  static const String uid_taken = "ut";
+  static const String email_taken = "et";
 }
 
 // collection names

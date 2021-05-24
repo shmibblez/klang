@@ -8,6 +8,8 @@ import 'package:klang/pages/klang_page.dart';
 import 'package:klang/presets.dart';
 
 class LoginPage extends StatefulWidget implements KlangPage {
+  final _formKey = GlobalKey<FormState>();
+
   LoginPage({this.showAppBar = true});
   final showAppBar;
   @override
@@ -20,7 +22,6 @@ class LoginPage extends StatefulWidget implements KlangPage {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _pswdController = TextEditingController();
 
@@ -29,7 +30,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       appBar: widget.showAppBar ? AppBar(title: Text("log in")) : null,
       body: Form(
-        key: _formKey,
+        key: widget._formKey,
         child: SingleChildScrollView(
           scrollDirection: Axis.vertical,
           child: Column(
@@ -80,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
 
   void _onSubmit() async {
     // if any field not ok, return
-    if (!_formKey.currentState.validate()) {
+    if (!widget._formKey.currentState.validate()) {
       return;
     }
 

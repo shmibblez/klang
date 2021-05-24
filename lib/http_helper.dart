@@ -22,6 +22,8 @@ enum CreateAccountResult {
   invalid_email,
   invalid_uid,
   invalid_pswd,
+  uid_taken,
+  email_taken,
   missionFailed,
   internal,
   network_request_failed,
@@ -74,6 +76,10 @@ class FirePP {
         return "invalid uid";
       case CreateAccountResult.invalid_pswd:
         return "invalid password";
+      case CreateAccountResult.uid_taken:
+        return "uid already in use";
+      case CreateAccountResult.email_taken:
+        return "email already in use";
       case CreateAccountResult.network_request_failed:
         return "failed to send network request, make sure you're connected";
       case CreateAccountResult.missionFailed:
@@ -147,7 +153,11 @@ class FirePP {
           return CreateAccountResult.invalid_uid;
         case ErrorCodes.invalid_pswd:
           return CreateAccountResult.invalid_pswd;
+        case ErrorCodes.uid_taken:
+          return CreateAccountResult.uid_taken;
         case ErrorCodes.mission_failed:
+        case ErrorCodes.email_taken:
+          return CreateAccountResult.email_taken;
           return CreateAccountResult.missionFailed;
         case ErrorCodes.internal:
           return CreateAccountResult.internal;

@@ -101,7 +101,10 @@ export class ErrorCodes {
   static readonly invalid_pswd = "ip";
   static readonly mission_failed = "mf";
   static readonly unauthenticated = "ua";
+  static readonly internal = "internal";
   static readonly no_sound = "ns";
+  static readonly uid_taken = "ut";
+  static readonly email_taken = "et";
 }
 
 // collection names

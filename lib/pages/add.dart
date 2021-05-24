@@ -13,6 +13,8 @@ import 'package:klang/pages/klang_page.dart';
 import 'package:klang/presets.dart';
 
 class AddPage extends StatefulWidget implements KlangPage {
+  final _formKey = GlobalKey<FormState>();
+  final _tagKey = GlobalKey<FormFieldState>();
   @override
   PageRoutePath get route => PageRoutePath.main("/add");
 
@@ -23,8 +25,6 @@ class AddPage extends StatefulWidget implements KlangPage {
 }
 
 class _AddPageState extends State<AddPage> {
-  final _formKey = GlobalKey<FormState>();
-  // final _tagKey = GlobalKey<FormFieldState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _tagController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
@@ -32,11 +32,12 @@ class _AddPageState extends State<AddPage> {
   final Set<String> _tags = Set();
   SelectedAudioFile _selectedAudioFile;
   bool _explicit = false;
+  bool _forAddTag = false;
 
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: _formKey,
+      key: widget._formKey,
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -58,14 +59,34 @@ class _AddPageState extends State<AddPage> {
               },
             ),
             Row(
-              // crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.max,
               children: [
                 Expanded(
                   child: KlangTextFormField(
                     "add tag",
+                    key: widget._tagKey,
                     controller: _tagController,
-                    validator: _tagValidator,
+                    validator: (tag) {
+                      if (!_forAddTag) return null;
+                      if (tag.length <= 0) {
+                        return null;
+                      }
+                      if (_tags.length >= Lengths.max_sound_tags) {
+                        return "sounds may only have up to 3 tags";
+                      }
+                      if (KlangRegex.tag_banished_chars.hasMatch(tag)) {
+                        return "tags may only contain (A-Z), underscores, dashes, and spaces";
+                      }
+                      if (tag.length < Lengths.min_tag_length) {
+                        return "too short, min tag length is ${Lengths.min_tag_length} characters";
+                      }
+                      if (tag.length > Lengths.max_tag_length) {
+                        return "too long, max tag length is ${Lengths.max_tag_length} characters";
+                      }
+
+                      return null;
+                    },
                     trailing: IconButton(
                       icon: Icon(Icons.cancel),
                       onPressed: () {
@@ -80,9 +101,11 @@ class _AddPageState extends State<AddPage> {
                     // TODO: how to validate only tags when "add tag" pressed?
                     // either: how to get widget state
                     // or: multiple global keys in same widget tree
-                    _formKey.currentState.validate();
-                    if (_tagValidator(_tagController.text) != null) return;
+                    // widget._formKey.currentState.validate();
+                    _forAddTag = true;
+                    if (!widget._tagKey.currentState.validate()) return;
                     if (_tagController.text.length <= 0) return;
+
                     setState(() {
                       _tags.add(_tagController.text);
                       _tagController.clear();
@@ -178,25 +201,6 @@ class _AddPageState extends State<AddPage> {
     );
   }
 
-  String _tagValidator(String tag) {
-    if (tag.length <= 0) {
-      return null;
-    }
-    if (KlangRegex.tag_banished_chars.hasMatch(tag)) {
-      return "tags may only contain (A-Z), underscores, dashes, and spaces";
-    }
-    if (tag.length < Lengths.min_tag_length) {
-      return "too short, min tag length is ${Lengths.min_tag_length} characters";
-    }
-    if (tag.length > Lengths.max_tag_length) {
-      return "too long, max tag length is ${Lengths.max_tag_length} characters";
-    }
-    // if (_tags.length >= Lengths.max_sound_tags) {
-    //   return "sounds may only have up to 3 tags";
-    // }
-    return null;
-  }
-
   List<Widget> _buildTags() {
     final List<Widget> tagChips = [];
     for (String t in _tags) {
@@ -236,7 +240,8 @@ class _AddPageState extends State<AddPage> {
   }
 
   void _onSubmit() async {
-    if (!_formKey.currentState.validate()) return;
+    _forAddTag = false;
+    if (!widget._formKey.currentState.validate()) return;
     if (_selectedAudioFile == null) {
       ScaffoldMessenger.of(context)
           .showSnackBar(ErrorSnackbar("no audio file selected"));

@@ -1,16 +1,24 @@
 import * as functions from "firebase-functions";
-import { Coll, FunctionParams, Info, Properties, StoragePaths } from "./constants/constants";
+import { Coll, FunctionParams, Info, Properties } from "./constants/constants";
 import * as admin from "firebase-admin";
-import { isAuthorized as isAuthenticated, isDescriptionOk, isUrlOk } from "./field_checks";
+import {
+  isAuthorized as isAuthenticated,
+  isDescriptionOk,
+  isUrlOk,
+} from "./field_checks";
 import { FirestoreSound } from "./data_models/sound";
 import { tagsFromStr } from "./field_generators";
-import { MissionFailedError, NoSoundError, UnauthenticatedError } from "./constants/errors";
-import * as fs from "fs"
+import {
+  MissionFailedError,
+  NoSoundError,
+  UnauthenticatedError,
+} from "./constants/errors";
+import * as fs from "fs";
 
-export const createSound = functions.https.onCall(async (data, context) => {
-  if(!isAuthenticated(context)) throw new UnauthenticatedError();
+export const create_sound = functions.https.onCall(async (data, context) => {
+  if (!isAuthenticated(context)) throw new UnauthenticatedError();
 
-  const uid = context.auth?.uid;
+  const uid = context.auth?.uid!;
 
   const raw_name: string = data[Info.item_name];
   const raw_tags_str: string = data[Info.tags] ?? "";
@@ -29,34 +37,31 @@ export const createSound = functions.https.onCall(async (data, context) => {
   let raw_explicit: boolean = data[Properties.explicit];
   if (typeof raw_explicit != "boolean") raw_explicit = true;
 
-  const raw_bytes:Uint8Array = data[FunctionParams.sound_file_bytes];
-  if(raw_bytes == undefined) throw new NoSoundError();
+  const raw_bytes: Uint8Array = data[FunctionParams.sound_file_bytes];
+  if (raw_bytes == undefined) throw new NoSoundError();
 
-  
   // TODO: check if user can add sound (upload limit not reached)
 
   const original_filename = "file.mp3"; // TODO: send filename with extension in function params, and use here
 
   try {
-   fs.writeFileSync(original_filename, raw_bytes);
+    fs.writeFileSync(original_filename, raw_bytes);
   } catch (e) {
     // failed to write file
     throw new MissionFailedError();
   }
 
-
   // TODO: get file bytes, store in temp file, convert, compress, & trim, store in other temp file, upload to storage, clean up files (remove), then proceed.
   // If something fails report error
 
-
-
-  const id:string = "";
+  const id: string = "";
+  const fileBucket = "";
+  const filePath = "";
   // TODO: generate sound doc id, should be combo between creator id and name: "[uid]+[name_with_invalid_chars_removed]"
 
-  // for id, need to replace all characters in sound name that aren't alphanumeric with dash (with grapheme splitter, 
+  // for id, need to replace all characters in sound name that aren't alphanumeric with dash (with grapheme splitter,
   // all graphemes that aren't in [A-Za-z-]), and add separator between uid and sound name (separator cannot be in valid characters for uid or sound name, for example "+")
   // also, for sound name, make kept name portion random between ex. 20-25, and make sure to call .toLowerCase()
-
 
   // set doc data
   const sound_doc_path = Coll.sounds + "/" + id;
@@ -68,8 +73,8 @@ export const createSound = functions.https.onCall(async (data, context) => {
     source_url: raw_source_url,
     creator_id: uid,
     explicit: raw_explicit,
-    fileBucket: ,
-    filePath: ,
+    fileBucket: fileBucket,
+    filePath: filePath,
   });
 
   // create sound doc

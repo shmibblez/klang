@@ -42,6 +42,8 @@ class MyApp extends StatelessWidget {
 //   - everything provider in 1st level provides needs to be re-provided by page container navigator so it's children can access it
 
 class _InitialSetup extends StatefulWidget {
+  final GlobalKey _initialSetupKey = GlobalKey();
+
   @override
   State<StatefulWidget> createState() {
     return _InitialSetupState();
@@ -97,7 +99,7 @@ class _InitialSetupState extends State<_InitialSetup> {
 
   Widget _blocSetup() {
     return MultiBlocProvider(
-      // key: MyApp._initialSetupKey,
+      key: widget._initialSetupKey,
       providers: [
         BlocProvider(
           lazy: false,
