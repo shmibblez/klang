@@ -36,9 +36,29 @@ export class InvalidPswdError extends HttpsError {
     super("invalid-argument", ErrorCodes.invalid_pswd, details);
   }
 }
+export class InvalidSoundNameError extends HttpsError {
+  constructor(details?: string) {
+    super("invalid-argument", ErrorCodes.invalid_sound_name, details);
+  }
+}
+export class UnsupportedFileExtensionError extends HttpsError {
+  constructor(details?: string) {
+    super("invalid-argument", ErrorCodes.unsupported_file_extension, details);
+  }
+}
+export class SoundDurationTooLongError extends HttpsError {
+  constructor(details?: string) {
+    super("invalid-argument", ErrorCodes.sound_duration_too_long, details);
+  }
+}
 export class NoSoundError extends HttpsError {
   constructor(details?: string) {
     super("invalid-argument", ErrorCodes.no_sound, details);
+  }
+}
+export class FileTooBigError extends HttpsError {
+  constructor(details?: string) {
+    super("invalid-argument", ErrorCodes.file_too_big, details);
   }
 }
 /**

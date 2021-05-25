@@ -89,7 +89,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 validator: (uid) {
                   if (uid.length > 0) {
                     if (KlangRegex.uid_banished_chars.hasMatch(uid))
-                      return "can only contain letters (A-Z)";
+                      return "can only contain letters (A-Z), and dash";
                     if (uid.length < Lengths.min_uid_length)
                       return "too short, min length is ${Lengths.min_uid_length} characters";
                     if (uid.length > Lengths.max_uid_length)

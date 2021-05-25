@@ -2,7 +2,7 @@ import { randomBytes } from "crypto";
 import Graphemer from "graphemer";
 import { Lengths } from "./constants/constants";
 import { reg_strings } from "./constants/regex";
-import { isTagOk } from "./field_checks";
+import { isTagOk, Rex } from "./field_checks";
 
 /**
  *
@@ -159,4 +159,41 @@ export function indexTags(t: string[]) {
   }
 
   return indx;
+}
+
+/**
+ *
+ * @param uid sound owner id
+ * @param name sound name
+ * @param randomize_end is called if id already taken, adds some extra random chars at the end
+ * @returns string with the format [uid+name], where all characters for name that aren't in [A-Za-z-] are replaced with -, no uid characters are replaced
+ */
+export function generateSoundId({
+  uid,
+  name,
+  randomize_end = false,
+}: {
+  uid: string;
+  name: string;
+  randomize_end?: boolean;
+}): string {
+  const max_name_length = Math.trunc(Math.random() * 5) + 15;
+  let cleaned_split = new Graphemer().splitGraphemes(name);
+  cleaned_split.forEach((grapheme) =>
+    Rex.uid_allowed_chars.test(grapheme) ? grapheme : "_"
+  );
+  // replace duplicate underscores with one so doesnt match __.*__
+  let cleaned_name = cleaned_split
+    .join("")
+    .substring(0, max_name_length)
+    .replace(/_{2,}/g, "_");
+
+  if (randomize_end) {
+    cleaned_name += "TODO, random char string";
+  }
+  // TODO: if randomize end true, add random str to end (copy how firebase generates doc ids)
+
+  let id = `${uid}+${cleaned_name}`;
+
+  return id;
 }

@@ -97,6 +97,8 @@ class _InitialSetupState extends State<_InitialSetup> {
     );
   }
 
+  // TODO auth cubit not working for some reason when signing in (sometimes),
+  // only after signing in first and then hot reloading. Maybe auth stream getting reset or something, or not reading status properly?
   Widget _blocSetup() {
     return MultiBlocProvider(
       key: widget._initialSetupKey,

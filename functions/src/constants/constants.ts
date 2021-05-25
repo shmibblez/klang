@@ -6,8 +6,8 @@ export class Root {
 }
 
 export class Info {
-  static readonly id: string = "id";
-  static readonly item_name: string = "nm";
+  static readonly id = "id";
+  static readonly item_name = "nm";
   static readonly search_keys = "sk";
   static readonly tags = "tg";
   static readonly tag_keys = "tk";
@@ -91,7 +91,8 @@ export class FunctionParams {
   static readonly email_confirmation = "ec";
   static readonly password = "p";
   static readonly password_confirmation = "pc";
-  static readonly sound_file_bytes = "b";
+  static readonly sound_file_bytes = "sb";
+  static readonly sound_file_name = "sn";
 }
 
 export class ErrorCodes {
@@ -99,10 +100,14 @@ export class ErrorCodes {
   static readonly invalid_email = "ie";
   static readonly invalid_uid = "id";
   static readonly invalid_pswd = "ip";
+  static readonly invalid_sound_name = "is";
   static readonly mission_failed = "mf";
   static readonly unauthenticated = "ua";
   static readonly internal = "internal";
   static readonly no_sound = "ns";
+  static readonly sound_duration_too_long = "sl";
+  static readonly file_too_big = "fb";
+  static readonly unsupported_file_extension = "uf";
   static readonly uid_taken = "ut";
   static readonly email_taken = "et";
 }
@@ -141,4 +146,16 @@ export class Lengths {
   // max file size is 2.5 MB
   static readonly max_sound_file_size_bytes = 2500000;
   static readonly max_sound_duration_millis = 30000;
+  static readonly supported_sound_file_extensions = [
+    ".mp3",
+    ".aac",
+    ".flac",
+    ".m4a",
+  ];
+}
+
+export class Misc {
+  static readonly storage_bucket = "klang-7.appspot.com";
+  static readonly storage_sound_file_ext = ".acc";
+  static readonly storage_sound_file_mime = "aac";
 }
