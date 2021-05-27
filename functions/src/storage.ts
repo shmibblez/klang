@@ -26,9 +26,10 @@ import {
   UnauthenticatedError,
   UnsupportedFileExtensionError,
 } from "./constants/errors";
-import { promises as fs } from "fs";
-import { extname, join, sep } from "path";
+import { promises as fsPromises } from "fs";
+import { extname, join } from "path";
 // import { promisify } from "util";
+import * as ffmpeg_static from "ffmpeg-static";
 import * as ffmpeg from "fluent-ffmpeg";
 import { storage } from "firebase-admin";
 
@@ -58,7 +59,9 @@ import { storage } from "firebase-admin";
 export const create_sound = functions.https.onCall(async (data, context) => {
   const raw_ext = extname(data[FunctionParams.sound_file_name]);
   if (!isSoundExtensionOk(raw_ext)) throw new UnsupportedFileExtensionError();
-  const raw_bytes: Uint8Array = data[FunctionParams.sound_file_bytes];
+  const raw_bytes: Uint8Array = new Uint8Array(
+    data[FunctionParams.sound_file_bytes]
+  );
   if (raw_bytes == undefined) throw new NoSoundError();
   if (raw_bytes.byteLength > Lengths.max_sound_file_size_bytes)
     throw new FileTooBigError();
@@ -82,27 +85,39 @@ export const create_sound = functions.https.onCall(async (data, context) => {
     raw_source_url == undefined;
   }
   // 1 or 0 string, defaults to true if other string
-  let raw_explicit: boolean = data[Properties.explicit];
-  if (typeof raw_explicit != "boolean") raw_explicit = true;
+  let raw_explicit: boolean = data[Properties.explicit] == false ? false : true;
 
   // TODO: check if user can add sound (upload limit not reached)
 
   // sound id follows format: [uid]+[name], where all chars in name that arent in [A-Za-z0-9-] are replaced with -
   const id: string = generateSoundId({ uid: uid, name: raw_name });
+  console.log(`create_sound: generated sound id: ${id}`);
 
-  const original_filepath = join(process.cwd(), id.replace("+", sep), raw_ext); // TODO: use sound id as filename in uid dir: "[uid]/[soundid].ext"
-  const new_filepath = join(
-    process.cwd(),
-    id.replace("+", sep),
-    Misc.storage_sound_file_ext
+  const clean_sound_name = id.substring(id.indexOf("+") + 1);
+  const sound_file_dir = join(process.cwd(), uid);
+  const input_filepath = join(sound_file_dir, clean_sound_name + raw_ext); // TODO: use sound id as filename in uid dir: "[uid]/[soundid].ext"
+  const output_filepath = join(
+    sound_file_dir,
+    clean_sound_name + Misc.storage_sound_file_ext // for testing: + "2" + raw_ext
+  );
+  console.log(
+    `create_sound:\n  input file: ${input_filepath}\n  output file: ${output_filepath}`
   );
 
   try {
-    await fs.writeFile(original_filepath, raw_bytes);
+    try {
+      await fsPromises.access(sound_file_dir);
+    } catch (e) {
+      // console.log(`create_sound: creating dir: ${sound_file_dir}`);
+      await fsPromises.mkdir(sound_file_dir);
+    }
+    // console.log("create_sound: writing file from bytes");
+    await fsPromises.writeFile(input_filepath, raw_bytes);
   } catch (e) {
     // failed to write file
+    console.error("create_sound: failed to write file, error: ", e);
     await _fileCleanup();
-    throw new MissionFailedError();
+    throw new MissionFailedError(e);
   }
 
   // not necessary since file size is checked anyway and encoded file is trimmed
@@ -113,7 +128,7 @@ export const create_sound = functions.https.onCall(async (data, context) => {
   //         "create_sound: ffprobe failed on original sound file: ",
   //         err
   //       );
-  //       throw new MissionFailedError();
+  //       throw new MissionFailedError(e);
   //     } else {
   //       const duration = data.format.duration;
   //       if (duration != undefined) resolve(duration);
@@ -126,19 +141,25 @@ export const create_sound = functions.https.onCall(async (data, context) => {
   // }
 
   await new Promise<void>((resolve, reject) => {
-    ffmpeg(original_filepath)
+    ffmpeg(input_filepath)
+      .setFfmpegPath(ffmpeg_static)
+      .inputOptions(["-analyzeduration 20M", "-probesize 20M"])
+      .audioCodec(Misc.storage_sound_file_mime)
       .audioBitrate("128k")
       .audioChannels(2)
-      .audioCodec(Misc.storage_sound_file_mime)
       .inputOption("-t 30")
-      .saveToFile(new_filepath)
-      .on("error", async (e) => {
+      .saveToFile(output_filepath)
+      // .on("start", (cmd) => {
+      //   console.log("beginning ffmpeg command, \ncmd: " + cmd);
+      // })
+      .on("error", async (e, stdout, stderr) => {
         console.error(
           `create_sound: failed to convert file to ${Misc.storage_sound_file_ext}: `,
           e
         );
+        console.error("create_sound: stderr: ", stderr);
         await _fileCleanup();
-        reject(new MissionFailedError());
+        reject(new MissionFailedError(e));
       })
       .on("end", (stdout) => {
         console.log("create_sound: processed file, output: ", stdout);
@@ -152,24 +173,15 @@ export const create_sound = functions.https.onCall(async (data, context) => {
 
   await storage()
     .bucket(Misc.storage_bucket)
-    .upload(new_filepath, { resumable: false, destination: storage_path })
+    .upload(output_filepath, { resumable: false, destination: storage_path })
     .catch(async (e) => {
       console.error(
         "create_sound: failed to upload sound file to storage: ",
         e
       );
       await _fileCleanup();
-      throw new MissionFailedError();
+      throw new MissionFailedError(e);
     });
-
-  // TODO: get file bytes, store in temp file, convert, compress, & trim, store in other temp file, upload to storage, clean up files (remove), then proceed.
-  // If something fails report error
-
-  // TODO: generate sound doc id, should be combo between creator id and name: "[uid]+[name_with_invalid_chars_removed]"
-
-  // for id, need to replace all characters in sound name that aren't alphanumeric with dash (with grapheme splitter,
-  // all graphemes that aren't in [A-Za-z-]), and add separator between uid and sound name (separator cannot be in valid characters for uid or sound name, for example "+")
-  // also, for sound name, make kept name portion random between ex. 20-25, and make sure to call .toLowerCase()
 
   // set doc data
   const sound_doc_path = Coll.sounds + "/" + id;
@@ -192,16 +204,26 @@ export const create_sound = functions.https.onCall(async (data, context) => {
   } catch (e) {
     // TODO: if id already taken, need to retry upload with uid generator. Move this to function that retries. Do this if it works so don't overcomplicate stuff too early
     console.log("file_uploaded: failed to create sound doc: ", e);
+    // FIXME: delete sound file from storage
     await _fileCleanup();
-    throw new MissionFailedError();
+    throw new MissionFailedError(e);
   }
 
   return Promise.resolve();
 
   async function _fileCleanup() {
-    await fs.unlink(original_filepath);
-    await fs.unlink(new_filepath);
+    try {
+      await fsPromises.unlink(input_filepath);
+    } catch (e) {
+      console.error("create_sound: failed to delete original file, e: ", e);
+    }
+    try {
+      await fsPromises.unlink(output_filepath);
+    } catch (e) {
+      console.error("create_sound: failed to delete processed file, e: ", e);
+    }
   }
+  return Promise.resolve();
 });
 // /**
 //  * procedure
@@ -253,7 +275,7 @@ export const create_sound = functions.https.onCall(async (data, context) => {
 //     await admin.firestore().doc(sound_doc_path).create(sound_doc_data);
 //   } catch (e) {
 //     console.log("file_uploaded: failed to create sound doc: ", e);
-//     throw new MissionFailedError();
+//     throw new MissionFailedError(e);
 //   }
 
 //   return Promise.resolve();
@@ -375,7 +397,7 @@ export const create_sound = functions.https.onCall(async (data, context) => {
 //     await admin.firestore().doc(sound_doc_path).create(sound_doc_data);
 //   } catch (e) {
 //     console.log("file_uploaded: failed to create sound doc: ", e);
-//     throw new MissionFailedError();
+//     throw new MissionFailedError(e);
 //   }
 
 //   return Promise.resolve();

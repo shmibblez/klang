@@ -62,9 +62,11 @@ class _AuthPageState extends State<AuthPage> {
     super.initState();
     _authCubit = BlocProvider.of<AuthCubit>(context);
     _streamSubscription = _authCubit.stream.listen((event) {
-      setState(() {
-        _loggedIn = event?.loggedIn;
-      });
+      if (this.mounted) {
+        setState(() {
+          _loggedIn = event?.loggedIn;
+        });
+      }
     });
     // if stop listening, pause stream listener,
     // if start listening, update based on last value and resume listening
@@ -72,7 +74,7 @@ class _AuthPageState extends State<AuthPage> {
       if (widget.authDelegate.isListening) {
         _streamSubscription.resume();
         _loggedIn = (await _authCubit.stream.last)?.loggedIn ?? false;
-        setState(() {/*after update _signedIn*/});
+        if (this.mounted) setState(() {/*after update _signedIn*/});
       } else {
         _streamSubscription.pause();
       }
@@ -91,5 +93,6 @@ class _AuthPageState extends State<AuthPage> {
   void dispose() {
     super.dispose();
     widget.authDelegate.removeListener(_authPageDelegateListener);
+    _streamSubscription.cancel();
   }
 }

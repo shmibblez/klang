@@ -156,6 +156,6 @@ export class Lengths {
 
 export class Misc {
   static readonly storage_bucket = "klang-7.appspot.com";
-  static readonly storage_sound_file_ext = ".acc";
+  static readonly storage_sound_file_ext = ".aac";
   static readonly storage_sound_file_mime = "aac";
 }

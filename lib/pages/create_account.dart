@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:klang/constants/regex.dart';
@@ -150,11 +151,19 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     BlocProvider.of<TouchEnabledCubit>(context).disableTouch();
 
     // if create account succeeds, should reload automatically thanks to AuthCubit
-    CreateAccountResult r = await FirePP.createAccount(
+    final CreateAccountResult r = await FirePP.createAccount(
         email: _emailController.text,
         username: _usernameController.text,
         uid: _uidController.text,
         password: _pswdController.text);
+
+    if (r == CreateAccountResult.success) {
+      LoginResult lr = await FirePP.login(
+          email: _emailController.text, password: _pswdController.text);
+      if (lr != LoginResult.success) {
+        throw "created account but failed to log in, shouldn't happen";
+      }
+    }
 
     BlocProvider.of<TouchEnabledCubit>(context).enableTouch();
 

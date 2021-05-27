@@ -128,15 +128,22 @@ export function randomSeeds() {
 export function tagsFromStr(t: string): string[] {
   if (t.length <= 0) return [];
   let tags = t.split(",");
-  tags.length = Lengths.max_sound_tags;
+  if (tags.length > Lengths.max_sound_tags)
+    tags.length = Lengths.max_sound_tags;
+  // tags = tags.slice(0, Lengths.max_sound_tags)
   tags = tags.map((tag) => tag.trim().replace(/\s{2,}/g, " "));
   tags = tags.filter((tag) => isTagOk(tag));
+  console.log("---tags.length after filter: " + tags.length);
+  console.log("---tags: " + tags);
   return tags;
 }
 
 // IMPORTANT: only 3 tags can be indexed, can keep it simple
 export function indexTags(t: string[]) {
-  let tags: string[] = t;
+  let tags: string[] = [];
+  for (const tag in t) {
+    tags.push(tag);
+  }
   tags.length = Lengths.max_sound_tags;
   tags = tags.map((tag) => tag.trim().replace(/\s{2,}/g, " "));
   tags = tags.filter((tag) => isTagOk(tag));
@@ -157,7 +164,6 @@ export function indexTags(t: string[]) {
     indx.push(tags[1] + "|" + tags[2]);
     indx.push(tags[0] + "|" + tags[1] + "|" + tags[2]);
   }
-
   return indx;
 }
 
@@ -180,7 +186,7 @@ export function generateSoundId({
   const max_name_length = Math.trunc(Math.random() * 5) + 15;
   let cleaned_split = new Graphemer().splitGraphemes(name);
   cleaned_split.forEach((grapheme) =>
-    Rex.uid_allowed_chars.test(grapheme) ? grapheme : "_"
+    Rex.allowed_chars_filename.test(grapheme) ? grapheme : "_"
   );
   // replace duplicate underscores with one so doesnt match __.*__
   let cleaned_name = cleaned_split

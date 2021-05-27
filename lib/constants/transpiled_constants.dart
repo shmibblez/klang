@@ -105,6 +105,7 @@ class ErrorCodes {
   static const invalid_pswd = "ip";
   static const invalid_sound_name = "is";
   static const mission_failed = "mf";
+  static const unauthenticated = "ua";
   static const internal = "internal";
   static const no_sound = "ns";
   static const unsupported_file_extension = "uf";

@@ -42,7 +42,8 @@ class MyApp extends StatelessWidget {
 //   - everything provider in 1st level provides needs to be re-provided by page container navigator so it's children can access it
 
 class _InitialSetup extends StatefulWidget {
-  final GlobalKey _initialSetupKey = GlobalKey();
+  final GlobalKey _blocKey = GlobalKey();
+  final GlobalKey _authKey = GlobalKey();
 
   @override
   State<StatefulWidget> createState() {
@@ -101,9 +102,10 @@ class _InitialSetupState extends State<_InitialSetup> {
   // only after signing in first and then hot reloading. Maybe auth stream getting reset or something, or not reading status properly?
   Widget _blocSetup() {
     return MultiBlocProvider(
-      key: widget._initialSetupKey,
+      key: widget._blocKey,
       providers: [
         BlocProvider(
+          key: widget._authKey,
           lazy: false,
           create: (_) => AuthCubit(
             null,
@@ -123,15 +125,6 @@ class _InitialSetupState extends State<_InitialSetup> {
     );
   }
 }
-
-// enum LoginResult {
-//   success,
-//   invalid_email,
-//   user_disabled,
-//   user_not_found,
-//   wrong_password,
-//   error,
-// }
 
 class UserState {
   UserState(this.user) {
@@ -153,7 +146,10 @@ class UserState {
 
 class AuthCubit extends Cubit<UserState> {
   AuthCubit(UserState initialState, Stream<User> userStream)
-      : super(initialState) {
+      : _userStream = userStream,
+        super(initialState) {
+    debugPrint("----new auth cubit created, user, running _onCreate()");
+    _onCreate();
     userStream.map<UserState>((event) {
       _lastUser = event;
       return UserState(event);
@@ -163,6 +159,13 @@ class AuthCubit extends Cubit<UserState> {
     });
   }
 
+  void _onCreate() async {
+    debugPrint("----_onCreate(), last user: $_lastUser");
+    _lastUser = await _userStream.first;
+    debugPrint("----_onCreate(), last user after waiting; $_lastUser");
+  }
+
+  final Stream<User> _userStream;
   User _lastUser;
 
   bool get loggedIn => state?.loggedIn ?? UserState(_lastUser).loggedIn;
@@ -205,7 +208,7 @@ class AuthCubit extends Cubit<UserState> {
   }
 }
 
-// TODO: add optional message param
+// # could add message when loading
 class TouchEnabledCubit extends Cubit<bool> {
   TouchEnabledCubit(bool touchEnabled) : super(touchEnabled);
 

@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'dart:typed_data';
 
 import 'package:cloud_functions/cloud_functions.dart';
@@ -29,11 +31,14 @@ enum CreateAccountResult {
   network_request_failed,
 }
 
-enum AddSoundResult {
+enum CreateSoundResult {
   success,
-  access_denied,
-  lost_connection,
-  upload_failed,
+  unsupported_file_extension,
+  no_sound,
+  file_too_big,
+  unauthenticated,
+  invalid_sound_name,
+  mission_failed,
 }
 
 /// combo between Firebase and HTTP
@@ -87,6 +92,26 @@ class FirePP {
         return "something went wrong, please try again later or if you can, send us an email describing what went wrong and we'll try to fix it asap";
     }
     throw "unknown CreateAccountResult: \"$c\"";
+  }
+
+  static String translateCreateSoundResult(CreateSoundResult r) {
+    switch (r) {
+      case CreateSoundResult.success:
+        return "success - sound uploaded";
+      case CreateSoundResult.unsupported_file_extension:
+        return "unsupported sound extension, supported extensions are: ${Lengths.supported_sound_file_extensions.join(", ")}";
+      case CreateSoundResult.no_sound:
+        return "no sound file received";
+      case CreateSoundResult.file_too_big:
+        return "file size is too big, max is ${Lengths.max_sound_file_size_bytes / 1000000} MB";
+      case CreateSoundResult.unauthenticated:
+        return "user not authenticated";
+      case CreateSoundResult.invalid_sound_name:
+        return "invalid sound name";
+      case CreateSoundResult.mission_failed:
+        return "something failed, might have something to do with the sound file. If you can, send us an email with the sound attached and we'll investigate the problem. Feel free to include any other non-personal info that may be relevant.";
+    }
+    throw "unknown CreateSoundResult: \"$r\"";
   }
 
   /// returns [LoginResult] to inform result
@@ -143,8 +168,8 @@ class FirePP {
     try {
       await functions.httpsCallable("cu").call(data);
     } catch (e) {
-      debugPrint("*received error: $e");
-      switch ((e as FirebaseFunctionsException).message) {
+      debugPrint("*create_account: received error: $e");
+      switch ((e as FirebaseFunctionsException).message.toLowerCase()) {
         case ErrorCodes.invalid_username:
           return CreateAccountResult.invalid_username;
         case ErrorCodes.invalid_email:
@@ -162,7 +187,7 @@ class FirePP {
         case ErrorCodes.internal:
           return CreateAccountResult.internal;
         default:
-          throw "unknown error code when creating user: \"${(e as FirebaseFunctionsException).message}\"";
+          throw "create_user: unknown error code: \"${(e as FirebaseFunctionsException).message.toLowerCase()}\"";
       }
     }
     return CreateAccountResult.success;
@@ -175,19 +200,56 @@ class FirePP {
   /// [uid] - creator id
   /// [explicit] - whether sound is explicit
   /// [fileBytes] - sound file's bytes
-  static Future<AddSoundResult> addSound({
+  static Future<CreateSoundResult> create_sound({
     @required String name,
     @required Set<String> tags,
     @required String description,
     @required String url,
-    @required String uid,
     @required bool explicit,
     @required Uint8List fileBytes,
+    @required String fileName,
   }) async {
     FirebaseStorage storage = FirebaseStorage.instance;
+    FirebaseFunctions functions = FirebaseFunctions.instance;
 
     if (_testing) {
       storage.useEmulator(host: "localhost", port: _storagePort);
+      functions.useFunctionsEmulator(
+        origin: "http://localhost:$_functionsPort",
+      );
+    }
+
+    final data = {
+      Info.item_name: name,
+      Info.tags: tags.join(","),
+      Info.description: description,
+      Info.source_url: url,
+      Properties.explicit: explicit,
+      FunctionParams.sound_file_bytes: fileBytes,
+      FunctionParams.sound_file_name: fileName,
+    };
+
+    try {
+      await functions.httpsCallable("cs").call(data);
+    } catch (e) {
+      debugPrint("*create_sound: received error: $e");
+      switch ((e as FirebaseFunctionsException).message.toLowerCase()) {
+        case ErrorCodes.unsupported_file_extension:
+          return CreateSoundResult.unsupported_file_extension;
+        case ErrorCodes.no_sound:
+          return CreateSoundResult.no_sound;
+        case ErrorCodes.file_too_big:
+          return CreateSoundResult.file_too_big;
+        case ErrorCodes.unauthenticated:
+          return CreateSoundResult.unauthenticated;
+        case ErrorCodes.invalid_sound_name:
+          return CreateSoundResult.invalid_sound_name;
+        case ErrorCodes.mission_failed:
+          return CreateSoundResult.mission_failed;
+          break;
+        default:
+          throw "create_sound: unknown error code: \"${(e as FirebaseFunctionsException).message.toLowerCase()}\"";
+      }
     }
 
     // TODO: upload sound here
@@ -217,6 +279,6 @@ class FirePP {
     //.
     // storage.ref().put
 
-    return AddSoundResult.success;
+    return CreateSoundResult.success;
   }
 }

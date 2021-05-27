@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 class KlangPadding {
   static const EdgeInsetsGeometry formTextFieldPadding = EdgeInsets.all(8);
   static const EdgeInsetsGeometry formButtonPadding = EdgeInsets.all(8.0);
+  static const EdgeInsetsGeometry formFieldPadding = EdgeInsets.all(8.0);
 }
 
 class SnackBarMessageText extends Text {
