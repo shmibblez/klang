@@ -14,3 +14,4 @@ admin.initializeApp();
 // export functions
 export { create_user as cu } from "./user";
 export { create_sound as cs } from "./storage";
+export {search as s} from "./search";

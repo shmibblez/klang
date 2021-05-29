@@ -49,7 +49,7 @@ export class FirestoreSound {
         [Info.timestamp_created]: admin.firestore.FieldValue.serverTimestamp(),
         [Info.timestamp_updated]: admin.firestore.FieldValue.serverTimestamp(),
         [Info.storage]: {
-          [Info.audio_file_bucket]: fileBucket, //obj.bucket,
+          [Info.audio_file_bucket]: fileBucket, // obj.bucket,
           [Info.audio_file_path]: filePath, // obj.name,
         },
       },

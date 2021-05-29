@@ -123,6 +123,7 @@ class FirePP {
       if (_testing) {
         await FirebaseAuth.instance.useEmulator("http://localhost:$_authPort");
       }
+      await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
       await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
     } catch (e) {
@@ -168,7 +169,6 @@ class FirePP {
     try {
       await functions.httpsCallable("cu").call(data);
     } catch (e) {
-      debugPrint("*create_account: received error: $e");
       switch ((e as FirebaseFunctionsException).message.toLowerCase()) {
         case ErrorCodes.invalid_username:
           return CreateAccountResult.invalid_username;
@@ -232,7 +232,6 @@ class FirePP {
     try {
       await functions.httpsCallable("cs").call(data);
     } catch (e) {
-      debugPrint("*create_sound: received error: $e");
       switch ((e as FirebaseFunctionsException).message.toLowerCase()) {
         case ErrorCodes.unsupported_file_extension:
           return CreateSoundResult.unsupported_file_extension;
@@ -245,10 +244,13 @@ class FirePP {
         case ErrorCodes.invalid_sound_name:
           return CreateSoundResult.invalid_sound_name;
         case ErrorCodes.mission_failed:
+        case ErrorCodes.internal:
           return CreateSoundResult.mission_failed;
           break;
         default:
-          throw "create_sound: unknown error code: \"${(e as FirebaseFunctionsException).message.toLowerCase()}\"";
+          debugPrint(
+              "**create_sound: unknown error code: \"${(e as FirebaseFunctionsException).message.toLowerCase()}\"");
+          return CreateSoundResult.mission_failed;
       }
     }
 

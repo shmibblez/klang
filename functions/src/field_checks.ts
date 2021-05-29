@@ -61,7 +61,7 @@ export class Rex {
     /^([-!#-'*+/-9=?A-Z^-~]+(\.[-!#-'*+/-9=?A-Z^-~]+)*|"(\[]!#-[^-~\s\t]|(\\[\t\s-~]))+")@[0-9A-Za-z]([0-9A-Za-z-]{0,61}[0-9A-Za-z])?(\.[0-9A-Za-z]([0-9A-Za-z-]{0,61}[0-9A-Za-z])?)+$/; // checks basic allowed email format
   static readonly uid_regex = /^[A-Za-z0-9-]{5,28}$/; // checks if chars allowed and within allowed length
   static readonly password_regex = /^.{5,100}$/; // checks if within allowed length
-  static readonly tag_regex = /^[A-Za-z _-]{3,17}$/; // checks if chars allowed and within allowed length, still need to trim and remove duplicate spaces
+  static readonly tag_regex = /^[A-Za-z0-9 ]{3,17}$/; // checks if chars allowed and within allowed length, still need to trim and remove duplicate spaces
   static readonly uid_banished_chars = /[^A-Za-z0-9-]/g;
   static readonly uid_allowed_chars = /[A-Za-z0-9-]/g;
   static readonly allowed_chars_filename = /[A-Za-z0-9-]/;

@@ -7,5 +7,5 @@ class KlangRegex {
   // chars not allowed in uid
   static final RegExp uid_banished_chars = RegExp(r"[^A-Za-z0-9-]");
   // chars not allowed in tags
-  static final RegExp tag_banished_chars = RegExp(r"[^A-Za-z _-]");
+  static final RegExp tag_banished_chars = RegExp(r"[^A-Za-z0-9 ]");
 }

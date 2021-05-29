@@ -1,8 +1,8 @@
 import { randomBytes } from "crypto";
 import Graphemer from "graphemer";
-import { Lengths } from "./constants/constants";
+import { Lengths, Properties } from "./constants/constants";
 import { reg_strings } from "./constants/regex";
-import { isTagOk, Rex } from "./field_checks";
+import { isTagOk } from "./field_checks";
 
 /**
  *
@@ -95,16 +95,16 @@ export function indexName(s: string) {
 export function indexProperties(e: boolean, h: boolean) {
   if (!e && !h) {
     // not_explicit & not_hidden
-    return 0;
+    return Properties.not_explicit_and_not_hidden;
   } else if (e && !h) {
     // explicit & not_hidden
-    return 1;
+    return Properties.explicit_and_not_hidden;
   } else if (!e && h) {
     // not_explicit & hidden
-    return 2;
+    return Properties.not_explicit_and_hidden;
   } else if (e && h) {
     // explicit & hidden
-    return 3;
+    return Properties.explicit_and_hidden;
   } else {
     throw new Error("this should not happen");
   }
@@ -130,23 +130,20 @@ export function tagsFromStr(t: string): string[] {
   let tags = t.split(",");
   if (tags.length > Lengths.max_sound_tags)
     tags.length = Lengths.max_sound_tags;
-  // tags = tags.slice(0, Lengths.max_sound_tags)
-  tags = tags.map((tag) => tag.trim().replace(/\s{2,}/g, " "));
+
+  tags.forEach((tag, i, arr) => (arr[i] = tag.trim().replace(/\s{2,}/g, " ")));
   tags = tags.filter((tag) => isTagOk(tag));
-  console.log("---tags.length after filter: " + tags.length);
-  console.log("---tags: " + tags);
   return tags;
 }
 
 // IMPORTANT: only 3 tags can be indexed, can keep it simple
 export function indexTags(t: string[]) {
   let tags: string[] = [];
-  for (const tag in t) {
+  for (const tag of t) {
     tags.push(tag);
   }
-  tags.length = Lengths.max_sound_tags;
-  tags = tags.map((tag) => tag.trim().replace(/\s{2,}/g, " "));
-  tags = tags.filter((tag) => isTagOk(tag));
+  if (tags.length > Lengths.max_sound_tags)
+    tags.length = Lengths.max_sound_tags;
   tags = tags.sort((a, b) => a.localeCompare(b, "en-US"));
 
   if (tags.length <= 0) return [];
@@ -175,31 +172,48 @@ export function indexTags(t: string[]) {
  * @returns string with the format [uid+name], where all characters for name that aren't in [A-Za-z-] are replaced with -, no uid characters are replaced
  */
 export function generateSoundId({
-  uid,
   name,
   randomize_end = false,
 }: {
-  uid: string;
   name: string;
   randomize_end?: boolean;
 }): string {
-  const max_name_length = Math.trunc(Math.random() * 5) + 15;
-  let cleaned_split = new Graphemer().splitGraphemes(name);
-  cleaned_split.forEach((grapheme) =>
-    Rex.allowed_chars_filename.test(grapheme) ? grapheme : "_"
-  );
-  // replace duplicate underscores with one so doesnt match __.*__
-  let cleaned_name = cleaned_split
-    .join("")
-    .substring(0, max_name_length)
-    .replace(/_{2,}/g, "_");
+  // don't need to worry about __.*__
+  let clean_name = name
+    .replace(/[^A-Za-z0-9-]/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/-$/, "")
+    .replace(/^-/g, "");
 
-  if (randomize_end) {
-    cleaned_name += "TODO, random char string";
+  if (clean_name.length < 4) {
+    clean_name += "-" + randomStr(4);
+  } else if (randomize_end) {
+    clean_name += "-" + randomStr(2);
   }
-  // TODO: if randomize end true, add random str to end (copy how firebase generates doc ids)
+  return clean_name;
+}
 
-  let id = `${uid}+${cleaned_name}`;
-
-  return id;
+/**
+ *
+ * @param length length of random string to return
+ * @returns random alphanumeric string of specified [length]
+ */
+export function randomStr(length: number): string {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let str = "";
+  while (str.length < 20) {
+    const bytes = randomBytes(40);
+    bytes.forEach((b) => {
+      // Length of `chars` is 62. We only take bytes between 0 and 62*4-1
+      // (both inclusive). The value is then evenly mapped to indices of `char`
+      // via a modulo operation. If maxValue weren't set, then id could be
+      // bias towards first 3 chars, or first (255 - maxValue) chars
+      const maxValue = 62 * 4 - 1;
+      if (str.length < 20 && b <= maxValue) {
+        str += chars.charAt(b % 62);
+      }
+    });
+  }
+  return str;
 }

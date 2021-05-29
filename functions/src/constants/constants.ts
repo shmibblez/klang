@@ -28,6 +28,10 @@ export class Properties {
   static readonly hidden = "hn";
   static readonly search_keys = "sk";
   static readonly random_seeds = "rs";
+  static readonly not_explicit_and_not_hidden = 0;
+  static readonly explicit_and_not_hidden = 1;
+  static readonly not_explicit_and_hidden = 2;
+  static readonly explicit_and_hidden = 3;
 }
 
 export class Metrics {
@@ -95,6 +99,25 @@ export class FunctionParams {
   static readonly sound_file_name = "sn";
 }
 
+export class Search {
+  static readonly type = "t";
+  static readonly sub_type = "";
+  static readonly sub_type_random = "r";
+  static readonly sub_type_sk = "k";
+  static readonly sub_type_downloads = "d";
+  static readonly sub_type_best = "b";
+  static readonly random_seed_num = "rs";
+  static readonly direction = "d";
+}
+
+export class SearchParamValues {
+  static readonly search_type_user = "u";
+  static readonly search_type_sound = "s";
+  static readonly search_type_list = "l";
+  static readonly direction_asc = "asc";
+  static readonly direction_dsc = "desc";
+}
+
 export class ErrorCodes {
   static readonly invalid_username = "iu";
   static readonly invalid_email = "ie";
@@ -121,9 +144,9 @@ export class Coll {
 }
 
 export class StoragePaths {
-  static readonly sound = "s";
-  static readonly list = "l";
-  static readonly user = "u";
+  static readonly sounds = "s";
+  static readonly lists = "l";
+  static readonly users = "u";
   static readonly sound_file_name = "a";
   static readonly list_image_name = "i";
   static readonly user_image_name = "i";
@@ -131,7 +154,7 @@ export class StoragePaths {
 
 export class Lengths {
   static readonly min_description_length = 0;
-  static readonly max_description_length = 420;
+  static readonly max_description_length = 720;
   static readonly min_username_length = 4;
   static readonly max_username_length = 17;
   static readonly min_uid_length = 7;
@@ -142,7 +165,7 @@ export class Lengths {
   static readonly min_pswd_length = 5;
   static readonly max_pswd_length = 100;
   static readonly min_sound_name_length = 3;
-  static readonly max_sound_name_length = 27;
+  static readonly max_sound_name_length = 47;
   // max file size is 2.5 MB
   static readonly max_sound_file_size_bytes = 2500000;
   static readonly max_sound_duration_millis = 30000;

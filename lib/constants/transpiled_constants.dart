@@ -133,7 +133,7 @@ class StoragePaths {
 
 class Lengths {
   static const min_description_length = 1;
-  static const max_description_length = 420;
+  static const max_description_length = 720;
   static const min_username_length = 4;
   static const max_username_length = 17;
   static const min_uid_length = 7;
@@ -144,7 +144,7 @@ class Lengths {
   static const min_pswd_length = 5;
   static const max_pswd_length = 100;
   static const min_sound_name_length = 3;
-  static const max_sound_name_length = 27;
+  static const max_sound_name_length = 47;
   // max file size is 2.5 MB
   static const max_sound_file_size_bytes = 2500000;
   static const max_sound_duration_millis = 30000;

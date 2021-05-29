@@ -50,9 +50,10 @@ samples, guidance on mobile development, and a full API reference.
 | stuff to do          | done server side | done client side | notes |
 | -------------------- | ---------------- | ---------------- | ----- |
 | navigation           | n/a              | yes              |       |
-| user sign up         | yes              | no               |       |
-| user sign in         | n/a              | no               |       |
-| create sound         | yes              | no               |       |
+| user sign up         | yes              | yes              |       |
+| user sign in         | n/a              | yes              |       |
+| create sound         | yes              | yes              |       |
+| search for sound     | no               | no               |       |
 | set user image       | no               | no               |       |
 | saved sounds         | no               | no               |       |
 | edit sound           | no               | no               |       |

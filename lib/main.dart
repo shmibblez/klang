@@ -42,8 +42,8 @@ class MyApp extends StatelessWidget {
 //   - everything provider in 1st level provides needs to be re-provided by page container navigator so it's children can access it
 
 class _InitialSetup extends StatefulWidget {
-  final GlobalKey _blocKey = GlobalKey();
-  final GlobalKey _authKey = GlobalKey();
+  // final GlobalKey _blocKey = GlobalKey();
+  // final GlobalKey _authKey = GlobalKey();
 
   @override
   State<StatefulWidget> createState() {
@@ -102,15 +102,12 @@ class _InitialSetupState extends State<_InitialSetup> {
   // only after signing in first and then hot reloading. Maybe auth stream getting reset or something, or not reading status properly?
   Widget _blocSetup() {
     return MultiBlocProvider(
-      key: widget._blocKey,
+      // key: widget._blocKey,
       providers: [
         BlocProvider(
-          key: widget._authKey,
+          // key: widget._authKey,
           lazy: false,
-          create: (_) => AuthCubit(
-            null,
-            FirebaseAuth.instance.authStateChanges(),
-          ),
+          create: (_) => AuthCubit(null),
         ),
         BlocProvider(
           lazy: true,
@@ -145,65 +142,30 @@ class UserState {
 }
 
 class AuthCubit extends Cubit<UserState> {
-  AuthCubit(UserState initialState, Stream<User> userStream)
-      : _userStream = userStream,
-        super(initialState) {
-    debugPrint("----new auth cubit created, user, running _onCreate()");
-    _onCreate();
-    userStream.map<UserState>((event) {
-      _lastUser = event;
-      return UserState(event);
-    }).listen((event) {
-      debugPrint("-----new auth event, user signed in: ${event?.loggedIn}");
+  AuthCubit(UserState initialState) : super(initialState) {
+    _resetAuth();
+  }
+
+  StreamSubscription<UserState> _streamSub;
+  Stream<UserState> _stream;
+  bool get loggedIn => state?.loggedIn ?? false;
+  String get uid => state?.uid;
+
+  void _resetAuth() {
+    debugPrint("AuthCubit: _resetAuth()");
+    _streamSub?.cancel();
+    _stream = FirebaseAuth.instance
+        .userChanges()
+        .map<UserState>((event) => UserState(event));
+    _streamSub = _stream.listen((event) {
+      debugPrint("AuthCubit: new user event");
       emit(event);
     });
   }
 
-  void _onCreate() async {
-    debugPrint("----_onCreate(), last user: $_lastUser");
-    _lastUser = await _userStream.first;
-    debugPrint("----_onCreate(), last user after waiting; $_lastUser");
-  }
-
-  final Stream<User> _userStream;
-  User _lastUser;
-
-  bool get loggedIn => state?.loggedIn ?? UserState(_lastUser).loggedIn;
-  String get uid => state?.uid ?? _lastUser?.uid;
-
-  StreamController<UserState> _streamController = StreamController();
-  StreamSink<UserState> get authStreamSink => _streamController.sink;
-  Stream<UserState> get authStream => _streamController.stream;
-
-  // Future<LoginResult> login(String email, String password) async {
-  //   if (state.uid != null) return LoginResult.success;
-  //   try {
-  //     if (FirePP._testing) {
-  //       await FirebaseAuth.instance.useEmulator("http://localhost:$_authPort");
-  //     }
-  //     await FirebaseAuth.instance
-  //         .signInWithEmailAndPassword(email: email, password: password);
-  //     return LoginResult.success;
-  //   } catch (e) {
-  //     switch ((e as FirebaseAuthException).message) {
-  //       case "invalid-email":
-  //         return LoginResult.invalid_email;
-  //       case "user-disabled":
-  //         return LoginResult.user_disabled;
-  //       case "user-not-found":
-  //         return LoginResult.user_not_found;
-  //       case "wrong-password":
-  //         return LoginResult.wrong_password;
-  //       default: // should not happen
-  //         throw "unknown FirebaseAuthException code -> \"${(e as FirebaseAuthException).message}\"";
-  //         return LoginResult.error;
-  //     }
-  //   }
-  // }
-
   @override
   Future<void> close() {
-    _streamController.close();
+    _streamSub.cancel();
     return super.close();
   }
 }
@@ -304,18 +266,28 @@ class Root extends StatefulWidget {
   Root({Key key}) : super(key: key);
 
   @override
-  _RootState createState() => _RootState();
+  _RootState createState() {
+    debugPrint("Root: createState()");
+    return _RootState();
+  }
 }
 
 class _RootState extends State<Root> {
   @override
+  void reassemble() {
+    debugPrint("_RootState reassemble()");
+    BlocProvider.of<AuthCubit>(context)._resetAuth();
+    super.reassemble();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    BlocProvider.of<AuthCubit>(context)._resetAuth();
     return Stack(
       alignment: Alignment.center,
       children: [
         WillPopScope(
           onWillPop: () async {
-            // debugPrint("//////////onWillPop called");
             return false;
           },
           child: MaterialApp.router(
@@ -357,7 +329,6 @@ class KlangMainPage extends StatefulWidget implements KlangPage {
 
   @override
   PageRoutePath get route {
-    // debugPrint("*selected BottomNavCubit item: ${BottomNavCubit.selectedItem}");
     return PageRoutePath.main(
       BottomNavCubit.mapItemToName(BottomNavCubit.selectedItem),
     );
@@ -372,7 +343,6 @@ class _KlangMainPageState extends State<KlangMainPage>
 
   @override
   void initState() {
-    // debugPrint("KlangMainPageState.initState()");
     super.initState();
     _pageController = PageController(initialPage: _selectedPageIndx);
     final BottomNavCubit bottomNavCubit = BlocProvider.of<BottomNavCubit>(
@@ -399,8 +369,6 @@ class _KlangMainPageState extends State<KlangMainPage>
 
   @override
   Widget build(BuildContext context) {
-    // debugPrint(
-    //     "KlangMainPage.build(), history size: ${BrowserHistory().length}");
     super.build(context);
     return Scaffold(
       key: widget.key,
