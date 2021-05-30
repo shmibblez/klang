@@ -41,6 +41,11 @@ enum CreateSoundResult {
   mission_failed,
 }
 
+enum QueryResult {
+  unsupported_query,
+  no_more_items,
+}
+
 /// combo between Firebase and HTTP
 class FirePP {
   static final bool _testing = true && kDebugMode;
@@ -254,33 +259,16 @@ class FirePP {
       }
     }
 
-    // TODO: upload sound here
-
-    // TODO: compress file bytes / convert to .m4a 248 kbps, or just make sure file type valid, and edit when storage function called
-    // if going to edit, convert, or compress audio file in storage functions, need to set config for longer time & more storage ->
-    // need to make sure function can store sound file, temp (2x file size at least), and process doesn't get killed (at least 10 secs? need to check how long it takes to modify audio file)
-
-    // this means storage function will now:
-    // 1. make sure all fields good
-    // 2. modify audio file (convert to m4a, compress, cut if over max sound length)
-    // 3. add firestore doc
-    // if anything fails, how to inform user?
-    //    Potential solution: client-side add task that checks if sound doc exists after some seconds (if upload success), if it does, then show snackbar informing success, if not, show snackbar with error. How to get error?
-    //    Potential solution 2: send notification to user device informing result, here can easily report error reason or success, and can even show notification if user left app after upload
-    //.
-
-    // FIXME: instead of doing above, can do everything in firebase function:
-    // 1. check user upload status / limits
-    // 1.1 check if fields valid
-    // 2. convert bytes to file, then process with ffmpeg, then add to storage
-    // 2.1 check if audio file valid (length, size, etc)
-    // 3. if file upload success, then add sound doc
-    // - using this approach, if there's an error, appropriate message will be thrown
-    // - no need to send notification to inform result
-    //
-    //.
-    // storage.ref().put
+    // FIXME: in firebase functions, need to set timeout & memory -> file processing could take bit longer than usual
 
     return CreateSoundResult.success;
+  }
+
+  static Future<QueryResult> search({
+    @required String queryType,
+    @required String querySubType,
+    @required Map<String, dynamic> data,
+  }) async {
+    // TODO:
   }
 }

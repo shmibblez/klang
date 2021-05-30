@@ -61,6 +61,11 @@ export class FileTooBigError extends HttpsError {
     super("invalid-argument", ErrorCodes.file_too_big, details);
   }
 }
+export class UnsupportedQueryError extends HttpsError {
+  constructor(details?: string) {
+    super("unavailable", ErrorCodes.unsupported_query, details);
+  }
+}
 /**
  * error thrown when something failed unexpectedly
  */

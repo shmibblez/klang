@@ -3,6 +3,7 @@ export class Root {
   static readonly properties = "p";
   static readonly metrics = "m";
   static readonly legal = "f";
+  static readonly deleted = "d";
 }
 
 export class Info {
@@ -11,6 +12,7 @@ export class Info {
   static readonly search_keys = "sk";
   static readonly tags = "tg";
   static readonly tag_keys = "tk";
+  static readonly tag_history = "th";
   static readonly description = "dt";
   static readonly source_url = "rl";
   static readonly creator_id = "cd";
@@ -60,6 +62,26 @@ export class Metrics {
   static readonly millenium_stale = "Ms";
 }
 
+export type KlangTimePeriod =
+  | "tl"
+  | "td"
+  | "tw"
+  | "tm"
+  | "ty"
+  | "tD"
+  | "tC"
+  | "tM";
+export const KlangTimePeriodArr: KlangTimePeriod[] = [
+  Metrics.total,
+  Metrics.this_day,
+  Metrics.this_week,
+  Metrics.this_month,
+  Metrics.this_year,
+  Metrics.this_decade,
+  Metrics.this_century,
+  Metrics.this_millenium,
+];
+
 export class Legal {
   static readonly received_copyright_notices = "rcn";
   static readonly received_trademark_notices = "rtn";
@@ -101,21 +123,20 @@ export class FunctionParams {
 
 export class Search {
   static readonly type = "t";
-  static readonly sub_type = "";
+  static readonly type_user = "u";
+  static readonly type_sound = "s";
+  static readonly type_list = "l";
+  static readonly direction_asc = "asc";
+  static readonly direction_desc = "desc";
+  static readonly sub_type = "y";
   static readonly sub_type_random = "r";
   static readonly sub_type_sk = "k";
   static readonly sub_type_downloads = "d";
   static readonly sub_type_best = "b";
-  static readonly random_seed_num = "rs";
-  static readonly direction = "d";
-}
-
-export class SearchParamValues {
-  static readonly search_type_user = "u";
-  static readonly search_type_sound = "s";
-  static readonly search_type_list = "l";
-  static readonly direction_asc = "asc";
-  static readonly direction_dsc = "desc";
+  static readonly random_seed_num = "n";
+  static readonly direction = "e";
+  static readonly offset = "o";
+  static readonly time_period = "m";
 }
 
 export class ErrorCodes {
@@ -133,6 +154,7 @@ export class ErrorCodes {
   static readonly unsupported_file_extension = "uf";
   static readonly uid_taken = "ut";
   static readonly email_taken = "et";
+  static readonly unsupported_query = "uq";
 }
 
 // collection names
@@ -181,4 +203,41 @@ export class Misc {
   static readonly storage_bucket = "klang-7.appspot.com";
   static readonly storage_sound_file_ext = ".aac";
   static readonly storage_sound_file_mime = "aac";
+  static readonly wildcard_str = "";
+}
+
+export class FieldMasks {
+  // for sound list item
+  static readonly public_sound_search = [
+    `${Root.info}.${Info.item_name}`,
+    `${Root.info}.${Info.tags}`,
+    `${Root.info}.${Info.description}`,
+    `${Root.info}.${Info.source_url}`,
+    `${Root.info}.${Info.creator_id}`,
+    `${Root.info}.${Info.timestamp_created}`,
+    `${Root.info}.${Info.timestamp_updated}`,
+    `${Root.info}.${Info.storage}`,
+    // `${Root.info}.${Info.storage}.${Info.audio_file_bucket}`,
+    // `${Root.info}.${Info.storage}.${Info.audio_file_path}`,
+    `${Root.properties}.${Properties.explicit}`,
+    `${Root.metrics}.${Metrics.downloads}.${Metrics.total}`,
+    `${Root.metrics}.${Metrics.saves}.${Metrics.total}`,
+  ];
+  // for user list item
+  static readonly public_user_search = [
+    // TODO: what else?
+    `${Root.info}.${Info.item_name}`,
+    `${Root.info}.${Info.tags}`,
+    `${Root.info}.${Info.tag_history}`,
+    `${Root.info}.${Info.description}`,
+    `${Root.info}.${Info.timestamp_created}`,
+    `${Root.info}.${Info.timestamp_updated}`,
+    `${Root.info}.${Info.storage}`,
+    // `${Root.info}.${Info.storage}.${Info.audio_file_bucket}`,
+    // `${Root.info}.${Info.storage}.${Info.audio_file_path}`,
+    `${Root.deleted}`,
+    `${Root.properties}.${Properties.explicit}`,
+    `${Root.metrics}.${Metrics.downloads}.${Metrics.total}`,
+    `${Root.metrics}.${Metrics.saves}.${Metrics.total}`,
+  ];
 }
