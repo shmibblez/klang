@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:klang/constants/regex.dart';
-import 'package:klang/constants/transpiled_constants.dart';
+import 'package:klang/constants/klang_constants.dart';
 import 'package:klang/http_helper.dart';
 import 'package:klang/main.dart';
 import 'package:klang/page_router.dart';
@@ -284,7 +284,7 @@ class _AddPageState extends State<AddPage> {
 
     BlocProvider.of<TouchEnabledCubit>(context).disableTouch();
 
-    CreateSoundResult r = await FirePP.create_sound(
+    CreateSoundResultMessage r = await FirePP.create_sound(
       name: _nameController.text,
       tags: _tags,
       description: _descController.text,
@@ -296,14 +296,14 @@ class _AddPageState extends State<AddPage> {
 
     final msg = FirePP.translateCreateSoundResult(r);
     ScaffoldMessenger.of(context).showSnackBar(
-      r == CreateSoundResult.success
+      r == CreateSoundResultMessage.success
           ? SuccessSnackbar(msg)
           : ErrorSnackbar(msg),
     );
 
     // TODO: not resetting for some reason, just figured out why -> key might change, but values remain, need to reset all values
     // this means can remove _resets and KeyedSubtree parent
-    if (r == CreateSoundResult.success) {
+    if (r == CreateSoundResultMessage.success) {
       _resetForm();
     }
     BlocProvider.of<TouchEnabledCubit>(context).enableTouch();

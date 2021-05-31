@@ -7,9 +7,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:klang/constants/transpiled_constants.dart';
+import 'package:klang/constants/klang_constants.dart';
+import 'package:klang/objects/klang_sound.dart';
 
-enum LoginResult {
+enum LoginResultMessage {
   success,
   invalid_email,
   wrong_password,
@@ -18,7 +19,7 @@ enum LoginResult {
   network_request_failed,
 }
 
-enum CreateAccountResult {
+enum CreateAccountResultMessage {
   success,
   invalid_username,
   invalid_email,
@@ -31,7 +32,7 @@ enum CreateAccountResult {
   network_request_failed,
 }
 
-enum CreateSoundResult {
+enum CreateSoundResultMessage {
   success,
   unsupported_file_extension,
   no_sound,
@@ -39,11 +40,19 @@ enum CreateSoundResult {
   unauthenticated,
   invalid_sound_name,
   mission_failed,
+  internal,
 }
 
-enum QueryResult {
-  unsupported_query,
-  no_more_items,
+enum SearchSoundHomeResultMessage {
+  success,
+  mission_failed,
+  internal,
+}
+
+class SearchSoundHomeResult {
+  SearchSoundHomeResult._(this.resultMsg, this.sounds);
+  final SearchSoundHomeResultMessage resultMsg;
+  final List sounds;
 }
 
 /// combo between Firebase and HTTP
@@ -56,71 +65,72 @@ class FirePP {
   static final _hostingPort = "5000";
   static final _storagePort = 9199;
 
-  static String translateLoginResult(LoginResult l) {
+  static String translateLoginResult(LoginResultMessage l) {
     switch (l) {
-      case LoginResult.success:
+      case LoginResultMessage.success:
         return "success";
-      case LoginResult.invalid_email:
+      case LoginResultMessage.invalid_email:
         return "invalid email";
-      case LoginResult.wrong_password:
+      case LoginResultMessage.wrong_password:
         return "wrong password";
-      case LoginResult.user_disabled:
+      case LoginResultMessage.user_disabled:
         return "user not enabled";
-      case LoginResult.user_not_found:
+      case LoginResultMessage.user_not_found:
         return "unknown email - it doesn't correspond to an existing user";
-      case LoginResult.network_request_failed:
+      case LoginResultMessage.network_request_failed:
         return "failed to send network request, make sure you're connected";
     }
     throw "unknow LoginResult: \"$l\"";
   }
 
-  static String translateCreateAccountResult(CreateAccountResult c) {
+  static String translateCreateAccountResult(CreateAccountResultMessage c) {
     switch (c) {
-      case CreateAccountResult.success:
+      case CreateAccountResultMessage.success:
         return "success";
-      case CreateAccountResult.invalid_username:
+      case CreateAccountResultMessage.invalid_username:
         return "invalid username";
-      case CreateAccountResult.invalid_email:
+      case CreateAccountResultMessage.invalid_email:
         return "invalid email";
-      case CreateAccountResult.invalid_uid:
+      case CreateAccountResultMessage.invalid_uid:
         return "invalid uid";
-      case CreateAccountResult.invalid_pswd:
+      case CreateAccountResultMessage.invalid_pswd:
         return "invalid password";
-      case CreateAccountResult.uid_taken:
+      case CreateAccountResultMessage.uid_taken:
         return "uid already in use";
-      case CreateAccountResult.email_taken:
+      case CreateAccountResultMessage.email_taken:
         return "email already in use";
-      case CreateAccountResult.network_request_failed:
+      case CreateAccountResultMessage.network_request_failed:
         return "failed to send network request, make sure you're connected";
-      case CreateAccountResult.missionFailed:
-      case CreateAccountResult.internal:
+      case CreateAccountResultMessage.missionFailed:
+      case CreateAccountResultMessage.internal:
         return "something went wrong, please try again later or if you can, send us an email describing what went wrong and we'll try to fix it asap";
     }
     throw "unknown CreateAccountResult: \"$c\"";
   }
 
-  static String translateCreateSoundResult(CreateSoundResult r) {
+  static String translateCreateSoundResult(CreateSoundResultMessage r) {
     switch (r) {
-      case CreateSoundResult.success:
+      case CreateSoundResultMessage.success:
         return "success - sound uploaded";
-      case CreateSoundResult.unsupported_file_extension:
+      case CreateSoundResultMessage.unsupported_file_extension:
         return "unsupported sound extension, supported extensions are: ${Lengths.supported_sound_file_extensions.join(", ")}";
-      case CreateSoundResult.no_sound:
+      case CreateSoundResultMessage.no_sound:
         return "no sound file received";
-      case CreateSoundResult.file_too_big:
+      case CreateSoundResultMessage.file_too_big:
         return "file size is too big, max is ${Lengths.max_sound_file_size_bytes / 1000000} MB";
-      case CreateSoundResult.unauthenticated:
+      case CreateSoundResultMessage.unauthenticated:
         return "user not authenticated";
-      case CreateSoundResult.invalid_sound_name:
+      case CreateSoundResultMessage.invalid_sound_name:
         return "invalid sound name";
-      case CreateSoundResult.mission_failed:
+      case CreateSoundResultMessage.internal:
+      case CreateSoundResultMessage.mission_failed:
         return "something failed, might have something to do with the sound file. If you can, send us an email with the sound attached and we'll investigate the problem. Feel free to include any other non-personal info that may be relevant.";
     }
     throw "unknown CreateSoundResult: \"$r\"";
   }
 
-  /// returns [LoginResult] to inform result
-  static Future<LoginResult> login({
+  /// returns [LoginResultMessage] to inform result
+  static Future<LoginResultMessage> login({
     @required String email,
     @required String password,
   }) async {
@@ -134,25 +144,25 @@ class FirePP {
     } catch (e) {
       switch ((e as FirebaseAuthException).code) {
         case "invalid-email":
-          return LoginResult.invalid_email;
+          return LoginResultMessage.invalid_email;
         case "user-disabled":
-          return LoginResult.user_disabled;
+          return LoginResultMessage.user_disabled;
         case "user-not-found":
-          return LoginResult.user_not_found;
+          return LoginResultMessage.user_not_found;
         case "wrong-password":
-          return LoginResult.wrong_password;
+          return LoginResultMessage.wrong_password;
         case "network-request-failed":
-          return LoginResult.network_request_failed;
+          return LoginResultMessage.network_request_failed;
         default:
           throw "unknown FirebaseAuthException error code: \"${(e as FirebaseAuthException).code}\"";
       }
     }
-    return LoginResult.success;
+    return LoginResultMessage.success;
   }
 
   /// call http create account function
-  /// returns [CreateAccountResult] to inform result
-  static Future<CreateAccountResult> createAccount({
+  /// returns [CreateAccountResultMessage] to inform result
+  static Future<CreateAccountResultMessage> createAccount({
     @required String email,
     @required String username,
     @required String uid,
@@ -176,26 +186,26 @@ class FirePP {
     } catch (e) {
       switch ((e as FirebaseFunctionsException).message.toLowerCase()) {
         case ErrorCodes.invalid_username:
-          return CreateAccountResult.invalid_username;
+          return CreateAccountResultMessage.invalid_username;
         case ErrorCodes.invalid_email:
-          return CreateAccountResult.invalid_email;
+          return CreateAccountResultMessage.invalid_email;
         case ErrorCodes.invalid_uid:
-          return CreateAccountResult.invalid_uid;
+          return CreateAccountResultMessage.invalid_uid;
         case ErrorCodes.invalid_pswd:
-          return CreateAccountResult.invalid_pswd;
+          return CreateAccountResultMessage.invalid_pswd;
         case ErrorCodes.uid_taken:
-          return CreateAccountResult.uid_taken;
+          return CreateAccountResultMessage.uid_taken;
         case ErrorCodes.mission_failed:
         case ErrorCodes.email_taken:
-          return CreateAccountResult.email_taken;
-          return CreateAccountResult.missionFailed;
+          return CreateAccountResultMessage.email_taken;
+          return CreateAccountResultMessage.missionFailed;
         case ErrorCodes.internal:
-          return CreateAccountResult.internal;
+          return CreateAccountResultMessage.internal;
         default:
           throw "create_user: unknown error code: \"${(e as FirebaseFunctionsException).message.toLowerCase()}\"";
       }
     }
-    return CreateAccountResult.success;
+    return CreateAccountResultMessage.success;
   }
 
   /// [name] - sound name
@@ -205,7 +215,7 @@ class FirePP {
   /// [uid] - creator id
   /// [explicit] - whether sound is explicit
   /// [fileBytes] - sound file's bytes
-  static Future<CreateSoundResult> create_sound({
+  static Future<CreateSoundResultMessage> create_sound({
     @required String name,
     @required Set<String> tags,
     @required String description,
@@ -239,36 +249,95 @@ class FirePP {
     } catch (e) {
       switch ((e as FirebaseFunctionsException).message.toLowerCase()) {
         case ErrorCodes.unsupported_file_extension:
-          return CreateSoundResult.unsupported_file_extension;
+          return CreateSoundResultMessage.unsupported_file_extension;
         case ErrorCodes.no_sound:
-          return CreateSoundResult.no_sound;
+          return CreateSoundResultMessage.no_sound;
         case ErrorCodes.file_too_big:
-          return CreateSoundResult.file_too_big;
+          return CreateSoundResultMessage.file_too_big;
         case ErrorCodes.unauthenticated:
-          return CreateSoundResult.unauthenticated;
+          return CreateSoundResultMessage.unauthenticated;
         case ErrorCodes.invalid_sound_name:
-          return CreateSoundResult.invalid_sound_name;
+          return CreateSoundResultMessage.invalid_sound_name;
         case ErrorCodes.mission_failed:
         case ErrorCodes.internal:
-          return CreateSoundResult.mission_failed;
+          return CreateSoundResultMessage.mission_failed;
           break;
         default:
           debugPrint(
               "**create_sound: unknown error code: \"${(e as FirebaseFunctionsException).message.toLowerCase()}\"");
-          return CreateSoundResult.mission_failed;
+          return CreateSoundResultMessage.mission_failed;
       }
     }
 
     // FIXME: in firebase functions, need to set timeout & memory -> file processing could take bit longer than usual
 
-    return CreateSoundResult.success;
+    return CreateSoundResultMessage.success;
   }
 
-  static Future<QueryResult> search({
-    @required String queryType,
-    @required String querySubType,
+  /// home page shows best or most downloaded sounds
+  /// [metric] is either [Search.sub_type_best] or [Search.sub_type_downloads]
+  /// [time] is a time period in [KlangTimePeriodArr]
+  static Future<SearchSoundHomeResult> search_sounds_home({
+    @required String metric,
+    @required String time,
     @required Map<String, dynamic> data,
   }) async {
-    // TODO:
+    assert(
+      metric == Search.sub_type_best || metric == Search.sub_type_downloads,
+    );
+    assert(KlangTimePeriodArr.contains(time));
+
+    FirebaseFunctions functions = FirebaseFunctions.instance;
+
+    if (_testing) {
+      functions.useFunctionsEmulator(
+        origin: "http://localhost:$_functionsPort",
+      );
+    }
+
+    final data = {
+      Search.type: Search.type_sound,
+      Search.sub_type: metric,
+      Search.time_period: time,
+    };
+
+    try {
+      final result = await functions.httpsCallable("s").call<List>(data);
+      List<KlangSound> sounds = KlangSound.fromJsonArr(result.data);
+
+      return SearchSoundHomeResult._(
+        SearchSoundHomeResultMessage.success,
+        sounds,
+      );
+    } catch (e) {
+      switch ((e as FirebaseFunctionsException).message.toLowerCase()) {
+        case ErrorCodes.internal:
+        case ErrorCodes.mission_failed:
+          return SearchSoundHomeResult._(
+            SearchSoundHomeResultMessage.internal,
+            null,
+          );
+        default:
+          debugPrint(
+              "**search_sounds_home: unknown error code: \"${(e as FirebaseFunctionsException).message.toLowerCase()}\"");
+          return SearchSoundHomeResult._(
+            SearchSoundHomeResultMessage.mission_failed,
+            null,
+          );
+      }
+    }
+  }
+}
+
+class TestFirePP {
+  static Future<void> create_test_sounds() async {
+    if (!FirePP._testing) return;
+    FirebaseFunctions functions = FirebaseFunctions.instance;
+    functions.useFunctionsEmulator(
+      origin: "http://localhost:${FirePP._functionsPort}",
+    );
+
+    await functions.httpsCallable("_cts").call();
+    return;
   }
 }

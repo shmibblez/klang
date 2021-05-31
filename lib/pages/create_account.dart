@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:klang/constants/regex.dart';
-import 'package:klang/constants/transpiled_constants.dart';
+import 'package:klang/constants/klang_constants.dart';
 import 'package:klang/http_helper.dart';
 import 'package:klang/main.dart';
 import 'package:klang/page_router.dart';
@@ -151,16 +151,16 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     BlocProvider.of<TouchEnabledCubit>(context).disableTouch();
 
     // if create account succeeds, should reload automatically thanks to AuthCubit
-    final CreateAccountResult r = await FirePP.createAccount(
+    final CreateAccountResultMessage r = await FirePP.createAccount(
         email: _emailController.text,
         username: _usernameController.text,
         uid: _uidController.text,
         password: _pswdController.text);
 
-    if (r == CreateAccountResult.success) {
-      LoginResult lr = await FirePP.login(
+    if (r == CreateAccountResultMessage.success) {
+      LoginResultMessage lr = await FirePP.login(
           email: _emailController.text, password: _pswdController.text);
-      if (lr != LoginResult.success) {
+      if (lr != LoginResultMessage.success) {
         throw "created account but failed to log in, shouldn't happen";
       }
     }
@@ -169,7 +169,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
     String rm = FirePP.translateCreateAccountResult(r);
     ScaffoldMessenger.of(context).showSnackBar(
-      r == CreateAccountResult.success
+      r == CreateAccountResultMessage.success
           ? SuccessSnackbar(rm)
           : ErrorSnackbar(rm),
     );

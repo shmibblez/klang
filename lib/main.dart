@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:klang/http_helper.dart';
 import 'package:klang/page_router.dart';
 import 'package:klang/pages/add.dart';
 import 'package:klang/pages/auth_page.dart';
@@ -374,6 +376,16 @@ class _KlangMainPageState extends State<KlangMainPage>
       key: widget.key,
       appBar: AppBar(
         title: Text("klang"),
+        actions: [
+          // if in test mode, show button that when pressed, creates sounds for testing
+          if (!kReleaseMode)
+            IconButton(
+              onPressed: () async {
+                await TestFirePP.create_test_sounds();
+              },
+              icon: Icon(Icons.music_note_rounded),
+            )
+        ],
       ),
       body: PageView(
         controller: _pageController,

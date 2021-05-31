@@ -15,3 +15,6 @@ admin.initializeApp();
 export { create_user as cu } from "./user";
 export { create_sound as cs } from "./storage";
 export { search as s } from "./search";
+
+// FIXME: only for testing
+export { create_test_sounds as _cts } from "./testing";
