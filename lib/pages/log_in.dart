@@ -88,14 +88,14 @@ class _LoginPageState extends State<LoginPage> {
     BlocProvider.of<TouchEnabledCubit>(context).disableTouch();
 
     // if login succeeds, should reload automatically thanks to AuthCubit
-    LoginResultMessage r = await FirePP.login(
+    LoginResultMsg r = await FirePP.login(
         email: _emailController.text, password: _pswdController.text);
 
     BlocProvider.of<TouchEnabledCubit>(context).enableTouch();
 
-    String rm = FirePP.translateLoginResult(r);
+    String rm = FirePP.translateLoginMsg(r);
     ScaffoldMessenger.of(context).showSnackBar(
-      r == LoginResultMessage.success ? SuccessSnackbar(rm) : ErrorSnackbar(rm),
+      r == LoginResultMsg.success ? SuccessSnackbar(rm) : ErrorSnackbar(rm),
     );
   }
 }

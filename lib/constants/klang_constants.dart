@@ -125,6 +125,10 @@ class FunctionParams {
   static const sound_file_name = "sn";
 }
 
+class FunctionResult {
+  static const items = "i";
+}
+
 class Search {
   static const type = "t";
   static const type_user = "u";
@@ -207,5 +211,5 @@ class Misc {
   static const storage_bucket = "klang-7.appspot.com";
   static const storage_sound_file_ext = ".aac";
   static const storage_sound_file_mime = "aac";
-  static const wildcard_str = "";
+  static const wildcard_str = "?";
 }

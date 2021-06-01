@@ -1,8 +1,9 @@
-import { Info, Properties, Root } from "../constants/constants";
+import { Info, Metrics, Properties, Root } from "../constants/constants";
 import {
   indexName,
   indexProperties,
   indexTags,
+  initMetric,
   randomSeeds,
 } from "../field_generators";
 import * as admin from "firebase-admin";
@@ -43,8 +44,8 @@ export class FirestoreSound {
         },
         [Info.tags]: tags,
         [Info.tag_keys]: indexTags(tags),
-        [Info.description]: description,
-        [Info.source_url]: source_url ?? undefined,
+        [Info.description]: description ?? "",
+        [Info.source_url]: source_url ?? "",
         [Info.creator_id]: creator_id,
         [Info.timestamp_created]: admin.firestore.FieldValue.serverTimestamp(),
         [Info.timestamp_updated]: admin.firestore.FieldValue.serverTimestamp(),
@@ -58,6 +59,12 @@ export class FirestoreSound {
         [Properties.hidden]: false,
         [Properties.search_keys]: indexProperties(explicit, false),
         [Properties.random_seeds]: randomSeeds(),
+      },
+      [Root.metrics]: {
+        [Metrics.downloads]: initMetric(),
+        [Metrics.saves]: initMetric(),
+        [Metrics.best]: initMetric(),
+        [Metrics.parent_lists]: initMetric(),
       },
       // no metrics when created
       // no legal info when created

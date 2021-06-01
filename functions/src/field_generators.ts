@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto";
 import Graphemer from "graphemer";
-import { Lengths, Properties } from "./constants/constants";
+import { Lengths, Metrics, Misc, Properties } from "./constants/constants";
 import { reg_strings } from "./constants/regex";
 import { isTagOk } from "./field_checks";
 
@@ -74,7 +74,8 @@ export function indexName(s: string) {
     .replace(/\s+/g, " ");
   _indexGraphemes(phase4);
 
-  //
+  // add wildcard string (matches nothing -> "")
+  keys[Misc.wildcard_str] = true;
 
   return keys;
 
@@ -125,6 +126,19 @@ export function randomSeeds() {
   }
 }
 
+export function initMetric() {
+  return {
+    [Metrics.total]: 0,
+    [Metrics.this_day]: 0,
+    [Metrics.this_week]: 0,
+    [Metrics.this_month]: 0,
+    [Metrics.this_year]: 0,
+    [Metrics.this_decade]: 0,
+    [Metrics.this_century]: 0,
+    [Metrics.this_millenium]: 0,
+  };
+}
+
 export function tagsFromStr(t: string): string[] {
   if (t.length <= 0) return [];
   let tags = t.split(",");
@@ -146,8 +160,10 @@ export function indexTags(t: string[]) {
     tags.length = Lengths.max_sound_tags;
   tags = tags.sort((a, b) => a.localeCompare(b, "en-US"));
 
-  if (tags.length <= 0) return [];
-  const indx: string[] = [];
+  // add wildcard tag str
+  const indx: string[] = [Misc.wildcard_str];
+
+  if (tags.length <= 0) return indx;
   if (tags.length >= 1) {
     indx.push(tags[0]);
   }

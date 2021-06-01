@@ -1,7 +1,14 @@
-import { Root, Info, Properties, Username } from "../constants/constants";
+import {
+  Root,
+  Info,
+  Properties,
+  Username,
+  Metrics,
+} from "../constants/constants";
 import {
   indexName,
   indexProperties,
+  initMetric,
   randomSeeds,
 } from "../field_generators";
 import * as admin from "firebase-admin";
@@ -9,13 +16,9 @@ import * as admin from "firebase-admin";
 // utility class for firestore username docs
 export class FirestoreUsername {
   // generates initial username doc data
-  static initDocData({
-    uid,
-    username,
-  }: {
-    uid: string;
-    username: string;
-  }): { [k: string]: unknown } {
+  static initDocData({ uid, username }: { uid: string; username: string }): {
+    [k: string]: unknown;
+  } {
     return { [Username.username]: username, [Username.uid]: uid };
   }
 }
@@ -32,20 +35,17 @@ export class FirestoreFollower {
 // utility class for firestore user docs
 export class FirestoreUser {
   // generates initial user doc data
-  static initDocData({
-    uid,
-    username,
-  }: {
-    uid: string;
-    username: string;
-  }): { [k: string]: unknown } {
+  static initDocData({ uid, username }: { uid: string; username: string }): {
+    [k: string]: unknown;
+  } {
     return {
       [Root.info]: {
         [Info.id]: uid,
         [Info.item_name]: {
           [Info.item_name]: username,
           [Info.search_keys]: indexName(username),
-          [Info.timestamp_updated]: admin.firestore.FieldValue.serverTimestamp(),
+          [Info.timestamp_updated]:
+            admin.firestore.FieldValue.serverTimestamp(),
         },
         [Info.timestamp_created]: admin.firestore.FieldValue.serverTimestamp(),
         [Info.timestamp_updated]: admin.firestore.FieldValue.serverTimestamp(),
@@ -55,6 +55,13 @@ export class FirestoreUser {
         [Properties.hidden]: false,
         [Properties.search_keys]: indexProperties(false, false),
         [Properties.random_seeds]: randomSeeds(),
+      },
+      [Root.metrics]: {
+        [Metrics.best]: initMetric(),
+        [Metrics.followers]: initMetric(),
+        [Metrics.following]: initMetric(),
+        [Metrics.sounds_created]: initMetric(),
+        [Metrics.lists_created]: initMetric(),
       },
     };
   }

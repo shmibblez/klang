@@ -151,25 +151,25 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     BlocProvider.of<TouchEnabledCubit>(context).disableTouch();
 
     // if create account succeeds, should reload automatically thanks to AuthCubit
-    final CreateAccountResultMessage r = await FirePP.createAccount(
+    final CreateAccountResultMsg r = await FirePP.createAccount(
         email: _emailController.text,
         username: _usernameController.text,
         uid: _uidController.text,
         password: _pswdController.text);
 
-    if (r == CreateAccountResultMessage.success) {
-      LoginResultMessage lr = await FirePP.login(
+    if (r == CreateAccountResultMsg.success) {
+      LoginResultMsg lr = await FirePP.login(
           email: _emailController.text, password: _pswdController.text);
-      if (lr != LoginResultMessage.success) {
+      if (lr != LoginResultMsg.success) {
         throw "created account but failed to log in, shouldn't happen";
       }
     }
 
     BlocProvider.of<TouchEnabledCubit>(context).enableTouch();
 
-    String rm = FirePP.translateCreateAccountResult(r);
+    String rm = FirePP.translateCreateAccountMsg(r);
     ScaffoldMessenger.of(context).showSnackBar(
-      r == CreateAccountResultMessage.success
+      r == CreateAccountResultMsg.success
           ? SuccessSnackbar(rm)
           : ErrorSnackbar(rm),
     );

@@ -39,18 +39,25 @@ class KlangSound {
     final updated_secs = map[Root.info][Info.timestamp_created]["_seconds"];
     final updated_nano = map[Root.info][Info.timestamp_created]["_nanoseconds"];
     return KlangSound._(
-      name: map[Root.info][Info.item_name],
-      tags: map[Root.info][Info.tags] ?? List.empty(),
-      description: map[Root.info][Info.description],
-      source_url: map[Root.info][Info.source_url],
+      name: map[Root.info][Info.item_name][Info.item_name],
+      tags: (map[Root.info][Info.tags] as List<dynamic>)
+              .map((e) => e.toString())
+              .toList() ??
+          List.empty(),
+      description: map[Root.info][Info.description] ?? "",
+      source_url: map[Root.info][Info.source_url] ?? "",
       creator_id: map[Root.info][Info.creator_id],
       timestamp_created: Timestamp(created_secs, created_nano),
       timestamp_updated: Timestamp(updated_secs, updated_nano),
       audio_file_bucket: map[Root.info][Info.storage][Info.audio_file_bucket],
       audio_file_path: map[Root.info][Info.storage][Info.audio_file_path],
       explicit: map[Root.properties][Properties.explicit],
-      total_downloads: map[Root.metrics][Metrics.downloads][Metrics.total],
-      total_saves: map[Root.metrics][Metrics.saves][Metrics.total],
+      total_downloads: ((map[Root.metrics] ?? const {})[Metrics.downloads] ??
+              const {})[Metrics.total] ??
+          0,
+      total_saves: ((map[Root.metrics] ?? const {})[Metrics.saves] ??
+              const {})[Metrics.total] ??
+          0,
     );
   }
 

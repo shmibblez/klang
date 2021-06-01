@@ -284,7 +284,7 @@ class _AddPageState extends State<AddPage> {
 
     BlocProvider.of<TouchEnabledCubit>(context).disableTouch();
 
-    CreateSoundResultMessage r = await FirePP.create_sound(
+    CreateSoundResultMsg r = await FirePP.create_sound(
       name: _nameController.text,
       tags: _tags,
       description: _descController.text,
@@ -294,16 +294,16 @@ class _AddPageState extends State<AddPage> {
       fileName: _selectedAudioFile.name,
     );
 
-    final msg = FirePP.translateCreateSoundResult(r);
+    final msg = FirePP.translateCreateSoundMsg(r);
     ScaffoldMessenger.of(context).showSnackBar(
-      r == CreateSoundResultMessage.success
+      r == CreateSoundResultMsg.success
           ? SuccessSnackbar(msg)
           : ErrorSnackbar(msg),
     );
 
     // TODO: not resetting for some reason, just figured out why -> key might change, but values remain, need to reset all values
     // this means can remove _resets and KeyedSubtree parent
-    if (r == CreateSoundResultMessage.success) {
+    if (r == CreateSoundResultMsg.success) {
       _resetForm();
     }
     BlocProvider.of<TouchEnabledCubit>(context).enableTouch();

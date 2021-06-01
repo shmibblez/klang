@@ -12,6 +12,7 @@ import {
   KlangTimePeriodArr,
   Metrics,
   FieldMasks,
+  FunctionResult,
 } from "./constants/constants";
 import { UnsupportedQueryError } from "./constants/errors";
 import { isTagOk } from "./field_checks";
@@ -29,7 +30,11 @@ export const search = https.onCall(async (data, context) => {
   query = query.limit(limit);
 
   const snap = await query.get();
-  return snap.docs.map<firestore.DocumentData>((doc) => doc.data());
+  return {
+    [FunctionResult.items]: snap.docs.map<firestore.DocumentData>((doc) =>
+      doc.data()
+    ),
+  };
 });
 
 async function _itemSearch({
@@ -60,8 +65,10 @@ async function _itemSearch({
   query = query.where(
     `${Root.info}.${Info.tag_keys}`,
     "array-contains",
-    tags_sk
+    tags_sk ?? Misc.wildcard_str
   );
+
+  console.log("search: tags_sk: " + tags_sk);
 
   switch (sub_type) {
     case Search.sub_type_downloads:
@@ -71,6 +78,9 @@ async function _itemSearch({
       /**
        *  explicit & tag filters already set
        **/
+      console.log(
+        "search: metric: " + metric + ", time period: " + time_period
+      );
       query = query.orderBy(`${Root.metrics}.${metric}.${time_period}`, "desc");
       query = query.orderBy(firestore.FieldPath.documentId(), "asc");
       if (Array.isArray(offset) && offset.length == 2) {

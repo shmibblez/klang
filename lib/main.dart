@@ -393,11 +393,11 @@ class _KlangMainPageState extends State<KlangMainPage>
         children: [
           HomePage(),
           SearchPage(),
-          // AuthPage(
-          //   child: AddPage(),
-          //   authFallbackPage: LoginPage(showAppBar: false),
-          // ),
-          AddPage(),
+          AuthPage(
+            child: AddPage(),
+            authFallbackPage: LoginPage(showAppBar: false),
+          ),
+          // AddPage(),
           // ShufflePage(),
           AuthPage(
             child: UserPage(uid: null, showAppBar: false),

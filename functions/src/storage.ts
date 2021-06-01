@@ -74,11 +74,11 @@ export const create_sound = functions.https.onCall(async (data, context) => {
   const tags = tagsFromStr(raw_tags_str);
   let raw_description: string | undefined = data[Info.description]; // optional
   if (!isDescriptionOk(raw_description)) {
-    raw_description = undefined;
+    raw_description = "";
   }
   let raw_source_url = data[Info.source_url]; // optional, if not ok then empty
   if (!isUrlOk(raw_source_url)) {
-    raw_source_url == undefined;
+    raw_source_url = "";
   }
   let raw_explicit: boolean = data[Properties.explicit] == false ? false : true; // defaults to true if invalid value received
 
@@ -240,6 +240,7 @@ export const create_sound = functions.https.onCall(async (data, context) => {
   /**
    * {@link phase_5 terminate operation}
    */
+  await _fileCleanup();
 
   return Promise.resolve();
 

@@ -121,6 +121,10 @@ export class FunctionParams {
   static readonly sound_file_name = "sn";
 }
 
+export class FunctionResult {
+  static readonly items = "i";
+}
+
 export class Search {
   static readonly type = "t";
   static readonly type_user = "u";
@@ -203,7 +207,7 @@ export class Misc {
   static readonly storage_bucket = "klang-7.appspot.com";
   static readonly storage_sound_file_ext = ".aac";
   static readonly storage_sound_file_mime = "aac";
-  static readonly wildcard_str = "";
+  static readonly wildcard_str = "?";
 }
 
 export class FieldMasks {
