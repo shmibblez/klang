@@ -113,6 +113,8 @@ class _HomePageState extends State<HomePage>
           buildLoadingItem: () => SoundLoadingListItem(),
           buildFailedToLoadItem: (msg, onRetry) =>
               SoundRetryLoadingListItem(msg: msg, onRetry: onRetry),
+          queryOffset: (sound) =>
+              sound.getMetricQueryOffset(_metric, _timePeriod),
         ));
       });
     }

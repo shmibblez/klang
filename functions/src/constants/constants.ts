@@ -213,7 +213,7 @@ export class Misc {
 export class FieldMasks {
   // for sound list item
   static readonly public_sound_search = [
-    `${Root.info}.${Info.item_name}`,
+    `${Root.info}.${Info.item_name}.${Info.item_name}`,
     `${Root.info}.${Info.tags}`,
     `${Root.info}.${Info.description}`,
     `${Root.info}.${Info.source_url}`,
@@ -224,13 +224,13 @@ export class FieldMasks {
     // `${Root.info}.${Info.storage}.${Info.audio_file_bucket}`,
     // `${Root.info}.${Info.storage}.${Info.audio_file_path}`,
     `${Root.properties}.${Properties.explicit}`,
-    `${Root.metrics}.${Metrics.downloads}.${Metrics.total}`,
-    `${Root.metrics}.${Metrics.saves}.${Metrics.total}`,
+    `${Root.metrics}.${Metrics.downloads}`,
+    `${Root.metrics}.${Metrics.saves}`,
   ];
   // for user list item
   static readonly public_user_search = [
     // TODO: what else?
-    `${Root.info}.${Info.item_name}`,
+    `${Root.info}.${Info.item_name}.${Info.item_name}`,
     `${Root.info}.${Info.tags}`,
     `${Root.info}.${Info.tag_history}`,
     `${Root.info}.${Info.description}`,
@@ -241,7 +241,7 @@ export class FieldMasks {
     // `${Root.info}.${Info.storage}.${Info.audio_file_path}`,
     `${Root.deleted}`,
     `${Root.properties}.${Properties.explicit}`,
-    `${Root.metrics}.${Metrics.downloads}.${Metrics.total}`,
-    `${Root.metrics}.${Metrics.saves}.${Metrics.total}`,
+    `${Root.metrics}.${Metrics.followers}`,
+    `${Root.metrics}.${Metrics.following}`,
   ];
 }

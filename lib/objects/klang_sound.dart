@@ -5,6 +5,7 @@ import 'package:klang/constants/klang_constants.dart';
 
 class KlangSound {
   KlangSound._({
+    this.id,
     this.name,
     this.tags,
     this.description,
@@ -17,8 +18,10 @@ class KlangSound {
     this.explicit,
     this.total_downloads,
     this.total_saves,
-  });
+    metrics,
+  }) : this._metrics = metrics;
 
+  final String id;
   final String name;
   final List<String> tags;
   final String description;
@@ -31,6 +34,7 @@ class KlangSound {
   final bool explicit;
   final int total_downloads;
   final int total_saves;
+  final Map<String, dynamic> _metrics;
 
   // KlangSound.fromJsonObj();
   static KlangSound _fromMap(Map<String, dynamic> map) {
@@ -39,6 +43,7 @@ class KlangSound {
     final updated_secs = map[Root.info][Info.timestamp_created]["_seconds"];
     final updated_nano = map[Root.info][Info.timestamp_created]["_nanoseconds"];
     return KlangSound._(
+      id: map[Root.info][Info.id],
       name: map[Root.info][Info.item_name][Info.item_name],
       tags: (map[Root.info][Info.tags] as List<dynamic>)
               .map((e) => e.toString())
@@ -58,7 +63,12 @@ class KlangSound {
       total_saves: ((map[Root.metrics] ?? const {})[Metrics.saves] ??
               const {})[Metrics.total] ??
           0,
+      metrics: map[Root.metrics] ?? {},
     );
+  }
+
+  List getMetricQueryOffset(String metric, String timePeriod) {
+    return [(_metrics[metric] ?? const {})[timePeriod], this.id];
   }
 
   static List<KlangSound> fromJsonArr(List data) {

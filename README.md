@@ -47,23 +47,23 @@ samples, guidance on mobile development, and a full API reference.
 - 
 
 # checklist
-| stuff to do          | done server side | done client side | notes |
-| -------------------- | ---------------- | ---------------- | ----- |
-| navigation           | n/a              | yes              |       |
-| user sign up         | yes              | yes              |       |
-| user sign in         | n/a              | yes              |       |
-| create sound         | yes              | yes              |       |
-| search for sound     | yes              | no               |       |
-| search for user      | no               | no               |       |
-| set user image       | no               | no               |       |
-| saved sounds         | no               | no               |       |
-| edit sound           | no               | no               |       |
-| sound metric updates | no               | n/a              |       |
-| user metric updates  | no               | n/a              |       |
-| follow user          | no               | no               |       |
-| unfollow user        | no               | no               |       |
-| content reporting    | no               | no               |       |
-| delete user          | no               | no               |       |
+| stuff to do          | server side | client side | notes |
+| -------------------- | ----------- | ----------- | ----- |
+| navigation           | 🚫           | ✅           |       |
+| user sign up         | ✅           | ✅           |       |
+| user sign in         | 🚫           | ✅           |       |
+| create sound         | ✅           | ✅           |       |
+| search for sound     | ✅           | ❌           |       |
+| search for user      | ❌           | ❌           |       |
+| set user image       | ❌           | ❌           |       |
+| saved sounds         | ❌           | ❌           |       |
+| edit sound           | ❌           | ❌           |       |
+| sound metric updates | ❌           | 🚫           |       |
+| user metric updates  | ❌           | 🚫           |       |
+| follow user          | ❌           | ❌           |       |
+| unfollow user        | ❌           | ❌           |       |
+| content reporting    | ❌           | ❌           |       |
+| delete user          | ❌           | ❌           |       |
 
 
 # future features

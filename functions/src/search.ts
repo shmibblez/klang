@@ -54,6 +54,8 @@ async function _itemSearch({
   const sub_type = data[Search.sub_type];
   const offset = data[Search.offset];
 
+  console.log("search: offset: " + offset);
+
   let query: firestore.Query = firestore().collection(coll);
 
   // set explicit & tag filters (common for all user/sound/list queries)
@@ -68,8 +70,6 @@ async function _itemSearch({
     tags_sk ?? Misc.wildcard_str
   );
 
-  console.log("search: tags_sk: " + tags_sk);
-
   switch (sub_type) {
     case Search.sub_type_downloads:
     case Search.sub_type_best:
@@ -78,9 +78,6 @@ async function _itemSearch({
       /**
        *  explicit & tag filters already set
        **/
-      console.log(
-        "search: metric: " + metric + ", time period: " + time_period
-      );
       query = query.orderBy(`${Root.metrics}.${metric}.${time_period}`, "desc");
       query = query.orderBy(firestore.FieldPath.documentId(), "asc");
       if (Array.isArray(offset) && offset.length == 2) {

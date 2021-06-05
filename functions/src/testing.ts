@@ -15,7 +15,7 @@ export const create_test_sounds = functions.https.onCall(
     // only run if testing
     if (process.env.FUNCTIONS_EMULATOR && process.env.FIRESTORE_EMULATOR_HOST) {
       const promises: Promise<any>[] = [];
-      const numSounds = 2;
+      const numSounds = 5;
       const uid = "shmibblez";
       const fileBucket = "klang-7.appspot.com";
 
