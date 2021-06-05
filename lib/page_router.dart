@@ -70,7 +70,7 @@ class PageRouteInformationParser extends RouteInformationParser<PageRoutePath> {
           final searchStr = paths.length >= 3 ? paths[2] : null;
           if (kIsWeb && (ct == null || searchStr == null))
             return PageRoutePath.main("search");
-          return PageRoutePath.search(ct, searchStr);
+          return PageRoutePath.search(searchStr);
         case "add":
           return PageRoutePath.main("add");
         // case "shuffle":
@@ -174,7 +174,7 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
     // if platform is web, gets called when page added or removed (going forward or backward in history)
     if (kIsWeb) {
       if (path.isMain) {
-        _makeMainPageActiveWeb(BottomNavCubit.mapNameToItem(path.elements[0]));
+        _makeMainPageActiveWeb(NavCubit.mapNameToItem(path.elements[0]));
         return null;
       }
       if (_pages.isNotEmpty) {
@@ -193,7 +193,7 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
     if (path.isMain) {
       if (_pages.last is KlangMainPage) {
         _makeMainPageActiveNotWeb(
-          BottomNavCubit.mapNameToItem(path.elements[0]),
+          NavCubit.mapNameToItem(path.elements[0]),
         );
       } else {
         // shouldnt happen, will end up returning UnknownPage()
@@ -243,12 +243,8 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
   KlangPage _genPageFrom(PageRoutePath path) {
     switch (path.elements[0].toLowerCase()) {
       case "search":
-        final ct = path.elements.length >= 2
-            ? KlangContentTypeFromStr[path.elements[1]]
-            : null;
         final searchStr = path.elements.length >= 3 ? path.elements[2] : null;
         return SearchResultsPage(
-          contentType: ct,
           searchStr: searchStr,
         );
       case "user":
@@ -294,8 +290,8 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
     // } else {
     //   _pages.add(_mainPage);
     // }
-    if (BottomNavCubit.selectedItem == i) return;
-    BlocProvider.of<BottomNavCubit>(_context, listen: false).setActiveItem(i);
+    if (NavCubit.selectedItem == i) return;
+    BlocProvider.of<NavCubit>(_context, listen: false).setActiveItem(i);
   }
 
   void _makeMainPageActiveWeb(BottomNavItem i) {
@@ -304,7 +300,7 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
       _pages.add(_mainPage);
       notifyListeners();
     }
-    BlocProvider.of<BottomNavCubit>(_context, listen: false).setActiveItem(i);
+    BlocProvider.of<NavCubit>(_context, listen: false).setActiveItem(i);
   }
 
   // // gets selected bottom nav item name
@@ -339,10 +335,10 @@ class PageRoutePath {
 
   PageRoutePath.home() : elements = ["home"];
 
-  PageRoutePath.search(KlangContentType ct, String searchStr)
+  PageRoutePath.search(String searchStr)
       : elements = [
           "search",
-          if (ct != null) _contentTypeToStr(ct),
+          // if (ct != null) _contentTypeToStr(ct),
           searchStr ?? "",
         ];
 

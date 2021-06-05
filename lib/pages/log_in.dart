@@ -10,8 +10,6 @@ import 'package:klang/presets.dart';
 class LoginPage extends StatefulWidget implements KlangPage {
   final _formKey = GlobalKey<FormState>();
 
-  LoginPage({this.showAppBar = true});
-  final showAppBar;
   @override
   State<StatefulWidget> createState() {
     return _LoginPageState();
@@ -28,7 +26,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: widget.showAppBar ? AppBar(title: Text("log in")) : null,
+      appBar: AppBar(title: Text("log in")),
       body: Form(
         key: widget._formKey,
         child: SingleChildScrollView(
@@ -68,8 +66,7 @@ class _LoginPageState extends State<LoginPage> {
               KlangFormButtonSecondary(
                 "create account",
                 onPressed: () {
-                  (Router.of(context).routerDelegate as PageRouterDelegate)
-                      .addPageRoutePath(PageRoutePath.createAccount());
+                  NavCubit.pushPath(context, PageRoutePath.createAccount());
                 },
               ),
             ],

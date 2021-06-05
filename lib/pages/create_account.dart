@@ -32,9 +32,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("create account"),
-      ),
+      appBar: AppBar(title: Text("create account")),
       body: Form(
         key: widget._formKey,
         child: SingleChildScrollView(

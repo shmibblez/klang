@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:klang/objects/klang_sound.dart';
 import 'package:klang/presets.dart';
 
-abstract class SoundListItem extends Widget {
+abstract class KlangListItem extends Widget {
   @required
-  SoundListItem({@required KlangSound sound});
+  KlangListItem({@required KlangSound sound});
 }
 
-class HomeSoundListItem extends StatelessWidget implements SoundListItem {
+class HomeSoundListItem extends StatelessWidget implements KlangListItem {
   HomeSoundListItem({@required this.sound});
 
   final KlangSound sound;
@@ -36,7 +36,7 @@ class HomeSoundListItem extends StatelessWidget implements SoundListItem {
   }
 }
 
-class SoundLoadingListItem extends StatelessWidget implements SoundListItem {
+class SoundLoadingListItem extends StatelessWidget implements KlangListItem {
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -49,7 +49,7 @@ class SoundLoadingListItem extends StatelessWidget implements SoundListItem {
 }
 
 class SoundRetryLoadingListItem extends StatelessWidget
-    implements SoundListItem {
+    implements KlangListItem {
   SoundRetryLoadingListItem({@required this.msg, @required this.onRetry});
 
   final String msg;
@@ -58,9 +58,13 @@ class SoundRetryLoadingListItem extends StatelessWidget
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      tileColor: Colors.red[400],
       contentPadding: KlangPadding.listItemPadding,
-      title: Text(msg),
-      trailing: OutlinedButton(child: Text("retry?"), onPressed: onRetry),
+      title: ErrorText(msg),
+      trailing: OutlinedButton(
+        child: ErrorText("retry?"),
+        onPressed: onRetry,
+      ),
     );
   }
 }

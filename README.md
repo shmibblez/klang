@@ -53,7 +53,7 @@ samples, guidance on mobile development, and a full API reference.
 | user sign up         | ✅           | ✅           |       |
 | user sign in         | 🚫           | ✅           |       |
 | create sound         | ✅           | ✅           |       |
-| search for sound     | ✅           | ❌           |       |
+| search for sound     | ✅           | ✅           |       |
 | search for user      | ❌           | ❌           |       |
 | set user image       | ❌           | ❌           |       |
 | saved sounds         | ❌           | ❌           |       |

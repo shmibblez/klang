@@ -5,7 +5,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:klang/http_helper.dart';
+import 'package:klang/objects/klang_sound.dart';
 import 'package:klang/page_router.dart';
 import 'package:klang/pages/add.dart';
 import 'package:klang/pages/auth_page.dart';
@@ -15,6 +17,8 @@ import 'package:klang/pages/klang_page.dart';
 import 'package:klang/pages/log_in.dart';
 import 'package:klang/pages/search.dart';
 import 'package:klang/pages/user.dart';
+
+/// TODO: was working on search but ended up setting up a lot of other stuff, code is plagued with errors since not everything ready yet
 
 void main() {
   runApp(MyApp());
@@ -100,8 +104,6 @@ class _InitialSetupState extends State<_InitialSetup> {
     );
   }
 
-  // TODO auth cubit not working for some reason when signing in (sometimes),
-  // only after signing in first and then hot reloading. Maybe auth stream getting reset or something, or not reading status properly?
   Widget _blocSetup() {
     return MultiBlocProvider(
       // key: widget._blocKey,
@@ -117,11 +119,56 @@ class _InitialSetupState extends State<_InitialSetup> {
         ),
         BlocProvider(
           lazy: false,
-          create: (_) => BottomNavCubit(BottomNavItem.home),
+          create: (_) => NavCubit(BottomNavItem.home),
         ),
       ],
       child: Root(),
     );
+  }
+}
+
+enum PlayaState { playing, paused, idle, notReady, error }
+
+/// DJCubit is in charge of emitting feel-good vibes
+/// DJCubit handles sound playback
+class DJCubit extends Cubit<PlayaState> {
+  DJCubit()
+      : _playa = FlutterSoundPlayer(),
+        super(PlayaState.notReady);
+
+  final FlutterSoundPlayer _playa;
+  String _errorMessage;
+
+  String get errorMessage => _errorMessage;
+
+  /// sets [sound] as [activeSound] and plays it
+  /// returns [sound] file duration
+  Future<int> play(KlangSound sound) async {
+    await _playa.stopPlayer();
+    try {
+      Duration d = await _playa.startPlayer(fromURI: sound.getDownloadUrl());
+      emit(PlayaState.playing);
+      return d.inMilliseconds;
+    } catch (e, st) {
+      debugPrint("***DJCubit error: $e, stackTrace: $st");
+      emit(PlayaState.error);
+      _errorMessage = e.toString();
+      return -1;
+    }
+  }
+
+  Future<void> pause() async {
+    if (_playa.isPlaying) {
+      await _playa.pausePlayer();
+      emit(PlayaState.paused);
+    }
+  }
+
+  Future<void> resume() async {
+    if (_playa.isPaused) {
+      await _playa.resumePlayer();
+      emit(PlayaState.playing);
+    }
   }
 }
 
@@ -187,15 +234,20 @@ class TouchEnabledCubit extends Cubit<bool> {
 
 enum BottomNavItem { home, search, add, /*shuffle,*/ user }
 
-class BottomNavCubit extends Cubit<BottomNavItem> {
-  BottomNavCubit(BottomNavItem initialState) : super(initialState);
+class NavCubit extends Cubit<BottomNavItem> {
+  NavCubit(BottomNavItem initialState) : super(initialState);
 
   static BottomNavItem _selectedItem;
   static BottomNavItem get selectedItem => _selectedItem ?? BottomNavItem.home;
 
+  static void pushPath(BuildContext context, PageRoutePath path) {
+    (Router.of(context).routerDelegate as PageRouterDelegate)
+        .addPageRoutePath(path);
+  }
+
   setActiveItem(BottomNavItem ni) {
     emit(ni);
-    BottomNavCubit._selectedItem = ni;
+    NavCubit._selectedItem = ni;
   }
 
   static String mapIndxToName(int indx) {
@@ -332,7 +384,7 @@ class KlangMainPage extends StatefulWidget implements KlangPage {
   @override
   PageRoutePath get route {
     return PageRoutePath.main(
-      BottomNavCubit.mapItemToName(BottomNavCubit.selectedItem),
+      NavCubit.mapItemToName(NavCubit.selectedItem),
     );
   }
 }
@@ -347,7 +399,7 @@ class _KlangMainPageState extends State<KlangMainPage>
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _selectedPageIndx);
-    final BottomNavCubit bottomNavCubit = BlocProvider.of<BottomNavCubit>(
+    final NavCubit bottomNavCubit = BlocProvider.of<NavCubit>(
       context,
       listen: false,
     );
@@ -375,7 +427,6 @@ class _KlangMainPageState extends State<KlangMainPage>
     return Scaffold(
       key: widget.key,
       appBar: AppBar(
-        title: Text("klang"),
         actions: [
           // if in test mode, show button that when pressed, creates sounds for testing
           if (!kReleaseMode)
@@ -395,13 +446,13 @@ class _KlangMainPageState extends State<KlangMainPage>
           SearchPage(),
           AuthPage(
             child: AddPage(),
-            authFallbackPage: LoginPage(showAppBar: false),
+            authFallbackPage: LoginPage(),
           ),
           // AddPage(),
           // ShufflePage(),
           AuthPage(
-            child: UserPage(uid: null, showAppBar: false),
-            authFallbackPage: LoginPage(showAppBar: false),
+            child: UserPage(uid: null),
+            authFallbackPage: LoginPage(),
           ),
         ],
       ),
@@ -410,9 +461,10 @@ class _KlangMainPageState extends State<KlangMainPage>
         selectedItemColor: Colors.grey[900],
         onTap: (newPageIndx) {
           if (_selectedPageIndx == newPageIndx) return;
-          (Router.of(context).routerDelegate as PageRouterDelegate)
-              .addPageRoutePath(PageRoutePath.main(
-                  BottomNavCubit.mapIndxToName(newPageIndx)));
+          NavCubit.pushPath(
+            context,
+            PageRoutePath.main(NavCubit.mapIndxToName(newPageIndx)),
+          );
         },
         currentIndex: _selectedPageIndx,
         elevation: 0,

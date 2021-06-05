@@ -3,6 +3,7 @@ import 'package:klang/constants/klang_constants.dart';
 import 'package:klang/http_helper.dart';
 import 'package:klang/list_items/sound_list_items.dart';
 import 'package:klang/lists/sound_list.dart';
+import 'package:klang/objects/klang_sound.dart';
 import 'package:klang/page_router.dart';
 import 'package:klang/pages/klang_page.dart';
 
@@ -22,7 +23,7 @@ class _HomePageState extends State<HomePage>
   String _timePeriod;
   Map<String, Map<String, int>> _listIndices;
   int _nextListIndx;
-  List<SoundList> _lists;
+  List<KlangItemList> _lists;
 
   @override
   bool get wantKeepAlive => true;
@@ -40,53 +41,56 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Column(
-      mainAxisSize: MainAxisSize.max,
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            DropdownButton<String>(
-              value: _metric,
-              items: [Search.sub_type_best, Search.sub_type_downloads]
-                  .map(
-                    (val) => DropdownMenuItem(
-                      value: val,
-                      child: Text(_metricCodeToMsg(val)),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (val) {
-                if (_metric == val) return;
-                setState(() {
-                  _metric = val;
-                });
-              },
-            ),
-            DropdownButton<String>(
-              value: _timePeriod,
-              items: KlangTimePeriodArr.map(
-                (val) => DropdownMenuItem(
-                  value: val,
-                  child: Text(_timePeriodToMsg(val)),
-                ),
-              ).toList(),
-              onChanged: (val) {
-                if (_timePeriod == val) return;
-                setState(() {
-                  _timePeriod = val;
-                });
-              },
-            )
-          ],
-        ),
-        Expanded(
-          child: IndexedStack(
-            index: _getSelectedListIndx(),
-            children: _lists,
+    return Scaffold(
+      appBar: AppBar(title: Text("home")),
+      body: Column(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              DropdownButton<String>(
+                value: _metric,
+                items: [Search.sub_type_best, Search.sub_type_downloads]
+                    .map(
+                      (val) => DropdownMenuItem(
+                        value: val,
+                        child: Text(_metricCodeToMsg(val)),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (val) {
+                  if (_metric == val) return;
+                  setState(() {
+                    _metric = val;
+                  });
+                },
+              ),
+              DropdownButton<String>(
+                value: _timePeriod,
+                items: KlangTimePeriodArr.map(
+                  (val) => DropdownMenuItem(
+                    value: val,
+                    child: Text(_timePeriodToMsg(val)),
+                  ),
+                ).toList(),
+                onChanged: (val) {
+                  if (_timePeriod == val) return;
+                  setState(() {
+                    _timePeriod = val;
+                  });
+                },
+              )
+            ],
           ),
-        ),
-      ],
+          Expanded(
+            child: IndexedStack(
+              index: _getSelectedListIndx(),
+              children: _lists,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -97,7 +101,7 @@ class _HomePageState extends State<HomePage>
     if (_listIndices[_metric][_timePeriod] == null) {
       _listIndices[_metric][_timePeriod] = _nextListIndx++;
       setState(() {
-        _lists.add(SoundList(
+        _lists.add(KlangItemList<KlangSound, KlangListItem>(
           loadMore: (offset) async {
             final r = await FirePP.search_sounds_home(
                 metric: _metric, time: _timePeriod, offset: offset);

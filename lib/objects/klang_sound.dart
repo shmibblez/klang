@@ -2,8 +2,9 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:klang/constants/klang_constants.dart';
+import 'package:klang/objects/klang_obj.dart';
 
-class KlangSound {
+class KlangSound implements KlangObj {
   KlangSound._({
     this.id,
     this.name,
@@ -42,6 +43,7 @@ class KlangSound {
     final created_nano = map[Root.info][Info.timestamp_created]["_nanoseconds"];
     final updated_secs = map[Root.info][Info.timestamp_created]["_seconds"];
     final updated_nano = map[Root.info][Info.timestamp_created]["_nanoseconds"];
+    // debugPrint("***sound map: $map");
     return KlangSound._(
       id: map[Root.info][Info.id],
       name: map[Root.info][Info.item_name][Info.item_name],
@@ -67,7 +69,7 @@ class KlangSound {
     );
   }
 
-  List getMetricQueryOffset(String metric, String timePeriod) {
+  List<dynamic> getMetricQueryOffset(String metric, String timePeriod) {
     return [(_metrics[metric] ?? const {})[timePeriod], this.id];
   }
 
@@ -80,4 +82,12 @@ class KlangSound {
 
     return sounds;
   }
+
+  String getDownloadUrl() => throw UnimplementedError();
+
+  @override
+  operator ==(Object o) => o is KlangSound && o.id == this.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }

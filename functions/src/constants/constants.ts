@@ -213,6 +213,7 @@ export class Misc {
 export class FieldMasks {
   // for sound list item
   static readonly public_sound_search = [
+    `${Root.info}.${Info.id}`,
     `${Root.info}.${Info.item_name}.${Info.item_name}`,
     `${Root.info}.${Info.tags}`,
     `${Root.info}.${Info.description}`,

@@ -8,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:klang/constants/klang_constants.dart';
+import 'package:klang/objects/klang_obj.dart';
 import 'package:klang/objects/klang_sound.dart';
 
 enum LoginResultMsg {
@@ -52,7 +53,19 @@ enum SearchSoundHomeResultMsg {
 class SearchSoundHomeResult {
   SearchSoundHomeResult._(this.resultMsg, this.sounds);
   final SearchSoundHomeResultMsg resultMsg;
-  final List sounds;
+  final List<KlangSound> sounds;
+}
+
+enum SearchFromKeysResultMsg {
+  success,
+  mission_failed,
+  internal,
+}
+
+class SearchFromKeysResult<O extends KlangObj> {
+  SearchFromKeysResult._(this.resultMsg, this.items);
+  final SearchFromKeysResultMsg resultMsg;
+  final List<O> items;
 }
 
 /// combo between Firebase and HTTP
@@ -135,7 +148,6 @@ class FirePP {
         return "success";
       case SearchSoundHomeResultMsg.internal:
       case SearchSoundHomeResultMsg.mission_failed:
-        return "failed to load, retry?";
         return "failed to load, retry?";
     }
     throw "unknown SearchSoundHomeResultMsg: \"m\"";
@@ -292,7 +304,7 @@ class FirePP {
   static Future<SearchSoundHomeResult> search_sounds_home({
     @required String metric,
     @required String time,
-    @required List offset,
+    @required List<dynamic> offset,
   }) async {
     assert(
       metric == Search.sub_type_best || metric == Search.sub_type_downloads,
@@ -343,6 +355,39 @@ class FirePP {
         // probably error parsing function data
         throw e;
       }
+    }
+  }
+
+  static Future<SearchFromKeysResult> search_from_str<O extends KlangObj>({
+    @required String searchStr,
+    List<dynamic> offset,
+  }) async {
+    FirebaseFunctions functions = FirebaseFunctions.instance;
+    if (_testing) {
+      functions.useFunctionsEmulator(
+        origin: "http://localhost:$_functionsPort",
+      );
+    }
+    String contentType;
+    if (O is KlangSound) {
+      contentType = "s";
+    } else {
+      contentType = "s";
+    }
+    final data = {
+      Search.offset: offset,
+      Search.type: contentType,
+      Search.sub_type: Search.sub_type_sk,
+    };
+
+    try {
+      final result = await functions.httpsCallable("TODO").call<Map>(data);
+      List<O> items = KlangObj.fromJsonArr<O>(
+          result.data[FunctionResult.items]); // TODO get
+      final obj =
+          SearchFromKeysResult<O>._(SearchFromKeysResultMsg.success, items);
+    } catch (e) {
+      throw e;
     }
   }
 }

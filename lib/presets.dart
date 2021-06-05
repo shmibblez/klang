@@ -109,3 +109,12 @@ class KlangFormButtonSecondary extends StatelessWidget {
     );
   }
 }
+
+/// default error text, expects red background (text is white)
+class ErrorText extends Text {
+  ErrorText(String text)
+      : super(
+          text,
+          style: TextStyle(color: Colors.white),
+        );
+}

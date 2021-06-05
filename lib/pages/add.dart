@@ -48,173 +48,176 @@ class _AddPageState extends State<AddPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: widget._formKey,
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            KlangTextFormField(
-              "sound name",
-              controller: _nameController,
-              validator: (name) {
-                if (name.length <= 0) {
-                  return "please name your sound";
-                }
-                if (name.length < Lengths.min_sound_name_length) {
-                  return "too short, min sound name length is ${Lengths.min_sound_name_length} characters";
-                }
-                if (name.length > Lengths.max_sound_name_length) {
-                  return "too long, max sound name length is ${Lengths.max_sound_name_length} characters";
-                }
-                return null;
-              },
-            ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Expanded(
-                  child: KlangTextFormField(
-                    "add tag",
-                    key: widget._tagKey,
-                    controller: _tagController,
-                    validator: (tag) {
-                      if (!_forAddTag) return null;
-                      if (tag.length <= 0) {
-                        return null;
-                      }
-                      if (_tags.length >= Lengths.max_sound_tags) {
-                        return "sounds may only have up to 3 tags";
-                      }
-                      if (KlangRegex.tag_banished_chars.hasMatch(tag)) {
-                        return "tags may only contain letters (A-Z), numbers (0-9), and spaces";
-                      }
-                      if (tag.length < Lengths.min_tag_length) {
-                        return "too short, min tag length is ${Lengths.min_tag_length} characters";
-                      }
-                      if (tag.length > Lengths.max_tag_length) {
-                        return "too long, max tag length is ${Lengths.max_tag_length} characters";
-                      }
-
-                      return null;
-                    },
-                    trailing: IconButton(
-                      icon: Icon(Icons.cancel),
-                      onPressed: () {
-                        _tagController.clear();
-                      },
-                    ),
-                  ),
-                ),
-                KlangFormButtonPrimary(
-                  "add tag",
-                  onPressed: () {
-                    _forAddTag = true;
-                    if (!widget._tagKey.currentState.validate()) return;
-                    if (_tagController.text.length <= 0) return;
-
-                    setState(() {
-                      _tags.add(_tagController.text);
-                      _tagController.clear();
-                    });
-                  },
-                ),
-              ],
-            ),
-            // sound tags are displayed / removed here
-            Wrap(
-              alignment: WrapAlignment.start,
-              direction: Axis.horizontal,
-              runSpacing: 8,
-              spacing: 8,
-              children: _buildTags(),
-            ),
-            KlangTextFormField(
-              "sound description",
-              controller: _descController,
-              validator: (desc) {
-                if (desc.length <= 0) {
-                  return null;
-                }
-                if (desc.length < Lengths.min_sound_name_length) {
-                  return "too short, min description length is ${Lengths.min_description_length} characters";
-                }
-                if (desc.length > Lengths.max_sound_name_length) {
-                  return "too long, max description length is ${Lengths.max_description_length} characters";
-                }
-                return null;
-              },
-            ),
-            KlangTextFormField(
-              "source url",
-              controller: _urlController,
-              validator: (url) {
-                if (url.length <= 0) {
-                  return null;
-                }
-                if (!(Uri.tryParse(url)?.hasAbsolutePath ?? false)) {
-                  return "invalid url, may be missing \"https://\". Example url: \"https://www.google.com\", or \"https://shmibblez.com\"";
-                }
-                return null;
-              },
-            ),
-            KlangFormButtonPrimary(
-              _selectedAudioFile == null
-                  ? "select audio file"
-                  : "audio file selected",
-              onPressed: _selectAudioFile,
-            ),
-            if (_selectedAudioFile != null)
-              FutureBuilder(
-                future: _selectedAudioFile.duration,
-                builder: (_, AsyncSnapshot<Duration> snap) {
-                  switch (snap.connectionState) {
-                    case ConnectionState.done:
-                      return Padding(
-                        padding: KlangPadding.formFieldPadding,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("file info"),
-                            Text("name: ${_selectedAudioFile.name}"),
-                            Text("size: ${_selectedAudioFile.sizeStr}"),
-                            Text(snap.data?.inSeconds == null
-                                ? "duration: unknown"
-                                : "duration: ${snap.data?.inSeconds}")
-                          ],
-                        ),
-                      );
-                    default:
-                      return Offstage(offstage: true);
+    return Scaffold(
+      appBar: AppBar(title: Text("add")),
+      body: Form(
+        key: widget._formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              KlangTextFormField(
+                "sound name",
+                controller: _nameController,
+                validator: (name) {
+                  if (name.length <= 0) {
+                    return "please name your sound";
                   }
+                  if (name.length < Lengths.min_sound_name_length) {
+                    return "too short, min sound name length is ${Lengths.min_sound_name_length} characters";
+                  }
+                  if (name.length > Lengths.max_sound_name_length) {
+                    return "too long, max sound name length is ${Lengths.max_sound_name_length} characters";
+                  }
+                  return null;
                 },
               ),
-            Padding(
-              padding: KlangPadding.formFieldPadding,
-              child: Row(
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text("is this sound or sound name explicit?"),
-                  Checkbox(
-                    value: _explicit,
-                    onChanged: (checked) {
-                      if (_explicit == checked) return;
+                  Expanded(
+                    child: KlangTextFormField(
+                      "add tag",
+                      key: widget._tagKey,
+                      controller: _tagController,
+                      validator: (tag) {
+                        if (!_forAddTag) return null;
+                        if (tag.length <= 0) {
+                          return null;
+                        }
+                        if (_tags.length >= Lengths.max_sound_tags) {
+                          return "sounds may only have up to 3 tags";
+                        }
+                        if (KlangRegex.tag_banished_chars.hasMatch(tag)) {
+                          return "tags may only contain letters (A-Z), numbers (0-9), and spaces";
+                        }
+                        if (tag.length < Lengths.min_tag_length) {
+                          return "too short, min tag length is ${Lengths.min_tag_length} characters";
+                        }
+                        if (tag.length > Lengths.max_tag_length) {
+                          return "too long, max tag length is ${Lengths.max_tag_length} characters";
+                        }
+
+                        return null;
+                      },
+                      trailing: IconButton(
+                        icon: Icon(Icons.cancel),
+                        onPressed: () {
+                          _tagController.clear();
+                        },
+                      ),
+                    ),
+                  ),
+                  KlangFormButtonPrimary(
+                    "add tag",
+                    onPressed: () {
+                      _forAddTag = true;
+                      if (!widget._tagKey.currentState.validate()) return;
+                      if (_tagController.text.length <= 0) return;
+
                       setState(() {
-                        _explicit = checked;
+                        _tags.add(_tagController.text);
+                        _tagController.clear();
                       });
                     },
                   ),
                 ],
               ),
-            ),
-            KlangFormButtonPrimary(
-              "upload",
-              onPressed: _onSubmit,
-            ),
-          ],
+              // sound tags are displayed / removed here
+              Wrap(
+                alignment: WrapAlignment.start,
+                direction: Axis.horizontal,
+                runSpacing: 8,
+                spacing: 8,
+                children: _buildTags(),
+              ),
+              KlangTextFormField(
+                "sound description",
+                controller: _descController,
+                validator: (desc) {
+                  if (desc.length <= 0) {
+                    return null;
+                  }
+                  if (desc.length < Lengths.min_sound_name_length) {
+                    return "too short, min description length is ${Lengths.min_description_length} characters";
+                  }
+                  if (desc.length > Lengths.max_sound_name_length) {
+                    return "too long, max description length is ${Lengths.max_description_length} characters";
+                  }
+                  return null;
+                },
+              ),
+              KlangTextFormField(
+                "source url",
+                controller: _urlController,
+                validator: (url) {
+                  if (url.length <= 0) {
+                    return null;
+                  }
+                  if (!(Uri.tryParse(url)?.hasAbsolutePath ?? false)) {
+                    return "invalid url, may be missing \"https://\". Example url: \"https://www.google.com\", or \"https://shmibblez.com\"";
+                  }
+                  return null;
+                },
+              ),
+              KlangFormButtonPrimary(
+                _selectedAudioFile == null
+                    ? "select audio file"
+                    : "audio file selected",
+                onPressed: _selectAudioFile,
+              ),
+              if (_selectedAudioFile != null)
+                FutureBuilder(
+                  future: _selectedAudioFile.duration,
+                  builder: (_, AsyncSnapshot<Duration> snap) {
+                    switch (snap.connectionState) {
+                      case ConnectionState.done:
+                        return Padding(
+                          padding: KlangPadding.formFieldPadding,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("file info"),
+                              Text("name: ${_selectedAudioFile.name}"),
+                              Text("size: ${_selectedAudioFile.sizeStr}"),
+                              Text(snap.data?.inSeconds == null
+                                  ? "duration: unknown"
+                                  : "duration: ${snap.data?.inSeconds}")
+                            ],
+                          ),
+                        );
+                      default:
+                        return Offstage(offstage: true);
+                    }
+                  },
+                ),
+              Padding(
+                padding: KlangPadding.formFieldPadding,
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("is this sound or sound name explicit?"),
+                    Checkbox(
+                      value: _explicit,
+                      onChanged: (checked) {
+                        if (_explicit == checked) return;
+                        setState(() {
+                          _explicit = checked;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              KlangFormButtonPrimary(
+                "upload",
+                onPressed: _onSubmit,
+              ),
+            ],
+          ),
         ),
       ),
     );
