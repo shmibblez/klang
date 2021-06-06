@@ -25,6 +25,10 @@ export class Info {
   static readonly image_file_path = "ip";
 }
 
+export class Deleted {
+  static readonly timestamp_deleted = "te";
+}
+
 export class Properties {
   static readonly explicit = "xp";
   static readonly hidden = "hn";
@@ -240,7 +244,7 @@ export class FieldMasks {
     `${Root.info}.${Info.storage}`,
     // `${Root.info}.${Info.storage}.${Info.audio_file_bucket}`,
     // `${Root.info}.${Info.storage}.${Info.audio_file_path}`,
-    `${Root.deleted}`,
+    `${Root.deleted}.${Deleted.timestamp_deleted}`,
     `${Root.properties}.${Properties.explicit}`,
     `${Root.metrics}.${Metrics.followers}`,
     `${Root.metrics}.${Metrics.following}`,

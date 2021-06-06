@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:klang/list_items/sound_list_items.dart';
-import 'package:klang/objects/klang_sound.dart';
+import 'package:klang/klang_obj_list_items.dart';
+import 'package:klang/objects/klang_obj.dart';
 import 'package:klang/presets.dart';
 
 class KlangItemList<@required O extends KlangObj,
@@ -63,7 +63,6 @@ class _KlangItemListState<@required O extends KlangObj,
             });
           }
           if (i == _sounds.length) {
-            // TODO: make last item StreamBuilder, and emit all events to its stream in _loadMore() instead of calling setState()
             if (!_hasMore)
               return Padding(
                 padding: KlangPadding.listItemPadding,

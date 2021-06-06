@@ -7,7 +7,7 @@
     - timestamp updated: Timestamp - (for algorithm versioning & update limiting)
   - tags: string[] - (for filtering searches)
   - tag_keys: string[] - (indexes user's top 3 most used tags)
-  - tag history: {[tag]: int} - (stores which tags user has used & how many times. Most used ones only are indexed)
+  - tag history: {[tag]: int} - (stores which tags user has used & how many times. Most used 3 are only ones indexed)
   - description: string - (optional)
   - timestamp created: Timestamp
   - timestamp updated: Timestamp

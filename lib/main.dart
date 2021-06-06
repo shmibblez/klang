@@ -18,8 +18,6 @@ import 'package:klang/pages/log_in.dart';
 import 'package:klang/pages/search.dart';
 import 'package:klang/pages/user.dart';
 
-/// TODO: was working on search but ended up setting up a lot of other stuff, code is plagued with errors since not everything ready yet
-
 void main() {
   runApp(MyApp());
 }

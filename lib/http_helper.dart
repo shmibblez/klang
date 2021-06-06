@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:klang/constants/klang_constants.dart';
 import 'package:klang/objects/klang_obj.dart';
 import 'package:klang/objects/klang_sound.dart';
+import 'package:klang/objects/klang_user.dart';
 
 enum LoginResultMsg {
   success,
@@ -73,8 +74,11 @@ class FirePP {
   static final bool _testing = true && kDebugMode;
   static final _authPort = "9099";
   static final _functionsPort = "5001";
+  // ignore: unused_field
   static final _firestorePort = "8080";
+  // ignore: unused_field
   static final _rtdbPort = "9000";
+  // ignore: unused_field
   static final _hostingPort = "5000";
   static final _storagePort = 9199;
 
@@ -151,6 +155,17 @@ class FirePP {
         return "failed to load, retry?";
     }
     throw "unknown SearchSoundHomeResultMsg: \"m\"";
+  }
+
+  static String translateSearchFromKeysResultMsg(SearchFromKeysResultMsg m) {
+    switch (m) {
+      case SearchFromKeysResultMsg.success:
+        return "success";
+      case SearchFromKeysResultMsg.internal:
+      case SearchFromKeysResultMsg.mission_failed:
+        return "failed to load, retry?";
+    }
+    throw "unknown SearchFromKeysResultMsg: \"m\"";
   }
 
   /// returns [LoginResultMsg] to inform result
@@ -358,7 +373,7 @@ class FirePP {
     }
   }
 
-  static Future<SearchFromKeysResult> search_from_str<O extends KlangObj>({
+  static Future<SearchFromKeysResult<O>> search_from_str<O extends KlangObj>({
     @required String searchStr,
     List<dynamic> offset,
   }) async {
@@ -370,22 +385,23 @@ class FirePP {
     }
     String contentType;
     if (O is KlangSound) {
-      contentType = "s";
-    } else {
-      contentType = "s";
+      contentType = Search.type_user;
+    } else if (O is KlangUser) {
+      contentType = Search.type_user;
     }
     final data = {
-      Search.offset: offset,
       Search.type: contentType,
       Search.sub_type: Search.sub_type_sk,
+      Search.offset: offset,
     };
 
     try {
-      final result = await functions.httpsCallable("TODO").call<Map>(data);
-      List<O> items = KlangObj.fromJsonArr<O>(
-          result.data[FunctionResult.items]); // TODO get
+      final result = await functions.httpsCallable("s").call<Map>(data);
+      List<O> items =
+          KlangObj.fromJsonArr<O>(result.data[FunctionResult.items]);
       final obj =
           SearchFromKeysResult<O>._(SearchFromKeysResultMsg.success, items);
+      return obj;
     } catch (e) {
       throw e;
     }

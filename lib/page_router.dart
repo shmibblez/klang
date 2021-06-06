@@ -185,8 +185,6 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
       return null;
     }
 
-    // TODO: need to test navigation on non-web devices
-    //.
     // if next page the same as current one, return (don't add page)
     if (path.toString() == _pages.last.route.toString()) return null;
     // if platform not web, gets called only when page added
@@ -360,17 +358,6 @@ class PageRoutePath {
   bool get isMain {
     return this.elements.length == 1 &&
         rootPaths.contains(this.elements[0].toLowerCase());
-  }
-
-  static String _contentTypeToStr(KlangContentType ct) {
-    switch (ct) {
-      case KlangContentType.user:
-        return "user";
-      case KlangContentType.sound:
-        return "sound";
-      default:
-        return "sound";
-    }
   }
 
   String get path => this.toString();

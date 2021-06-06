@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:klang/objects/klang_sound.dart';
+import 'package:klang/objects/klang_user.dart';
 import 'package:klang/presets.dart';
 
 abstract class KlangListItem extends Widget {
@@ -7,8 +8,8 @@ abstract class KlangListItem extends Widget {
   KlangListItem({@required KlangSound sound});
 }
 
-class HomeSoundListItem extends StatelessWidget implements KlangListItem {
-  HomeSoundListItem({@required this.sound});
+class SoundListItem extends StatelessWidget implements KlangListItem {
+  SoundListItem({@required this.sound});
 
   final KlangSound sound;
 
@@ -36,7 +37,33 @@ class HomeSoundListItem extends StatelessWidget implements KlangListItem {
   }
 }
 
-class SoundLoadingListItem extends StatelessWidget implements KlangListItem {
+class UserListItem extends StatelessWidget implements KlangListItem {
+  UserListItem({@required this.user});
+
+  final KlangUser user;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(Icons.account_box_rounded),
+      title: Text(user.name),
+      trailing: IconButton(
+        onPressed: () {
+          // TODO: show user popup menu & options
+          // what options? (depend on auth state)
+          // if logged out:
+          // - sign in
+          // - ...
+          // if logged in or out
+          // - view user's profile
+        },
+        icon: Icon(Icons.more_vert_rounded),
+      ),
+    );
+  }
+}
+
+class LoadingListItem extends StatelessWidget implements KlangListItem {
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -48,9 +75,8 @@ class SoundLoadingListItem extends StatelessWidget implements KlangListItem {
   }
 }
 
-class SoundRetryLoadingListItem extends StatelessWidget
-    implements KlangListItem {
-  SoundRetryLoadingListItem({@required this.msg, @required this.onRetry});
+class RetryLoadingListItem extends StatelessWidget implements KlangListItem {
+  RetryLoadingListItem({@required this.msg, @required this.onRetry});
 
   final String msg;
   final void Function() onRetry;

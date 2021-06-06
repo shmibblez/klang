@@ -304,8 +304,6 @@ class _AddPageState extends State<AddPage> {
           : ErrorSnackbar(msg),
     );
 
-    // TODO: not resetting for some reason, just figured out why -> key might change, but values remain, need to reset all values
-    // this means can remove _resets and KeyedSubtree parent
     if (r == CreateSoundResultMsg.success) {
       _resetForm();
     }

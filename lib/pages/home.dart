@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:klang/constants/klang_constants.dart';
 import 'package:klang/http_helper.dart';
-import 'package:klang/list_items/sound_list_items.dart';
-import 'package:klang/lists/sound_list.dart';
+import 'package:klang/klang_obj_list_items.dart';
+import 'package:klang/klang_obj_list.dart';
 import 'package:klang/objects/klang_sound.dart';
 import 'package:klang/page_router.dart';
 import 'package:klang/pages/klang_page.dart';
@@ -113,10 +113,10 @@ class _HomePageState extends State<HomePage>
             }
             return r.sounds;
           },
-          buildItem: (sound) => HomeSoundListItem(sound: sound),
-          buildLoadingItem: () => SoundLoadingListItem(),
+          buildItem: (sound) => SoundListItem(sound: sound),
+          buildLoadingItem: () => LoadingListItem(),
           buildFailedToLoadItem: (msg, onRetry) =>
-              SoundRetryLoadingListItem(msg: msg, onRetry: onRetry),
+              RetryLoadingListItem(msg: msg, onRetry: onRetry),
           queryOffset: (sound) =>
               sound.getMetricQueryOffset(_metric, _timePeriod),
         ));

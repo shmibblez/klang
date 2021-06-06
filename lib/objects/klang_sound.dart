@@ -1,6 +1,7 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:klang/constants/klang_constants.dart';
 import 'package:klang/objects/klang_obj.dart';
 
@@ -70,16 +71,19 @@ class KlangSound implements KlangObj {
   }
 
   List<dynamic> getMetricQueryOffset(String metric, String timePeriod) {
+    debugPrint("***sound metrics: $_metrics");
     return [(_metrics[metric] ?? const {})[timePeriod], this.id];
+  }
+
+  List<dynamic> getSKQueryOffset() {
+    return [this.id];
   }
 
   static List<KlangSound> fromJsonArr(List data) {
     List<KlangSound> sounds = [];
-
     for (final Map<String, dynamic> m in data) {
       sounds.add(KlangSound._fromMap(m));
     }
-
     return sounds;
   }
 

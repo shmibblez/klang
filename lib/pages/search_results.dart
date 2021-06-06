@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:klang/constants/constants.dart';
 import 'package:klang/http_helper.dart';
-import 'package:klang/list_items/sound_list_items.dart';
-import 'package:klang/lists/sound_list.dart';
+import 'package:klang/klang_obj_list_items.dart';
+import 'package:klang/klang_obj_list.dart';
 import 'package:klang/objects/klang_sound.dart';
+import 'package:klang/objects/klang_user.dart';
 import 'package:klang/page_router.dart';
 import 'package:klang/pages/klang_page.dart';
 
@@ -33,25 +33,54 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
     ];
     _pages = [
       KlangItemList<KlangSound, KlangListItem>(
+        queryOffset: (sound) => sound.getSKQueryOffset(),
         loadMore: (offset) async {
-          final res = await FirePP.search_from_str(
+          final res = await FirePP.search_from_str<KlangSound>(
             searchStr: widget.searchStr,
             offset: offset,
           );
-          if(res.resultMsg != SearchFromKeysResultMsg.success) {
-            throw FirePP.translateSearchSoundHomeResultMsg(res.resultMsg);
+          if (res.resultMsg != SearchFromKeysResultMsg.success) {
+            throw FirePP.translateSearchFromKeysResultMsg(res.resultMsg);
           }
+          return res.items;
         },
+        buildItem: (sound) => SoundListItem(sound: sound),
+        buildLoadingItem: () => LoadingListItem(),
+        buildFailedToLoadItem: (msg, onRetry) => RetryLoadingListItem(
+          msg: msg,
+          onRetry: onRetry,
+        ),
       ),
-      KlangItemList(),
+      KlangItemList<KlangUser, KlangListItem>(
+        queryOffset: (user) => user.getSKQueryOffset(),
+        loadMore: (offset) async {
+          final res = await FirePP.search_from_str<KlangUser>(
+            searchStr: widget.searchStr,
+            offset: offset,
+          );
+          if (res.resultMsg != SearchFromKeysResultMsg.success) {
+            throw FirePP.translateSearchFromKeysResultMsg(res.resultMsg);
+          }
+          return res.items;
+        },
+        buildItem: (user) => UserListItem(user: user),
+        buildLoadingItem: () => LoadingListItem(),
+        buildFailedToLoadItem: (msg, onRetry) => RetryLoadingListItem(
+          msg: msg,
+          onRetry: onRetry,
+        ),
+      ),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: TabBar(tabs: _tabs),
-      body: TabBarView(children: _pages),
+    return DefaultTabController(
+      length: _tabs.length,
+      child: Scaffold(
+        appBar: TabBar(tabs: _tabs),
+        body: TabBarView(children: _pages),
+      ),
     );
   }
 }

@@ -29,6 +29,10 @@ class Info {
   static const image_file_path = "ip";
 }
 
+class Deleted {
+  static const timestamp_deleted = "te";
+}
+
 class Properties {
   static const explicit = "xp";
   static const hidden = "hn";
