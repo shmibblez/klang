@@ -3,9 +3,9 @@ import 'package:klang/objects/klang_user.dart';
 
 abstract class KlangObj {
   static List<O> fromJsonArr<O extends KlangObj>(List list) {
-    if (O is KlangUser) {
+    if (O == KlangUser) {
       return KlangUser.fromJsonArr(list) as List<O>;
-    } else if (O is KlangSound) {
+    } else if (O == KlangSound) {
       return KlangSound.fromJsonArr(list) as List<O>;
     }
     throw UnimplementedError(

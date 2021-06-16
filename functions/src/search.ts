@@ -1,5 +1,6 @@
 import { firestore } from "firebase-admin";
 import { https } from "firebase-functions";
+import Graphemer from "graphemer";
 import {
   Properties,
   Search,
@@ -15,6 +16,7 @@ import {
   FunctionResult,
 } from "./constants/constants";
 import { UnsupportedQueryError } from "./constants/errors";
+import { reg_strings } from "./constants/regex";
 import { isTagOk } from "./field_checks";
 
 export const search = https.onCall(async (data, context) => {
@@ -30,6 +32,7 @@ export const search = https.onCall(async (data, context) => {
   query = query.limit(limit);
 
   const snap = await query.get();
+  console.log(`search: result size: ${snap.docs.length}`);
   return {
     [FunctionResult.items]: snap.docs.map<firestore.DocumentData>((doc) =>
       doc.data()
@@ -93,13 +96,20 @@ async function _itemSearch({
        *  explicit & tag filters already set
        **/
       if (keys.length > 99) keys.length = 99;
+
       for (const k of keys) {
-        query = query.where(
-          `${Root.info}.${Info.item_name}.${Info.search_keys}.${k}`,
-          "==",
-          true
-        );
+        if (k) {
+          console.log(
+            `search: adding filter for key "${k}", path: "${Root.info}.${Info.item_name}.${Info.search_keys}.${k}"`
+          );
+          query = query.where(
+            `${Root.info}.${Info.item_name}.${Info.search_keys}.${k}`,
+            "==",
+            true
+          );
+        } else console.log("search: invalid search key length: " + k.length);
       }
+
       query = query.orderBy(firestore.FieldPath.documentId(), "asc");
       if (Array.isArray(offset) && offset.length == 1) {
         // offset should be ["doc id"]
@@ -125,6 +135,7 @@ async function _itemSearch({
         query = query.startAfter(...offset);
       }
       break;
+
     default:
       throw new UnsupportedQueryError();
   }
@@ -140,11 +151,29 @@ async function _itemSearch({
 function _searchKeysFrom(name: unknown): string[] {
   if (typeof name != "string" || name.length <= 0) return [""];
 
-  const indx = new Set();
+  const keys: { [k: string]: true } = {};
+  const splitter = new Graphemer();
 
-  // TODO: split graphemes and pair up here
+  // split string into words ex: "abc def" -> ["abc", "def"]
+  const words = name
+    .normalize("NFKD") //                                           splits diacritics from letters
+    .replace(RegExp(reg_strings.all_diacritics, "g"), "") //        remove diacritics
+    .replace(RegExp(reg_strings.skin_colors, "g"), "") //           remove emoji skin colors
+    .replace(RegExp(reg_strings.variation_selectors, "g"), "") //   remove variation selectors
+    /** no need to remove hair colors since, when their ZWJ is removed, ther're considered separate emojis */
+    .normalize("NFKC") //                                           re-combines everything (shouldn't really do anything at this point but just to be safe)
+    .trim() //                                                      remove leading and trailing spaces
+    .replace(/\s+/g, " ")
+    .split(" ");
+  for (const w of words) {
+    // split into graphemes and index each one
+    const graphemes = splitter.splitGraphemes(w);
+    for (let i = 0; i < graphemes.length - 1; i++) {
+      keys[graphemes[i] + graphemes[i + 1]] = true;
+    }
+  }
 
-  return Array.from(indx) as string[];
+  return Object.keys(keys);
 }
 
 function _tagsSearchKey(tag_str: string): string {

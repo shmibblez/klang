@@ -76,9 +76,10 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
+      initialIndex: 0,
       length: _tabs.length,
       child: Scaffold(
-        appBar: TabBar(tabs: _tabs),
+        appBar: AppBar(title: TabBar(tabs: _tabs)),
         body: TabBarView(children: _pages),
       ),
     );

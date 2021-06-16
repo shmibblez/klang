@@ -29,7 +29,7 @@ class KlangItemList<@required O extends KlangObj,
 }
 
 class _KlangItemListState<@required O extends KlangObj,
-    @required I extends KlangListItem> extends State<KlangItemList> {
+    @required I extends KlangListItem> extends State<KlangItemList<O, I>> {
   bool _loading;
   bool _hasMore;
   bool _failedToLoad;
@@ -54,8 +54,8 @@ class _KlangItemListState<@required O extends KlangObj,
     return ListView.builder(
         shrinkWrap: true,
         itemBuilder: (_, i) {
-          if (!_failedToLoad &&
-              _sounds.length - i - 1 == _loadingThreshold &&
+          if (_sounds.length - i - 1 <= _loadingThreshold &&
+              !_failedToLoad &&
               _hasMore &&
               !_loading) {
             Future.delayed(Duration.zero, () async {

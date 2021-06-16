@@ -65,11 +65,8 @@ class PageRouteInformationParser extends RouteInformationParser<PageRoutePath> {
         case "home":
           return PageRoutePath.main("home");
         case "search":
-          final ct =
-              paths.length >= 2 ? KlangContentTypeFromStr[paths[1]] : null;
-          final searchStr = paths.length >= 3 ? paths[2] : null;
-          if (kIsWeb && (ct == null || searchStr == null))
-            return PageRoutePath.main("search");
+          final searchStr = paths.length >= 2 ? paths[1] : null;
+          if (kIsWeb && searchStr == null) return PageRoutePath.main("search");
           return PageRoutePath.search(searchStr);
         case "add":
           return PageRoutePath.main("add");
@@ -241,7 +238,8 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
   KlangPage _genPageFrom(PageRoutePath path) {
     switch (path.elements[0].toLowerCase()) {
       case "search":
-        final searchStr = path.elements.length >= 3 ? path.elements[2] : null;
+        debugPrint("***path.elements: ${path.elements}");
+        final searchStr = path.elements.length >= 2 ? path.elements[1] : null;
         return SearchResultsPage(
           searchStr: searchStr,
         );

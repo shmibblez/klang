@@ -81,7 +81,6 @@ class _AuthPageState extends State<AuthPage> {
     };
     widget.authDelegate.addListener(_authPageDelegateListener);
     _loggedIn = _authCubit.loggedIn ?? false;
-    debugPrint("AuthPage.initState(), logged in: ${_authCubit.loggedIn}");
   }
 
   @override

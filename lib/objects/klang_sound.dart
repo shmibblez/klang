@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:klang/constants/klang_constants.dart';
 import 'package:klang/objects/klang_obj.dart';
 
-class KlangSound implements KlangObj {
+class KlangSound extends KlangObj {
   KlangSound._({
     this.id,
     this.name,
@@ -71,8 +71,10 @@ class KlangSound implements KlangObj {
   }
 
   List<dynamic> getMetricQueryOffset(String metric, String timePeriod) {
-    debugPrint("***sound metrics: $_metrics");
-    return [(_metrics[metric] ?? const {})[timePeriod], this.id];
+    return [
+      (_metrics[metric] ?? const {})[timePeriod],
+      this.id,
+    ];
   }
 
   List<dynamic> getSKQueryOffset() {

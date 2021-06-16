@@ -14,25 +14,55 @@ class SearchPage extends StatefulWidget implements KlangPage {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  TextEditingController _searchController = TextEditingController();
-
   bool _searching;
+  FocusNode _searchFocusNode;
+  TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searching = false;
+    _searchFocusNode = FocusNode();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _searchFocusNode.dispose();
+    _searchController.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: _searching
-            ? IconButton(
-                onPressed: _searchController.clear, icon: Icon(Icons.close))
-            : Container(),
+        leading: IconButton(
+          onPressed: () {
+            _searchController.clear();
+            setState(() {
+              _searchFocusNode.requestFocus();
+              _searching = true;
+            });
+          },
+          icon: Icon(Icons.close),
+        ),
         title: TextField(
+          style: TextStyle(color: Colors.white),
+          autofocus: true,
+          focusNode: _searchFocusNode,
+          showCursor: true,
+          cursorColor: Colors.white,
           controller: _searchController,
           onTap: () {
-            _searching = true;
+            setState(() {
+              _searching = true;
+            });
           },
           onSubmitted: (str) {
-            _searching = false;
+            setState(() {
+              _searching = false;
+            });
             _search(str);
           },
         ),

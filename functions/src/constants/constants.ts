@@ -139,8 +139,8 @@ export class Search {
   static readonly sub_type = "y";
   static readonly sub_type_random = "r";
   static readonly sub_type_sk = "k";
-  static readonly sub_type_downloads = "d";
-  static readonly sub_type_best = "b";
+  static readonly sub_type_downloads = Metrics.downloads;
+  static readonly sub_type_best = Metrics.best;
   static readonly random_seed_num = "n";
   static readonly direction = "e";
   static readonly offset = "o";

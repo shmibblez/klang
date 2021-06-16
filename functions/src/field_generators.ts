@@ -48,13 +48,13 @@ export function indexName(s: string) {
   //
 
   /** {@link phase2.0 index string pairs, no filtering} */
-  _indexGraphemes(clean);
+  _graphemePairs(clean);
 
   //
 
   /** {@link phase2.1 index string pairs with composite emojis split} */
   const phase2_1 = clean.replace(RegExp(reg_strings.zwj, "g"), "");
-  _indexGraphemes(phase2_1);
+  _graphemePairs(phase2_1);
 
   //
 
@@ -63,7 +63,7 @@ export function indexName(s: string) {
     .replace(/[^A-Za-z0-9\s_-]/g, "")
     .trim()
     .replace(/\s+/g, " ");
-  _indexGraphemes(phase3);
+  _graphemePairs(phase3);
 
   //
 
@@ -72,7 +72,7 @@ export function indexName(s: string) {
     .replace(/[^A-Za-z0-9\s]/g, "")
     .trim()
     .replace(/\s+/g, " ");
-  _indexGraphemes(phase4);
+  _graphemePairs(phase4);
 
   // add wildcard string (matches nothing -> "")
   keys[Misc.wildcard_str] = true;
@@ -80,7 +80,7 @@ export function indexName(s: string) {
   return keys;
 
   // indexes graphemes in pairs
-  function _indexGraphemes(str: string) {
+  function _graphemePairs(str: string) {
     // split string into words ex: "abc def" -> ["abc", "def"]
     const words = str.split(" ");
     for (const w of words) {

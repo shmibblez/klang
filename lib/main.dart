@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_sound/flutter_sound.dart';
-import 'package:klang/http_helper.dart';
 import 'package:klang/objects/klang_sound.dart';
 import 'package:klang/page_router.dart';
 import 'package:klang/pages/add.dart';
@@ -347,7 +346,8 @@ class _RootState extends State<Root> {
             routeInformationParser: PageRouteInformationParser(),
             title: 'Flutter Demo',
             theme: ThemeData(
-              primarySwatch: Colors.blue,
+              primaryColor: Colors.green,
+              primarySwatch: Colors.orange,
             ),
           ),
         ), // used for enabling/disabling touch
@@ -396,11 +396,12 @@ class _KlangMainPageState extends State<KlangMainPage>
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: _selectedPageIndx);
     final NavCubit bottomNavCubit = BlocProvider.of<NavCubit>(
       context,
       listen: false,
     );
+    _selectedPageIndx = bottomNavCubit.activeItemIndx();
+    _pageController = PageController(initialPage: _selectedPageIndx);
     _bottomNavListener = bottomNavCubit.stream.listen(
       (event) {
         setState(() {
@@ -409,7 +410,6 @@ class _KlangMainPageState extends State<KlangMainPage>
         });
       },
     );
-    _selectedPageIndx = bottomNavCubit.activeItemIndx();
   }
 
   @override
@@ -424,18 +424,6 @@ class _KlangMainPageState extends State<KlangMainPage>
     super.build(context);
     return Scaffold(
       key: widget.key,
-      appBar: AppBar(
-        actions: [
-          // if in test mode, show button that when pressed, creates sounds for testing
-          if (!kReleaseMode)
-            IconButton(
-              onPressed: () async {
-                await TestFirePP.create_test_sounds();
-              },
-              icon: Icon(Icons.music_note_rounded),
-            )
-        ],
-      ),
       body: PageView(
         controller: _pageController,
         physics: NeverScrollableScrollPhysics(),

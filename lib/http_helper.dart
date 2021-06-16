@@ -322,7 +322,7 @@ class FirePP {
     @required List<dynamic> offset,
   }) async {
     assert(
-      metric == Search.sub_type_best || metric == Search.sub_type_downloads,
+      metric == Metrics.best || metric == Metrics.downloads,
     );
     assert(KlangTimePeriodArr.contains(time));
 
@@ -384,12 +384,13 @@ class FirePP {
       );
     }
     String contentType;
-    if (O is KlangSound) {
-      contentType = Search.type_user;
-    } else if (O is KlangUser) {
+    if (O == KlangSound) {
+      contentType = Search.type_sound;
+    } else if (O == KlangUser) {
       contentType = Search.type_user;
     }
     final data = {
+      Info.item_name: searchStr,
       Search.type: contentType,
       Search.sub_type: Search.sub_type_sk,
       Search.offset: offset,

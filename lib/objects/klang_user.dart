@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:klang/constants/klang_constants.dart';
 import 'package:klang/objects/klang_obj.dart';
 
-class KlangUser implements KlangObj {
+class KlangUser extends KlangObj {
   KlangUser._({
     this.id,
     this.name,

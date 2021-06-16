@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:klang/constants/klang_constants.dart';
 import 'package:klang/http_helper.dart';
@@ -23,7 +24,7 @@ class _HomePageState extends State<HomePage>
   String _timePeriod;
   Map<String, Map<String, int>> _listIndices;
   int _nextListIndx;
-  List<KlangItemList> _lists;
+  List<KlangItemList<KlangSound, KlangListItem>> _lists;
 
   @override
   bool get wantKeepAlive => true;
@@ -31,7 +32,7 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
-    _metric = Search.sub_type_downloads;
+    _metric = Metrics.downloads;
     _timePeriod = Metrics.this_week;
     _listIndices = {};
     _nextListIndx = 0;
@@ -42,7 +43,19 @@ class _HomePageState extends State<HomePage>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      appBar: AppBar(title: Text("home")),
+      appBar: AppBar(
+        title: Text("home"),
+        actions: [
+          // if in test mode, show button that when pressed, creates sounds for testing
+          if (!kReleaseMode)
+            IconButton(
+              onPressed: () async {
+                await TestFirePP.create_test_sounds();
+              },
+              icon: Icon(Icons.music_note_rounded),
+            )
+        ],
+      ),
       body: Column(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.start,
@@ -51,7 +64,7 @@ class _HomePageState extends State<HomePage>
             children: [
               DropdownButton<String>(
                 value: _metric,
-                items: [Search.sub_type_best, Search.sub_type_downloads]
+                items: [Metrics.best, Metrics.downloads]
                     .map(
                       (val) => DropdownMenuItem(
                         value: val,
@@ -127,9 +140,9 @@ class _HomePageState extends State<HomePage>
 
   String _metricCodeToMsg(String metricCode) {
     switch (metricCode) {
-      case Search.sub_type_best:
+      case Metrics.best:
         return "best";
-      case Search.sub_type_downloads:
+      case Metrics.downloads:
       default:
         return "downloads";
     }
