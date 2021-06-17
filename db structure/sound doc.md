@@ -15,6 +15,7 @@
   - storage
     - sound file bucket: string - (cloud storage bucket)
     - sound file path: string - (cloud storage path)
+    - sound file duration: double - (duration in seconds)
 - properties
   - explicit: bool
   - hidden: bool

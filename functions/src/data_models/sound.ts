@@ -21,6 +21,7 @@ export class FirestoreSound {
     explicit,
     fileBucket,
     filePath,
+    fileDuration,
   }: {
     // obj: functions.storage.ObjectMetadata;
     id: string;
@@ -32,6 +33,7 @@ export class FirestoreSound {
     explicit: boolean;
     fileBucket: string;
     filePath: string;
+    fileDuration: number;
   }): { [k: string]: unknown } {
     return {
       [Root.info]: {
@@ -52,6 +54,7 @@ export class FirestoreSound {
         [Info.storage]: {
           [Info.audio_file_bucket]: fileBucket, // obj.bucket,
           [Info.audio_file_path]: filePath, // obj.name,
+          [Info.audio_file_duration]: fileDuration,
         },
       },
       [Root.properties]: {

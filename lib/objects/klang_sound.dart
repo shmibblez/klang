@@ -1,8 +1,8 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 import 'package:klang/constants/klang_constants.dart';
+import 'package:klang/http_helper.dart';
 import 'package:klang/objects/klang_obj.dart';
 
 class KlangSound extends KlangObj {
@@ -17,6 +17,7 @@ class KlangSound extends KlangObj {
     this.timestamp_updated,
     this.audio_file_bucket,
     this.audio_file_path,
+    this.audio_file_duration,
     this.explicit,
     this.total_downloads,
     this.total_saves,
@@ -33,6 +34,7 @@ class KlangSound extends KlangObj {
   final Timestamp timestamp_updated;
   final String audio_file_bucket;
   final String audio_file_path;
+  final double audio_file_duration;
   final bool explicit;
   final int total_downloads;
   final int total_saves;
@@ -59,6 +61,8 @@ class KlangSound extends KlangObj {
       timestamp_updated: Timestamp(updated_secs, updated_nano),
       audio_file_bucket: map[Root.info][Info.storage][Info.audio_file_bucket],
       audio_file_path: map[Root.info][Info.storage][Info.audio_file_path],
+      audio_file_duration: map[Root.info][Info.storage]
+          [Info.audio_file_duration],
       explicit: map[Root.properties][Properties.explicit],
       total_downloads: ((map[Root.metrics] ?? const {})[Metrics.downloads] ??
               const {})[Metrics.total] ??
@@ -89,7 +93,12 @@ class KlangSound extends KlangObj {
     return sounds;
   }
 
-  String getDownloadUrl() => throw UnimplementedError();
+  String getDownloadUrl() {
+    // TODO: replace slash with "%2F" ?
+    if (FirePP.isTesting)
+      return "http://localhost:9199/v0/b/klang-7.appspot.com/o/test_sound.aac?alt=media&token=9c1f06d9-aabb-4abd-b667-49ad2ba5dd7f";
+    return "https://firebasestorage.googleapis.com/v0/b/$audio_file_bucket/o/$audio_file_path";
+  }
 
   @override
   operator ==(Object o) => o is KlangSound && o.id == this.id;

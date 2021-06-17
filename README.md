@@ -50,11 +50,12 @@ samples, guidance on mobile development, and a full API reference.
 | stuff to do          | server side | client side | notes |
 | -------------------- | ----------- | ----------- | ----- |
 | navigation           | 🚫           | ✅           |       |
+| play sound           | 🚫           | ✅           |       |
 | user sign up         | ✅           | ✅           |       |
 | user sign in         | 🚫           | ✅           |       |
 | create sound         | ✅           | ✅           |       |
 | search for sound     | ✅           | ✅           |       |
-| search for user      | ❌           | ❌           |       |
+| search for user      | ✅           | ✅           |       |
 | set user image       | ❌           | ❌           |       |
 | saved sounds         | ❌           | ❌           |       |
 | edit sound           | ❌           | ❌           |       |

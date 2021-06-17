@@ -26,7 +26,7 @@ export const create_test_sounds = functions.https.onCall(
         const description = rw({ min: 3, max: 25, join: " " });
         const source_url = "";
         const explicit = false;
-        const filePath = "sound-name-nice.aac"; //`${StoragePaths.sounds}/${uid}/${sound_id}/${StoragePaths.sound_file_name}${Misc.storage_sound_file_ext}`;
+        const filePath = "test_sound.aac"; //`${StoragePaths.sounds}/${uid}/${sound_id}/${StoragePaths.sound_file_name}${Misc.storage_sound_file_ext}`;
 
         const data = {
           [Root.info]: {
@@ -46,6 +46,7 @@ export const create_test_sounds = functions.https.onCall(
             [Info.storage]: {
               [Info.audio_file_bucket]: fileBucket, // obj.bucket,
               [Info.audio_file_path]: filePath, // obj.name,
+              [Info.audio_file_duration]: 7 * 1000, // 7 seconds to millis
             },
           },
           [Root.properties]: {

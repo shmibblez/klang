@@ -30,6 +30,7 @@ import { promises as fsPromises } from "fs";
 import { extname, join } from "path";
 // import { promisify } from "util";
 import * as ffmpeg_static from "ffmpeg-static";
+import * as ffprobe_static from "ffprobe-static";
 import * as ffmpeg from "fluent-ffmpeg";
 import { firestore, storage } from "firebase-admin";
 
@@ -95,9 +96,9 @@ export const create_sound = functions.https.onCall(async (data, context) => {
     sound_file_dir,
     clean_sound_name + Misc.storage_sound_file_ext // for testing: + "2" + raw_ext
   );
-  console.log(
-    `create_sound:\n  input file: ${input_filepath}\n  output file: ${output_filepath}`
-  );
+  // console.log(
+  //   `create_sound:\n  input file: ${input_filepath}\n  output file: ${output_filepath}`
+  // );
 
   /**
    * {@link phase_2 write file}
@@ -147,10 +148,31 @@ export const create_sound = functions.https.onCall(async (data, context) => {
         reject(new MissionFailedError(e));
       })
       .on("end", (stdout) => {
-        console.log("create_sound: processed file, output: ", stdout);
         resolve();
       });
   });
+
+  const sound_duration: number = await new Promise<number>((resolve, reject) =>
+    ffmpeg(output_filepath)
+      .setFfmpegPath(ffprobe_static.path)
+      .ffprobe(async (err, metadata) => {
+        if (err) {
+          console.error("create_sound: ffprobe error: ", err);
+          await _fileCleanup();
+          reject(new MissionFailedError(err));
+        }
+
+        const d = metadata?.format?.duration;
+
+        if (d === undefined || typeof d != "number") {
+          await _fileCleanup();
+          console.error("create_sound: file metadata is invalid");
+          reject(new MissionFailedError());
+        }
+
+        resolve(d as number);
+      })
+  );
 
   /**
    * {@link phase_3 create sound doc}
@@ -189,6 +211,7 @@ export const create_sound = functions.https.onCall(async (data, context) => {
       explicit: raw_explicit,
       fileBucket: storage_bucket,
       filePath: storage_path,
+      fileDuration: sound_duration,
     });
 
     console.log(

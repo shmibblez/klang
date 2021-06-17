@@ -5,7 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_sound/flutter_sound.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:klang/objects/klang_sound.dart';
 import 'package:klang/page_router.dart';
 import 'package:klang/pages/add.dart';
@@ -106,6 +106,14 @@ class _InitialSetupState extends State<_InitialSetup> {
       // key: widget._blocKey,
       providers: [
         BlocProvider(
+          lazy: false,
+          create: (_) => DJCubit(),
+        ),
+        BlocProvider(
+          lazy: false,
+          create: (_) => SavedItemsCubit(),
+        ),
+        BlocProvider(
           // key: widget._authKey,
           lazy: false,
           create: (_) => AuthCubit(null),
@@ -130,43 +138,90 @@ enum PlayaState { playing, paused, idle, notReady, error }
 /// DJCubit handles sound playback
 class DJCubit extends Cubit<PlayaState> {
   DJCubit()
-      : _playa = FlutterSoundPlayer(),
+      : _playa = AudioPlayer(),
+        _playingSoundIdStreamController = StreamController(),
         super(PlayaState.notReady);
 
-  final FlutterSoundPlayer _playa;
+  final AudioPlayer _playa;
+  final StreamController<String> _playingSoundIdStreamController;
   String _errorMessage;
 
   String get errorMessage => _errorMessage;
+  Duration get soundDuration => _playa.duration;
 
   /// sets [sound] as [activeSound] and plays it
   /// returns [sound] file duration
-  Future<int> play(KlangSound sound) async {
-    await _playa.stopPlayer();
+  Future<Duration> play(KlangSound sound) async {
+    await _playa.stop();
     try {
-      Duration d = await _playa.startPlayer(fromURI: sound.getDownloadUrl());
+      Duration d = await _playa.setUrl(sound.getDownloadUrl());
+      _playa.play();
       emit(PlayaState.playing);
-      return d.inMilliseconds;
+      _playingSoundIdStreamController.add(sound.id);
+      return d;
     } catch (e, st) {
       debugPrint("***DJCubit error: $e, stackTrace: $st");
       emit(PlayaState.error);
       _errorMessage = e.toString();
-      return -1;
+      // TODO: show error snackbar from Root widget
+      return Duration.zero;
     }
   }
 
   Future<void> pause() async {
-    if (_playa.isPlaying) {
-      await _playa.pausePlayer();
+    if (_playa.playing) {
+      _playa.pause();
       emit(PlayaState.paused);
     }
   }
 
+  Future<void> restart() async {
+    await _playa.seek(Duration.zero);
+    _playa.play();
+    emit(PlayaState.playing);
+  }
+
   Future<void> resume() async {
-    if (_playa.isPaused) {
-      await _playa.resumePlayer();
+    if (!_playa.playing) {
+      await _playa.play();
       emit(PlayaState.playing);
     }
   }
+
+  /// emits currently playing sound id
+  Stream<String> onPlayingId() {
+    return _playingSoundIdStreamController.stream;
+  }
+
+  Stream<Duration> onProgress() {
+    return _playa.positionStream;
+  }
+}
+
+enum SavedItemsState { loading, ready }
+
+class SavedItemsCubit extends Cubit<SavedItemsState> {
+  SavedItemsCubit() : super(SavedItemsState.loading) {
+    _setup();
+  }
+
+  bool get isReady => state == SavedItemsState.ready;
+  Map<String, Object> sounds;
+
+  /// sets up user's saved items lists
+  /// if fails to load keeps retrying every 7 seconds
+  void _setup() async {
+    if (state == SavedItemsState.ready) return;
+    try {
+      // TODO: load saved items here
+      emit(SavedItemsState.ready);
+    } catch (e) {
+      await Future.delayed(Duration(seconds: 7));
+      _setup();
+    }
+  }
+
+  bool isSaved(String id) => sounds?.containsKey(id) ?? false;
 }
 
 class UserState {

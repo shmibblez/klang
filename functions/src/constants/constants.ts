@@ -21,6 +21,7 @@ export class Info {
   static readonly storage = "st";
   static readonly audio_file_bucket = "ab";
   static readonly audio_file_path = "ap";
+  static readonly audio_file_duration = "ad";
   static readonly image_file_bucket = "ib";
   static readonly image_file_path = "ip";
 }

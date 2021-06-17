@@ -71,7 +71,7 @@ class SearchFromKeysResult<O extends KlangObj> {
 
 /// combo between Firebase and HTTP
 class FirePP {
-  static final bool _testing = true && kDebugMode;
+  static final bool isTesting = true && kDebugMode;
   static final _authPort = "9099";
   static final _functionsPort = "5001";
   // ignore: unused_field
@@ -80,7 +80,7 @@ class FirePP {
   static final _rtdbPort = "9000";
   // ignore: unused_field
   static final _hostingPort = "5000";
-  static final _storagePort = 9199;
+  static final storagePort = 9199;
 
   static String translateLoginMsg(LoginResultMsg l) {
     switch (l) {
@@ -174,7 +174,7 @@ class FirePP {
     @required String password,
   }) async {
     try {
-      if (_testing) {
+      if (isTesting) {
         await FirebaseAuth.instance.useEmulator("http://localhost:$_authPort");
       }
       await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
@@ -208,7 +208,7 @@ class FirePP {
     @required String password,
   }) async {
     FirebaseFunctions functions = FirebaseFunctions.instance;
-    if (_testing) {
+    if (isTesting) {
       functions.useFunctionsEmulator(
         origin: 'http://localhost:$_functionsPort',
       );
@@ -266,8 +266,8 @@ class FirePP {
     FirebaseStorage storage = FirebaseStorage.instance;
     FirebaseFunctions functions = FirebaseFunctions.instance;
 
-    if (_testing) {
-      storage.useEmulator(host: "localhost", port: _storagePort);
+    if (isTesting) {
+      storage.useEmulator(host: "localhost", port: storagePort);
       functions.useFunctionsEmulator(
         origin: "http://localhost:$_functionsPort",
       );
@@ -328,7 +328,7 @@ class FirePP {
 
     FirebaseFunctions functions = FirebaseFunctions.instance;
 
-    if (_testing) {
+    if (isTesting) {
       functions.useFunctionsEmulator(
         origin: "http://localhost:$_functionsPort",
       );
@@ -378,7 +378,7 @@ class FirePP {
     List<dynamic> offset,
   }) async {
     FirebaseFunctions functions = FirebaseFunctions.instance;
-    if (_testing) {
+    if (isTesting) {
       functions.useFunctionsEmulator(
         origin: "http://localhost:$_functionsPort",
       );
@@ -411,7 +411,7 @@ class FirePP {
 
 class TestFirePP {
   static Future<void> create_test_sounds() async {
-    if (!FirePP._testing) return;
+    if (!FirePP.isTesting) return;
     FirebaseFunctions functions = FirebaseFunctions.instance;
     functions.useFunctionsEmulator(
       origin: "http://localhost:${FirePP._functionsPort}",

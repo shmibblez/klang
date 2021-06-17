@@ -25,6 +25,7 @@ class Info {
   static const storage = "st";
   static const audio_file_bucket = "ab";
   static const audio_file_path = "ap";
+  static const audio_file_duration = "ad";
   static const image_file_bucket = "ib";
   static const image_file_path = "ip";
 }
