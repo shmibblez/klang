@@ -30,13 +30,26 @@ class SoundListItem extends StatefulWidget implements KlangListItem {
 class _SoundListItemState extends State<SoundListItem> {
   StreamSubscription<Duration> _onProgressStreamSub;
   StreamSubscription<String> _onPlayingSoundIdStreamSub;
-  bool _playing;
+  bool _active;
   double _progress; // percent of playing completion (from 0 to 1)
+  Size _size;
 
   @override
   void initState() {
     super.initState();
-    _playing = false;
+    _active = false;
+    _progress = 0;
+    // if sound currently playing, then setup listeners and show progress.
+    // Doesn't update progress if sound list item already built (would require
+    // all sound list items to always have listeners active)
+    DJCubit cube = BlocProvider.of<DJCubit>(context);
+    if (cube.state == widget.sound.id) {
+      _active = true;
+      _setupListeners(cube);
+    }
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _size = context.size;
+    });
   }
 
   @override
@@ -50,8 +63,14 @@ class _SoundListItemState extends State<SoundListItem> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        if (_active && _size != null)
+          Container(
+            height: _size.height,
+            width: _size.width * _progress,
+            color: Colors.green[200],
+          ),
         ListTile(
-          title: Text(widget.sound.name + ", progress: $_progress"),
+          title: Text(widget.sound.name),
           onTap: _onTapSound,
           trailing: PopupMenuButton<_SoundMenuOption>(
             child: Icon(Icons.more_vert_rounded),
@@ -84,26 +103,32 @@ class _SoundListItemState extends State<SoundListItem> {
   }
 
   void _onTapSound() async {
-    DJCubit cube = BlocProvider.of<DJCubit>(context);
-    await cube.play(widget.sound);
-
     setState(() {
-      _playing = true;
+      _active = true;
     });
-    _onProgressStreamSub?.cancel();
-    _onProgressStreamSub = cube.onProgress().listen((progress) {
+    DJCubit cube = BlocProvider.of<DJCubit>(context);
+    _setupListeners(cube);
+  }
+
+  void _setupListeners(DJCubit cube) {
+    _onProgressStreamSub ??= cube.onProgress().listen((pos) {
       setState(() {
-        _progress = progress.inSeconds / widget.sound.audio_file_duration;
+        _progress = pos.inMilliseconds / cube.soundDuration.inMilliseconds;
+        if (_progress >= 1) _progress = 0;
       });
     });
 
     // if playing sound id isn't this one, that means it changed, cancel onProgress stream and set [_playing] to false
-    _onPlayingSoundIdStreamSub ??= cube.onPlayingId().listen((playingId) {
-      if (_playing && playingId != widget.sound.id) {
+    _onPlayingSoundIdStreamSub ??= cube.stream.listen((activeSoundId) {
+      if (activeSoundId != widget.sound.id) {
         setState(() {
-          _playing = false;
+          _active = false;
+          _progress = 0;
         });
-        _onProgressStreamSub?.cancel();
+        _onProgressStreamSub.cancel();
+        _onPlayingSoundIdStreamSub?.cancel();
+        _onProgressStreamSub = null;
+        _onPlayingSoundIdStreamSub = null;
       }
     });
   }

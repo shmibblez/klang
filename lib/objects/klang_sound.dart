@@ -1,6 +1,7 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:klang/constants/klang_constants.dart';
 import 'package:klang/http_helper.dart';
 import 'package:klang/objects/klang_obj.dart';
@@ -61,8 +62,9 @@ class KlangSound extends KlangObj {
       timestamp_updated: Timestamp(updated_secs, updated_nano),
       audio_file_bucket: map[Root.info][Info.storage][Info.audio_file_bucket],
       audio_file_path: map[Root.info][Info.storage][Info.audio_file_path],
-      audio_file_duration: map[Root.info][Info.storage]
-          [Info.audio_file_duration],
+      audio_file_duration: FirePP.isTesting
+          ? 4147.639
+          : map[Root.info][Info.storage][Info.audio_file_duration],
       explicit: map[Root.properties][Properties.explicit],
       total_downloads: ((map[Root.metrics] ?? const {})[Metrics.downloads] ??
               const {})[Metrics.total] ??
@@ -96,7 +98,7 @@ class KlangSound extends KlangObj {
   String getDownloadUrl() {
     // TODO: replace slash with "%2F" ?
     if (FirePP.isTesting)
-      return "http://localhost:9199/v0/b/klang-7.appspot.com/o/test_sound.aac?alt=media&token=9c1f06d9-aabb-4abd-b667-49ad2ba5dd7f";
+      return "http://localhost:9199/v0/b/klang-7.appspot.com/o/test_sound.aac?alt=media&token=68d421a1-aa32-4275-aee6-4a5de6f95343";
     return "https://firebasestorage.googleapis.com/v0/b/$audio_file_bucket/o/$audio_file_path";
   }
 

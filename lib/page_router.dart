@@ -237,7 +237,6 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
   KlangPage _genPageFrom(PageRoutePath path) {
     switch (path.elements[0].toLowerCase()) {
       case "search":
-        debugPrint("***path.elements: ${path.elements}");
         final searchStr = path.elements.length >= 2 ? path.elements[1] : null;
         return SearchResultsPage(
           searchStr: searchStr,

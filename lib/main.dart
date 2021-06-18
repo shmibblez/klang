@@ -132,36 +132,33 @@ class _InitialSetupState extends State<_InitialSetup> {
   }
 }
 
-enum PlayaState { playing, paused, idle, notReady, error }
-
 /// DJCubit is in charge of emitting feel-good vibes
-/// DJCubit handles sound playback
-class DJCubit extends Cubit<PlayaState> {
+/// DJCubit handles sound playback & emits currently playing sound id
+class DJCubit extends Cubit<String> {
   DJCubit()
       : _playa = AudioPlayer(),
-        _playingSoundIdStreamController = StreamController(),
-        super(PlayaState.notReady);
+        super(null);
 
   final AudioPlayer _playa;
-  final StreamController<String> _playingSoundIdStreamController;
   String _errorMessage;
+  Duration _soundDuration;
 
   String get errorMessage => _errorMessage;
-  Duration get soundDuration => _playa.duration;
+  Duration get soundDuration => _soundDuration;
 
   /// sets [sound] as [activeSound] and plays it
   /// returns [sound] file duration
   Future<Duration> play(KlangSound sound) async {
+    emit(sound.id);
     await _playa.stop();
+    _soundDuration = Duration.zero;
     try {
-      Duration d = await _playa.setUrl(sound.getDownloadUrl());
+      _soundDuration = await _playa.setUrl(sound.getDownloadUrl());
       _playa.play();
-      emit(PlayaState.playing);
-      _playingSoundIdStreamController.add(sound.id);
-      return d;
+      return _soundDuration;
     } catch (e, st) {
       debugPrint("***DJCubit error: $e, stackTrace: $st");
-      emit(PlayaState.error);
+      emit(null);
       _errorMessage = e.toString();
       // TODO: show error snackbar from Root widget
       return Duration.zero;
@@ -171,26 +168,18 @@ class DJCubit extends Cubit<PlayaState> {
   Future<void> pause() async {
     if (_playa.playing) {
       _playa.pause();
-      emit(PlayaState.paused);
     }
   }
 
   Future<void> restart() async {
     await _playa.seek(Duration.zero);
     _playa.play();
-    emit(PlayaState.playing);
   }
 
   Future<void> resume() async {
     if (!_playa.playing) {
       await _playa.play();
-      emit(PlayaState.playing);
     }
-  }
-
-  /// emits currently playing sound id
-  Stream<String> onPlayingId() {
-    return _playingSoundIdStreamController.stream;
   }
 
   Stream<Duration> onProgress() {
@@ -253,7 +242,6 @@ class AuthCubit extends Cubit<UserState> {
   String get uid => state?.uid;
 
   void _resetAuth() {
-    debugPrint("AuthCubit: _resetAuth()");
     _streamSub?.cancel();
     _stream = FirebaseAuth.instance
         .userChanges()
@@ -373,7 +361,6 @@ class Root extends StatefulWidget {
 
   @override
   _RootState createState() {
-    debugPrint("Root: createState()");
     return _RootState();
   }
 }
@@ -381,7 +368,6 @@ class Root extends StatefulWidget {
 class _RootState extends State<Root> {
   @override
   void reassemble() {
-    debugPrint("_RootState reassemble()");
     BlocProvider.of<AuthCubit>(context)._resetAuth();
     super.reassemble();
   }

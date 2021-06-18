@@ -231,6 +231,7 @@ export class FieldMasks {
     // `${Root.info}.${Info.storage}.${Info.audio_file_path}`,
     `${Root.properties}.${Properties.explicit}`,
     `${Root.metrics}.${Metrics.downloads}`,
+    `${Root.metrics}.${Metrics.best}`,
     `${Root.metrics}.${Metrics.saves}`,
   ];
   // for user list item

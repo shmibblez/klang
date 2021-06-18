@@ -94,7 +94,7 @@ export const create_sound = functions.https.onCall(async (data, context) => {
   const input_filepath = join(sound_file_dir, clean_sound_name + raw_ext); // TODO: use sound id as filename in uid dir: "[uid]/[soundid].ext"
   const output_filepath = join(
     sound_file_dir,
-    clean_sound_name + Misc.storage_sound_file_ext // for testing: + "2" + raw_ext
+    clean_sound_name + "0" + Misc.storage_sound_file_ext // for testing: + "2" + raw_ext
   );
   // console.log(
   //   `create_sound:\n  input file: ${input_filepath}\n  output file: ${output_filepath}`
@@ -164,13 +164,14 @@ export const create_sound = functions.https.onCall(async (data, context) => {
 
         const d = metadata?.format?.duration;
 
-        if (d === undefined || typeof d != "number") {
+        if (typeof d != "number") {
           await _fileCleanup();
           console.error("create_sound: file metadata is invalid");
           reject(new MissionFailedError());
         }
 
-        resolve(d as number);
+        // convert from s to ms
+        resolve((d as number) * 1000);
       })
   );
 

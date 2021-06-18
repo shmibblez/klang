@@ -121,7 +121,7 @@ class _HomePageState extends State<HomePage>
 
             if (r.resultMsg != SearchSoundHomeResultMsg.success) {
               debugPrint(
-                  "**result message not success, resultMsg: ${r.resultMsg}");
+                  "**FirePP.search_sounds_home failed, resultMsg: ${r.resultMsg}");
               throw FirePP.translateSearchSoundHomeResultMsg(r.resultMsg);
             }
             return r.sounds;
