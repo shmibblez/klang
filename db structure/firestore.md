@@ -23,7 +23,7 @@
     - [username] - (doc)
 
 ## sounds.[sound doc id].lists & sounds.[sound doc id].saves sub-collections
-- these collections store docs that store sound doc duplicates along with array of list ids & save ids. This means that doc id needs to be random, & need to keep track of which docs are full & which ones aren't
+- these collections store docs that store sound doc duplicates along with array of list ids & user ids. This means that doc id needs to be random, & need to keep track of which docs are full & which ones aren't
 - this allows collection group querying for sounds in lists & ordering by downloads, saves, timestamp created, etc, and allows lists & saved lists to have unlimited size. (see user saved lists & saved sounds for note on those limits)
 
 ## users.[user doc id].saved sub-collection
