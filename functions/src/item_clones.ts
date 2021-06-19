@@ -39,6 +39,9 @@ export const save_sound = functions.https.onCall(async (data, context) => {
   // original sound doc
   const sound_doc_ref = firestore().collection(Coll.sounds).doc(sound_id);
 
+  // TODO: update user's saved sounds list too, check if already contains sound, and if not, add
+  // user's saved sounds list is for local caching and checks
+
   await firestore().runTransaction(async (t) => {
     const sound_snap = await t.get(sound_doc_ref);
     if (!sound_snap.exists) throw new NonexistentDocError();
@@ -95,6 +98,7 @@ export const save_sound = functions.https.onCall(async (data, context) => {
         ).splice(indx, 1);
       }
     }
+    // TODO: read this over to see if all good
     FirestoreSound.updateMetric({
       metric: Metrics.saves,
       data: sound_doc_data,

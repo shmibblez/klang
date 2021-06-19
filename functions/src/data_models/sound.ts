@@ -15,6 +15,7 @@ import {
   randomSeeds,
 } from "../field_generators";
 import { firestore } from "firebase-admin";
+import { isMetricStale } from "../field_checks";
 
 export class FirestoreSound {
   // generates initial sound doc data
@@ -104,10 +105,6 @@ export class FirestoreSound {
     data: { [k: string]: any };
     change: number;
   }): void {
-    // TODO: add param `rejuvinateIfStale`
-    // all would need to do then is:
-    // - if stale, reset count for metric and reset timestamp stale
-    //.
     // update total
     (data[Root.metrics][metric][Metrics.total] as number) += change;
     // for each time period:
@@ -119,18 +116,19 @@ export class FirestoreSound {
       // get current metric count
       const num = data[Root.metrics][metric][tp];
       const tp_stale = Metrics.matchToTimePeriodStale(tp);
-      if (num === 0) {
-        // not set yet, apply overflow if eligible and set timestamp stale
+      if (num === 0 || isMetricStale(data[Root.metrics][metric][tp_stale])) {
+        // if not set or stale, reset count and timestamp stale
         let date_stale = Dates.currentTimePeriodEnd({ tp: tp });
         if (Dates.withinOffsetPeriod({ tp: tp })) {
+          // if within offset period, timestamp stale is when next time period ends
           date_stale = Dates.nextTimePeriodEnd({ tp: tp });
         }
+        // set timestamp stale
         data[Root.metrics][metric][tp_stale] =
           firestore.Timestamp.fromDate(date_stale);
+        // set metric count
+        (data[Root.metrics][metric][tp] as number) = change;
       } else {
-        if (data[Root.metrics][metric][tp_stale]) {
-          // TODO:
-        }
         // timestamp stale unchanged, only update metric
         (data[Root.metrics][metric][tp] as number) += change;
       }

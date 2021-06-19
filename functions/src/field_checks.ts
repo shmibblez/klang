@@ -2,6 +2,7 @@ import { Lengths } from "./constants/constants";
 
 import { URL } from "url";
 import { https } from "firebase-functions";
+import { firestore } from "firebase-admin";
 
 // checks whether user is signed in
 export function isAuthorized(context: https.CallableContext): boolean {
@@ -69,4 +70,9 @@ export class Rex {
   static readonly uid_banished_chars = /[^A-Za-z0-9-]/g;
   static readonly uid_allowed_chars = /[A-Za-z0-9-]/g;
   static readonly allowed_chars_filename = /[A-Za-z0-9-]/;
+}
+export function isMetricStale(t: firestore.Timestamp): boolean {
+  if (!t) return true; // if undefined, stale confirmed
+  // if timestamp is in past, stale confirmed
+  return t.seconds < firestore.Timestamp.fromMillis(Date.now()).seconds;
 }
