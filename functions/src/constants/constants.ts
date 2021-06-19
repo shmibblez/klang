@@ -1,9 +1,25 @@
+import {
+  addDays,
+  addMonths,
+  addWeeks,
+  addYears,
+  differenceInDays,
+  differenceInHours,
+  differenceInYears,
+  endOfDay,
+  lastDayOfDecade,
+  lastDayOfMonth,
+  lastDayOfWeek,
+  lastDayOfYear,
+} from "date-fns";
+
 export class Root {
   static readonly info = "i";
   static readonly properties = "p";
   static readonly metrics = "m";
   static readonly legal = "f";
   static readonly deleted = "d";
+  static readonly clone = "c";
 }
 
 export class Info {
@@ -65,8 +81,30 @@ export class Metrics {
   static readonly decade_stale = "Ds";
   static readonly century_stale = "Cs";
   static readonly millenium_stale = "Ms";
-}
 
+  static matchToTimePeriodStale(tp: KlangTimePeriod): string {
+    if (!KlangTimePeriods.includes(tp))
+      throw `time period not in KlangTimePeriods: ${tp}`;
+    if (tp === Metrics.total || tp === Metrics.this_day) {
+      return tp;
+    }
+    switch (tp) {
+      case Metrics.this_week:
+        return Metrics.week_stale;
+      case Metrics.this_month:
+        return Metrics.month_stale;
+      case Metrics.this_year:
+        return Metrics.year_stale;
+      case Metrics.this_decade:
+        return Metrics.decade_stale;
+      case Metrics.this_century:
+        return Metrics.century_stale;
+      case Metrics.this_millenium:
+        return Metrics.millenium_stale;
+    }
+  }
+}
+export type KlangMetric = "dn" | "sv" | "bs" | "pl" | "fs" | "fw" | "sc" | "lc";
 export type KlangTimePeriod =
   | "tl"
   | "td"
@@ -76,7 +114,7 @@ export type KlangTimePeriod =
   | "tD"
   | "tC"
   | "tM";
-export const KlangTimePeriodArr: KlangTimePeriod[] = [
+export const KlangTimePeriods: KlangTimePeriod[] = [
   Metrics.total,
   Metrics.this_day,
   Metrics.this_week,
@@ -108,6 +146,13 @@ export class Following {
 export class Username {
   static readonly username = "n";
   static readonly uid = "d";
+}
+
+export class Clone {
+  static readonly ids = "z";
+  static readonly available_clone_ids = "ai";
+  static readonly space_available = "sa";
+  static readonly clone_count = "dc";
 }
 
 export class RTDB {
@@ -154,6 +199,7 @@ export class ErrorCodes {
   static readonly invalid_uid = "id";
   static readonly invalid_pswd = "ip";
   static readonly invalid_sound_name = "is";
+  static readonly invalid_doc_id = "ii";
   static readonly mission_failed = "mf";
   static readonly unauthenticated = "ua";
   static readonly internal = "internal";
@@ -164,14 +210,19 @@ export class ErrorCodes {
   static readonly uid_taken = "ut";
   static readonly email_taken = "et";
   static readonly unsupported_query = "uq";
+  static readonly nonexistent_doc = "nd";
+  static readonly already_saved = "av";
 }
 
 // collection names
+// - root-level collections are denoted by 1 character
+// - sub-collections are denoted by 2 characters
 export class Coll {
   static readonly sounds = "s";
   static readonly users = "u";
   static readonly lists = "l";
   static readonly usernames = "n";
+  static readonly saves = "sv";
 }
 
 export class StoragePaths {
@@ -206,6 +257,7 @@ export class Lengths {
     ".flac",
     ".m4a",
   ];
+  static readonly max_clone_sound_uids = 1000;
 }
 
 export class Misc {
@@ -251,4 +303,131 @@ export class FieldMasks {
     `${Root.metrics}.${Metrics.followers}`,
     `${Root.metrics}.${Metrics.following}`,
   ];
+}
+
+export class Dates {
+  static readonly reference_year = 2000;
+  static readonly reference_date = new Date(2000, 0);
+  static readonly offset_for_day_in_hours = 6;
+  static readonly offset_for_week_in_days = 3;
+  static readonly offset_for_month_in_days = 7;
+  static readonly offset_for_year_in_days = 30;
+  static readonly offset_for_decade_in_years = 1;
+  static readonly offset_for_century_in_years = 10;
+  static readonly offset_for_millenium_in_years = 100;
+
+  static currentTimePeriodEnd({ tp }: { tp: KlangTimePeriod }): Date {
+    const now = new Date();
+    if (tp === Metrics.total || tp === Metrics.this_day) return new Date(0, 0);
+    switch (tp) {
+      case Metrics.this_week:
+        return lastDayOfWeek(now);
+      case Metrics.this_month:
+        return lastDayOfMonth(now);
+      case Metrics.this_year:
+        return lastDayOfYear(now);
+      case Metrics.this_decade:
+        return lastDayOfDecade(now);
+      case Metrics.this_century: {
+        const years = differenceInYears(now, Dates.reference_date);
+        let centuries = Math.ceil(years / 100);
+        const future = addYears(Dates.reference_date, centuries * 100);
+        // if within first year of century since `differenceinYears()` returns int
+        if (now >= future) return addYears(future, 100);
+        return future;
+      }
+      case Metrics.this_millenium: {
+        const years = differenceInYears(now, Dates.reference_date);
+        const milleniums = Math.ceil(years / 1000);
+        const future = addYears(Dates.reference_date, milleniums * 1000);
+        // if within first year of millenium `differenceinYears()` returns int
+        if (now >= future) return addYears(future, 1000);
+        return future;
+      }
+    }
+  }
+
+  static nextTimePeriodEnd({ tp }: { tp: KlangTimePeriod }): Date {
+    const now = new Date();
+    if (tp === Metrics.total) return new Date(0, 0);
+    switch (tp) {
+      case Metrics.this_day:
+        return endOfDay(addDays(now, 1));
+      case Metrics.this_week:
+        return lastDayOfWeek(addWeeks(now, 1));
+      case Metrics.this_month:
+        return lastDayOfMonth(addMonths(now, 1));
+      case Metrics.this_year:
+        return lastDayOfYear(addYears(now, 1));
+      case Metrics.this_decade:
+        return lastDayOfDecade(addYears(now, 10));
+      case Metrics.this_century: {
+        const years = differenceInYears(now, Dates.reference_date);
+        let centuries = Math.ceil(years / 100);
+        const future = addYears(Dates.reference_date, centuries * 100);
+        // if within first year of century since `differenceinYears()` returns int
+        if (now >= future) return addYears(future, 200);
+        return addYears(future, 100);
+      }
+      case Metrics.this_millenium: {
+        const years = differenceInYears(now, Dates.reference_date);
+        const milleniums = Math.ceil(years / 1000);
+        const future = addYears(Dates.reference_date, milleniums * 1000);
+        // if within first year of millenium `differenceinYears()` returns int
+        if (now >= future) return addYears(future, 2000);
+        return addYears(future, 1000);
+      }
+    }
+  }
+
+  static withinOffsetPeriod({
+    tp,
+    date = new Date(),
+  }: {
+    tp: KlangTimePeriod;
+    date?: Date;
+  }): boolean {
+    if (tp === Metrics.total) return false;
+    const current_tp_end = this.currentTimePeriodEnd({ tp: tp });
+    if (date == current_tp_end) return true;
+    const dateLeft = date > current_tp_end ? date : current_tp_end;
+    const dateRight = date > current_tp_end ? current_tp_end : date;
+    switch (tp) {
+      case Metrics.this_day:
+        return (
+          differenceInHours(dateLeft, dateRight) <=
+          Dates.offset_for_day_in_hours
+        );
+      case Metrics.this_week:
+        return (
+          differenceInDays(dateLeft, dateRight) <= Dates.offset_for_week_in_days
+        );
+      case Metrics.this_month:
+        return (
+          differenceInDays(dateLeft, dateRight) <=
+          Dates.offset_for_month_in_days
+        );
+      case Metrics.this_year:
+        return (
+          differenceInDays(dateLeft, dateRight) <= Dates.offset_for_year_in_days
+        );
+      case Metrics.this_decade:
+        return (
+          differenceInYears(dateLeft, dateRight) <=
+          Dates.offset_for_decade_in_years
+        );
+      case Metrics.this_century: {
+        return (
+          differenceInDays(dateLeft, dateRight) <=
+          Dates.offset_for_century_in_years
+        );
+      }
+      case Metrics.this_millenium: {
+        return (
+          differenceInDays(dateLeft, dateRight) <=
+          Dates.offset_for_millenium_in_years
+        );
+      }
+    }
+  }
 }

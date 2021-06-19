@@ -7,7 +7,9 @@ this doc is stored in paths:
 
 # doc structure:
 - [doc clone, may exclude fields not necessary for sorting]
-- ids: string[] - (content ids that have saved it)
+- clone fields: map - (stores clone fields in here to separate fields and avoid conflicting field names)
+  - ids: string[] - (content ids that have saved it)
+  - space available: bool - (whether has space for more ids)
 
 # notes
 - content types that include doc are given by the sub collection, ex: sounds saved will always be in sounds.[sound id].lists -> lists include this sound

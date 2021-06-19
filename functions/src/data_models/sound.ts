@@ -1,4 +1,12 @@
-import { Info, Metrics, Properties, Root } from "../constants/constants";
+import {
+  Dates,
+  Info,
+  KlangMetric,
+  KlangTimePeriods,
+  Metrics,
+  Properties,
+  Root,
+} from "../constants/constants";
 import {
   indexName,
   indexProperties,
@@ -6,7 +14,7 @@ import {
   initMetric,
   randomSeeds,
 } from "../field_generators";
-import * as admin from "firebase-admin";
+import { firestore } from "firebase-admin";
 
 export class FirestoreSound {
   // generates initial sound doc data
@@ -41,16 +49,15 @@ export class FirestoreSound {
         [Info.item_name]: {
           [Info.item_name]: name,
           [Info.search_keys]: indexName(name),
-          [Info.timestamp_updated]:
-            admin.firestore.FieldValue.serverTimestamp(),
+          [Info.timestamp_updated]: firestore.FieldValue.serverTimestamp(),
         },
         [Info.tags]: tags,
         [Info.tag_keys]: indexTags(tags),
         [Info.description]: description ?? "",
         [Info.source_url]: source_url ?? "",
         [Info.creator_id]: creator_id,
-        [Info.timestamp_created]: admin.firestore.FieldValue.serverTimestamp(),
-        [Info.timestamp_updated]: admin.firestore.FieldValue.serverTimestamp(),
+        [Info.timestamp_created]: firestore.FieldValue.serverTimestamp(),
+        [Info.timestamp_updated]: firestore.FieldValue.serverTimestamp(),
         [Info.storage]: {
           [Info.audio_file_bucket]: fileBucket, // obj.bucket,
           [Info.audio_file_path]: filePath, // obj.name,
@@ -72,5 +79,61 @@ export class FirestoreSound {
       // no metrics when created
       // no legal info when created
     };
+  }
+
+  static formatSaveCloneId(sound_id: string, num: number): string {
+    return sound_id + "-" + Math.trunc(num);
+  }
+
+  static parseSaveCloneId(clone_id: string): string {
+    return clone_id.substring(0, clone_id.lastIndexOf("-") - 1);
+  }
+
+  /**
+   * modifies [data] directly
+   * @param metric metric to update
+   * @param data doc data to modify/update
+   * @param change save count change, can be + or -
+   */
+  static updateMetric({
+    metric,
+    data,
+    change,
+  }: {
+    metric: KlangMetric;
+    data: { [k: string]: any };
+    change: number;
+  }): void {
+    // TODO: add param `rejuvinateIfStale`
+    // all would need to do then is:
+    // - if stale, reset count for metric and reset timestamp stale
+    //.
+    // update total
+    (data[Root.metrics][metric][Metrics.total] as number) += change;
+    // for each time period:
+    // - if metric count exists, increment - don't overflow (timestamp stale not changed)
+    // - if metric count doesn't exist, set - do overflow (timestamp stale is set to next time period end, after closest one)
+    for (const tp of KlangTimePeriods) {
+      // these metrics don't need stale maintenance
+      if (tp === Metrics.total || tp === Metrics.this_day) continue;
+      // get current metric count
+      const num = data[Root.metrics][metric][tp];
+      const tp_stale = Metrics.matchToTimePeriodStale(tp);
+      if (num === 0) {
+        // not set yet, apply overflow if eligible and set timestamp stale
+        let date_stale = Dates.currentTimePeriodEnd({ tp: tp });
+        if (Dates.withinOffsetPeriod({ tp: tp })) {
+          date_stale = Dates.nextTimePeriodEnd({ tp: tp });
+        }
+        data[Root.metrics][metric][tp_stale] =
+          firestore.Timestamp.fromDate(date_stale);
+      } else {
+        if (data[Root.metrics][metric][tp_stale]) {
+          // TODO:
+        }
+        // timestamp stale unchanged, only update metric
+        (data[Root.metrics][metric][tp] as number) += change;
+      }
+    }
   }
 }

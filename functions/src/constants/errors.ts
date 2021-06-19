@@ -41,6 +41,11 @@ export class InvalidSoundNameError extends HttpsError {
     super("invalid-argument", ErrorCodes.invalid_sound_name, details);
   }
 }
+export class InvalidDocIdError extends HttpsError {
+  constructor(details?: string) {
+    super("invalid-argument", ErrorCodes.invalid_doc_id, details);
+  }
+}
 export class UnsupportedFileExtensionError extends HttpsError {
   constructor(details?: string) {
     super("invalid-argument", ErrorCodes.unsupported_file_extension, details);
@@ -64,6 +69,16 @@ export class FileTooBigError extends HttpsError {
 export class UnsupportedQueryError extends HttpsError {
   constructor(details?: string) {
     super("unavailable", ErrorCodes.unsupported_query, details);
+  }
+}
+export class NonexistentDocError extends HttpsError {
+  constructor(details?: string) {
+    super("failed-precondition", ErrorCodes.nonexistent_doc, details);
+  }
+}
+export class AlreadySavedError extends HttpsError {
+  constructor(details?: string) {
+    super("failed-precondition", ErrorCodes.already_saved, details);
   }
 }
 /**

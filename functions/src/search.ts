@@ -10,7 +10,7 @@ import {
   Lengths,
   Misc,
   KlangTimePeriod,
-  KlangTimePeriodArr,
+  KlangTimePeriods,
   Metrics,
   FieldMasks,
   FunctionResult,
@@ -203,7 +203,7 @@ function _directionFrom(d: string): FirebaseFirestore.OrderByDirection {
 }
 
 function _timePeriodFrom(t: string): KlangTimePeriod {
-  if (!KlangTimePeriodArr.includes(t as KlangTimePeriod))
+  if (!KlangTimePeriods.includes(t as KlangTimePeriod))
     return Metrics.this_week;
   return t as KlangTimePeriod;
 }

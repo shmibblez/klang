@@ -47,6 +47,10 @@
 - legal (legal information, if has received copyright notices before & not removed chances are it's not infringing) 
   - received copyright notices: int
   - received trademark notices: int
+- clone
+  - saves - (clones for saves)
+    - available docs: string[] - (list of clone docs with available id storage space)
+    - clone doc count: int - (number of clone docs)
 
 ## sound doc general stuff
 - any time sound doc is updated, random seeds are too, for randomization purposes
@@ -58,6 +62,7 @@
   - all possible tag combos are created, with multiple ones being called composite tags. Composite tags allow for filtering sounds that match multiple tags, and are created from multiple tags in alphabetical order to limit possibilities
 
 ## metric updates
+- metrics for `this_day` aren't taken into account, would require daily updates for all sounds
 - metric updates are stored in rtdb, refer to rtdb structure. Metric report is as follows:
   - 
 - metric updates are stored in rtdb, and are accompanied by timestamp for ascending filtering, & for determining stale timestamp for sound doc. rtdb metric update process is as follows:

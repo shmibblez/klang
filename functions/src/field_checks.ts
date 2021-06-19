@@ -3,16 +3,20 @@ import { Lengths } from "./constants/constants";
 import { URL } from "url";
 import { https } from "firebase-functions";
 
+// checks whether user is signed in
 export function isAuthorized(context: https.CallableContext): boolean {
   return (
     context.auth?.token?.email != undefined && context.auth?.uid != undefined
   );
 }
+export function isDocIdOk(id: string): boolean {
+  return typeof id === "string" && id.length > 0;
+}
 export function isSoundExtensionOk(e: string) {
   return Lengths.supported_sound_file_extensions.includes(e);
 }
 export function isSoundNameOk(n: string) {
-  return typeof n == "string" && Rex.sound_name_regex.test(n);
+  return typeof n === "string" && Rex.sound_name_regex.test(n);
 }
 /**
  *
@@ -29,11 +33,11 @@ export function isUidOk(uid: unknown): boolean {
   return typeof uid === "string" && Rex.uid_regex.test(uid ?? "");
 }
 export function isPswdOk(p: unknown): boolean {
-  return typeof p == "string" && Rex.password_regex.test(p);
+  return typeof p === "string" && Rex.password_regex.test(p);
 }
 export function isDescriptionOk(d: unknown): boolean {
   return (
-    typeof d == "string" &&
+    typeof d === "string" &&
     (d.length >= 0 ||
       Lengths.max_description_length <= Lengths.max_description_length)
   );
@@ -49,7 +53,7 @@ export function isUrlOk(u: unknown): boolean {
   }
 }
 export function isTagOk(t: unknown) {
-  return typeof t == "string" && Rex.tag_regex.test(t);
+  return typeof t === "string" && Rex.tag_regex.test(t);
 }
 /**
  * regex for checking values
