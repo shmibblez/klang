@@ -20,6 +20,7 @@ export class Root {
   static readonly legal = "f";
   static readonly deleted = "d";
   static readonly clone = "c";
+  static readonly items = "t";
 }
 
 export class Info {
@@ -34,6 +35,7 @@ export class Info {
   static readonly creator_id = "cd";
   static readonly timestamp_created = "tc";
   static readonly timestamp_updated = "tu";
+  static readonly timestamp_checked = "te";
   static readonly storage = "st";
   static readonly audio_file_bucket = "ab";
   static readonly audio_file_path = "ap";
@@ -43,7 +45,7 @@ export class Info {
 }
 
 export class Deleted {
-  static readonly timestamp_deleted = "te";
+  static readonly timestamp_deleted = "tt";
 }
 
 export class Properties {
@@ -212,6 +214,7 @@ export class ErrorCodes {
   static readonly unsupported_query = "uq";
   static readonly nonexistent_doc = "nd";
   static readonly already_saved = "av";
+  static readonly limit_overflow = "lo";
 }
 
 // collection names
@@ -223,6 +226,12 @@ export class Coll {
   static readonly lists = "l";
   static readonly usernames = "n";
   static readonly saves = "sv";
+  static readonly saved = "sd";
+}
+
+export class Docs {
+  static readonly saved_sounds = "ss";
+  static readonly saved_lists = "sl";
 }
 
 export class StoragePaths {
@@ -248,6 +257,7 @@ export class Lengths {
   static readonly max_pswd_length = 100;
   static readonly min_sound_name_length = 3;
   static readonly max_sound_name_length = 47;
+  static readonly max_saved_sounds = 100;
   // max file size is 2.5 MB
   static readonly max_sound_file_size_bytes = 2500000;
   static readonly max_sound_duration_millis = 30000;

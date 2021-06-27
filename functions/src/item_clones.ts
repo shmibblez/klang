@@ -3,6 +3,7 @@ import * as functions from "firebase-functions";
 import {
   Clone,
   Coll,
+  Docs,
   Info,
   Lengths,
   Metrics,
@@ -11,6 +12,7 @@ import {
 import {
   AlreadySavedError,
   InvalidDocIdError,
+  LimitOverflowError,
   NonexistentDocError,
   UnauthenticatedError,
 } from "./constants/errors";
@@ -18,11 +20,13 @@ import { FirestoreSound } from "./data_models/sound";
 import { isAuthorized, isDocIdOk } from "./field_checks";
 
 export const save_sound = functions.https.onCall(async (data, context) => {
+  /// check params
   if (!isAuthorized(context)) throw new UnauthenticatedError();
   const uid = context.auth?.uid!;
   const sound_id = data[Info.id];
   if (!isDocIdOk(sound_id)) throw new InvalidDocIdError();
 
+  /// setup queries
   // gets docs that have space in id list
   const sound_doc_clones_query = firestore()
     .collection(Coll.sounds)
@@ -38,18 +42,60 @@ export const save_sound = functions.https.onCall(async (data, context) => {
     .where(`${Root.clone}.${Clone.ids}`, "array-contains", sound_id);
   // original sound doc
   const sound_doc_ref = firestore().collection(Coll.sounds).doc(sound_id);
+  // user's saved sounds doc
+  const saved_sounds_ref = firestore()
+    .collection(Coll.users)
+    .doc(uid)
+    .collection(Coll.saved)
+    .doc(Docs.saved_sounds);
 
-  // TODO: update user's saved sounds list too, check if already contains sound, and if not, add
-  // user's saved sounds list is for local caching and checks
-
+  /// save sound if not already saved
   await firestore().runTransaction(async (t) => {
+    /// check user's saved sounds doc
+    const saved_sounds_snap = await t.get(saved_sounds_ref);
+    let saved_sounds_data = saved_sounds_snap.data();
+    // check if save limit reached
+    if (
+      Object.keys(saved_sounds_data?.[Root.items] ?? {}).length >=
+      Lengths.max_saved_sounds
+    )
+      throw new LimitOverflowError();
+    // check if already saved
+    if (saved_sounds_snap.data()![Root.items][sound_id] !== undefined)
+      throw new AlreadySavedError();
+
+    /// check if sound exists
     const sound_snap = await t.get(sound_doc_ref);
     if (!sound_snap.exists) throw new NonexistentDocError();
     let sound_doc_data = sound_snap.data()!;
-    // check if already saved
+
+    /// check if already saved
     const impostor_docs = (await t.get(impostor_query)).docs;
     if (impostor_docs.length !== 0) throw new AlreadySavedError(); // impostor caught successfully
 
+    /// add sound to user's saved sounds doc
+    if (!saved_sounds_snap.exists) {
+      // if doesn't exist, create doc
+      saved_sounds_data = {
+        [Root.info]: {
+          [Info.timestamp_updated]: firestore.FieldValue.serverTimestamp(),
+          [Info.timestamp_checked]: firestore.FieldValue.serverTimestamp(),
+        },
+        [Root.items]: {
+          [sound_id]: firestore.FieldValue.serverTimestamp(),
+        },
+      };
+      t.create(saved_sounds_ref, saved_sounds_data);
+    } else {
+      // if does exist, update data
+      saved_sounds_data![Root.info][Info.timestamp_updated] =
+        firestore.FieldValue.serverTimestamp();
+      saved_sounds_data![Root.items][sound_id] =
+        firestore.FieldValue.serverTimestamp();
+      t.update(saved_sounds_ref, saved_sounds_data!);
+    }
+
+    /// add uid to available clone doc
     const available_clone_snaps = (await t.get(sound_doc_clones_query)).docs;
     let clone_data: { [k: string]: any };
     if (available_clone_snaps.length <= 0) {
@@ -99,6 +145,7 @@ export const save_sound = functions.https.onCall(async (data, context) => {
       }
     }
     // TODO: read this over to see if all good
+    // TODO: this updates main sound doc data, how/when to update clones?
     FirestoreSound.updateMetric({
       metric: Metrics.saves,
       data: sound_doc_data,
