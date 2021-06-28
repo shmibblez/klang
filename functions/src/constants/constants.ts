@@ -171,10 +171,18 @@ export class FunctionParams {
   static readonly password_confirmation = "pc";
   static readonly sound_file_bytes = "sb";
   static readonly sound_file_name = "sn";
+  static readonly timestamp = "t";
+  static readonly timestamp_seconds = "_seconds";
+  static readonly timestamp_nanoseconds = "_nanoseconds";
+  static readonly force_query = "fq";
+  static readonly force_sound_query = "fsq";
+  static readonly force_list_query = "flq";
 }
 
 export class FunctionResult {
   static readonly items = "i";
+  static readonly sounds = "s";
+  static readonly lists = "l";
 }
 
 export class Search {
@@ -214,6 +222,7 @@ export class ErrorCodes {
   static readonly unsupported_query = "uq";
   static readonly nonexistent_doc = "nd";
   static readonly already_saved = "av";
+  static readonly not_saved = "nv";
   static readonly limit_overflow = "lo";
 }
 
@@ -226,7 +235,7 @@ export class Coll {
   static readonly lists = "l";
   static readonly usernames = "n";
   static readonly saves = "sv";
-  static readonly saved = "sd";
+  static readonly user_saved = "sd";
 }
 
 export class Docs {

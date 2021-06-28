@@ -81,7 +81,7 @@ class _HomePageState extends State<HomePage>
               ),
               DropdownButton<String>(
                 value: _timePeriod,
-                items: KlangTimePeriodArr.map(
+                items: KlangTimePeriods.map(
                   (val) => DropdownMenuItem(
                     value: val,
                     child: Text(_timePeriodToMsg(val)),

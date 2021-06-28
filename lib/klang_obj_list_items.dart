@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:klang/http_helper.dart';
 import 'package:klang/main.dart';
 import 'package:klang/objects/klang_sound.dart';
 import 'package:klang/objects/klang_user.dart';
@@ -75,24 +76,48 @@ class _SoundListItemState extends State<SoundListItem> {
           trailing: PopupMenuButton<_SoundMenuOption>(
             child: Icon(Icons.more_vert_rounded),
             itemBuilder: _buildMenuOptions,
-            onSelected: (op) {
+            onSelected: (op) async {
               switch (op) {
                 case _SoundMenuOption.log_in:
                   NavCubit.pushPath(context, PageRoutePath.login());
                   break;
                 case _SoundMenuOption.change_saved:
-                  final id = widget.sound.id; // id of sound to save
-                  // TODO send save/unsave request to db (if loading disable option and show "loading..."), if success update local list, if error notify user "failed to save"
-                  // while loading, show saving with loading icon after sound name (set state _loading = true, and for title show row with sound name and saving/unsaving icon with circular progress indicator)
+                  AuthCubit ac = BlocProvider.of<AuthCubit>(context);
+                  bool isSaved =
+                      ac.loggedIn && ac.state.isSoundSaved(widget.sound.id);
+                  if (isSaved) {
+                    // TODO: implement sound unsave
+                    throw UnimplementedError(
+                        "unsave sound http function not setup yet");
+                    ac.state.notifySoundUnsaved(widget.sound.id);
+                  } else {
+                    try {
+                      ac.setSoundPendingSaveState(widget.sound.id);
+                      SaveSoundResultMsg r =
+                          await FirePP.saveSound(widget.sound.id);
+                      if (r == SaveSoundResultMsg.success) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SuccessSnackbar("saved sound successfully"));
+                        ac.state.notifySoundSaved(widget.sound.id);
+                      } else {
+                        throw r;
+                      }
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(ErrorSnackbar(
+                          e is SaveSoundResultMsg
+                              ? FirePP.translateSaveSoundResultMsg(e)
+                              : e.toString()));
+                    }
+                    ac.setSoundNotPendingSaveState(widget.sound.id);
+                  }
                   break;
                 case _SoundMenuOption.visit_creator:
                   NavCubit.pushPath(
                       context, PageRoutePath.user(widget.sound.creator_id));
                   break;
                 case _SoundMenuOption.download:
-                  // TODO
-                  // - check permissions
-                  // - download and save to path
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      ErrorSnackbar("download sound when option selected"));
                   break;
               }
             },
@@ -113,7 +138,8 @@ class _SoundListItemState extends State<SoundListItem> {
   void _setupListeners(DJCubit cube) {
     _onProgressStreamSub ??= cube.onProgress().listen((pos) {
       setState(() {
-        _progress = pos.inMilliseconds / cube.soundDuration.inMilliseconds;
+        _progress =
+            pos?.inMilliseconds ?? 0 / cube.soundDuration?.inMilliseconds ?? 0;
         if (_progress >= 1) _progress = 0;
       });
     });
@@ -146,6 +172,9 @@ class _SoundListItemState extends State<SoundListItem> {
     //     // - download
     //     // - view creator page
     AuthCubit ac = BlocProvider.of<AuthCubit>(c);
+    bool isSaved = ac.loggedIn && ac.state.isSoundSaved(widget.sound.id);
+    bool isPendingSaveState =
+        ac.loggedIn && ac.isSoundPendingSaveState(widget.sound.id);
     return <PopupMenuEntry<_SoundMenuOption>>[
       if (!ac.loggedIn)
         PopupMenuItem(
@@ -155,8 +184,14 @@ class _SoundListItemState extends State<SoundListItem> {
       // for saved sounds could have saved sounds cubit that loads saved items. If not ready, show "save/unsave" greyed out, if already loaded, then check and show corresponding "save" or "unsave"
       if (ac.loggedIn)
         PopupMenuItem(
-          value: _SoundMenuOption.log_in,
-          child: Text("save / unsave"),
+          enabled:
+              ac.loggedIn && ac.state.savedItemsReady && !isPendingSaveState,
+          value: _SoundMenuOption.change_saved,
+          child: isPendingSaveState
+              ? Text(isSaved ? "unsaving..." : "saving...")
+              : ac.loggedIn && ac.state.savedItemsReady
+                  ? Text(isSaved ? "unsave" : "save")
+                  : Text("save / unsave loading..."),
         ),
       // push new route to
       PopupMenuItem(

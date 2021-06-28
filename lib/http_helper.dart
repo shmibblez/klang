@@ -2,6 +2,7 @@
 
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -67,6 +68,25 @@ class SearchFromKeysResult<O extends KlangObj> {
   SearchFromKeysResult._(this.resultMsg, this.items);
   final SearchFromKeysResultMsg resultMsg;
   final List<O> items;
+}
+
+enum GetSavedItemsResultMsg { success, mission_failed, internal }
+
+class GetSavedItemsResult {
+  GetSavedItemsResult._(this.resultMsg, this.items);
+  final GetSavedItemsResultMsg resultMsg;
+  final List<Map<String, Timestamp>> items;
+}
+
+enum SaveSoundResultMsg {
+  success,
+  unauthenticated,
+  invalid_sound_id,
+  limit_overflow,
+  already_saved,
+  nonexistent_sound,
+  mission_failed,
+  internal,
 }
 
 /// combo between Firebase and HTTP
@@ -166,6 +186,27 @@ class FirePP {
         return "failed to load, retry?";
     }
     throw "unknown SearchFromKeysResultMsg: \"m\"";
+  }
+
+  static String translateSaveSoundResultMsg(SaveSoundResultMsg r) {
+    switch (r) {
+      case SaveSoundResultMsg.success:
+        return "saved sound successfully";
+      case SaveSoundResultMsg.unauthenticated:
+        return "need to be signed in to save sound";
+      case SaveSoundResultMsg.invalid_sound_id:
+        return "sound id provided is invalid";
+      case SaveSoundResultMsg.limit_overflow:
+        return "saved sound limit has been reached, you can only save 100 sounds";
+      case SaveSoundResultMsg.already_saved:
+        return "this sound's already been saved";
+      case SaveSoundResultMsg.nonexistent_sound:
+        return "sound doesn't exist anymore";
+      case SaveSoundResultMsg.internal:
+      case SaveSoundResultMsg.mission_failed:
+        return "something failed on our end, if you can, please send us the sound id you're trying to save";
+    }
+    throw "unknown SaveSoundResultMsg: \"$r\"";
   }
 
   /// returns [LoginResultMsg] to inform result
@@ -324,7 +365,7 @@ class FirePP {
     assert(
       metric == Metrics.best || metric == Metrics.downloads,
     );
-    assert(KlangTimePeriodArr.contains(time));
+    assert(KlangTimePeriods.contains(time));
 
     FirebaseFunctions functions = FirebaseFunctions.instance;
 
@@ -405,6 +446,90 @@ class FirePP {
       return obj;
     } catch (e) {
       throw e;
+    }
+  }
+
+  /// returns list of saved items: [saved sounds, saved lists]
+  static Future<GetSavedItemsResult> getSavedItems() async {
+    FirebaseFunctions functions = FirebaseFunctions.instance;
+    if (isTesting) {
+      functions.useFunctionsEmulator(
+        origin: "http://localhost:$_functionsPort",
+      );
+    }
+    // TODO: get from local storage, also check if has local list, if no list cached, then force_query should be true
+    Timestamp timestampSoundsLastUpdated;
+    final data = {
+      FunctionParams.timestamp: {
+        FunctionParams.timestamp_seconds:
+            timestampSoundsLastUpdated?.seconds ?? 0,
+        FunctionParams.timestamp_nanoseconds:
+            timestampSoundsLastUpdated?.nanoseconds ?? 0,
+      },
+      FunctionParams.force_sound_query:
+          true, // TODO: true if no local list found
+    };
+    try {
+      final result =
+          await functions.httpsCallable("gsi").call<Map<String, dynamic>>(data);
+      final saved_sounds_doc = result.data[FunctionResult.sounds];
+      if (saved_sounds_doc == null)
+        return GetSavedItemsResult._(GetSavedItemsResultMsg.success, [{}]);
+
+      final raw_sounds = saved_sounds_doc[Root.items] as Map<String, dynamic>;
+      final sounds = Map<String, Timestamp>();
+
+      raw_sounds.forEach((key, value) {
+        final seconds = value["_seconds"];
+        final nanoseconds = value["_nanoseconds"];
+        sounds[key] = Timestamp(seconds, nanoseconds);
+      });
+
+      // TODO: save local version of saved sounds list here (use pub package localstorage), also save timestamp last updated
+
+      return GetSavedItemsResult._(GetSavedItemsResultMsg.success, [sounds]);
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  static Future<SaveSoundResultMsg> saveSound(String soundId) async {
+    FirebaseFunctions functions = FirebaseFunctions.instance;
+    if (isTesting) {
+      functions.useFunctionsEmulator(
+        origin: "http://localhost:$_functionsPort",
+      );
+    }
+    final data = {
+      Info.id: soundId,
+    };
+    try {
+      await functions.httpsCallable("ss").call(data);
+      return SaveSoundResultMsg.success;
+    } catch (e) {
+      if (e is FirebaseFunctionsException) {
+        switch (e.message.toLowerCase()) {
+          case ErrorCodes.unauthenticated:
+            return SaveSoundResultMsg.unauthenticated;
+          case ErrorCodes.invalid_doc_id:
+            return SaveSoundResultMsg.invalid_sound_id;
+          case ErrorCodes.limit_overflow:
+            return SaveSoundResultMsg.limit_overflow;
+          case ErrorCodes.already_saved:
+            return SaveSoundResultMsg.already_saved;
+          case ErrorCodes.nonexistent_doc:
+            return SaveSoundResultMsg.nonexistent_sound;
+          case ErrorCodes.internal:
+          case ErrorCodes.mission_failed:
+            return SaveSoundResultMsg.mission_failed;
+          default:
+            debugPrint(
+                "**search_sounds_home: unknown error code: \"${e.message.toLowerCase()}\"");
+            return SaveSoundResultMsg.mission_failed;
+        }
+      } else {
+        throw e;
+      }
     }
   }
 }

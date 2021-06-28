@@ -81,6 +81,11 @@ export class AlreadySavedError extends HttpsError {
     super("failed-precondition", ErrorCodes.already_saved, details);
   }
 }
+export class NotSavedError extends HttpsError {
+  constructor(details?: string) {
+    super("failed-precondition", ErrorCodes.not_saved, details);
+  }
+}
 export class LimitOverflowError extends HttpsError {
   constructor(details?: string) {
     super("failed-precondition", ErrorCodes.limit_overflow, details);

@@ -19,6 +19,13 @@ import {
 import { FirestoreSound } from "./data_models/sound";
 import { isAuthorized, isDocIdOk } from "./field_checks";
 
+/**
+ * steps:
+ * 1. check if sound already saved, if yes throw error
+ * 2. add sound to user's saved sounds doc
+ * 3. add uid to clone doc, update sound data
+ * 4. TODO: update sound's clones?, or schedule update later, could have cron job that updates all sound clone docs at end of day,
+ */
 export const save_sound = functions.https.onCall(async (data, context) => {
   /// check params
   if (!isAuthorized(context)) throw new UnauthenticatedError();
@@ -46,7 +53,7 @@ export const save_sound = functions.https.onCall(async (data, context) => {
   const saved_sounds_ref = firestore()
     .collection(Coll.users)
     .doc(uid)
-    .collection(Coll.saved)
+    .collection(Coll.user_saved)
     .doc(Docs.saved_sounds);
 
   /// save sound if not already saved
@@ -61,7 +68,7 @@ export const save_sound = functions.https.onCall(async (data, context) => {
     )
       throw new LimitOverflowError();
     // check if already saved
-    if (saved_sounds_snap.data()![Root.items][sound_id] !== undefined)
+    if (saved_sounds_snap.data()?.[Root.items]?.[sound_id] !== undefined)
       throw new AlreadySavedError();
 
     /// check if sound exists
@@ -72,6 +79,9 @@ export const save_sound = functions.https.onCall(async (data, context) => {
     /// check if already saved
     const impostor_docs = (await t.get(impostor_query)).docs;
     if (impostor_docs.length !== 0) throw new AlreadySavedError(); // impostor caught successfully
+
+    // get available clone doc
+    const available_clone_snaps = (await t.get(sound_doc_clones_query)).docs;
 
     /// add sound to user's saved sounds doc
     if (!saved_sounds_snap.exists) {
@@ -96,11 +106,16 @@ export const save_sound = functions.https.onCall(async (data, context) => {
     }
 
     /// add uid to available clone doc
-    const available_clone_snaps = (await t.get(sound_doc_clones_query)).docs;
     let clone_data: { [k: string]: any };
     if (available_clone_snaps.length <= 0) {
       // if no available clones, create new one
-      const clone_num = sound_doc_data[Root.clone][Clone.clone_count] as number;
+      if (!sound_doc_data[Root.clone]) {
+        sound_doc_data[Root.clone] = {};
+        sound_doc_data[Root.clone][Clone.available_clone_ids] = [];
+      }
+
+      const clone_num =
+        (sound_doc_data[Root.clone][Clone.clone_count] as number) ?? 0;
       const clone_id = FirestoreSound.formatSaveCloneId(
         sound_snap.id,
         clone_num
@@ -145,7 +160,6 @@ export const save_sound = functions.https.onCall(async (data, context) => {
       }
     }
     // TODO: read this over to see if all good
-    // TODO: this updates main sound doc data, how/when to update clones?
     FirestoreSound.updateMetric({
       metric: Metrics.saves,
       data: sound_doc_data,
@@ -156,3 +170,46 @@ export const save_sound = functions.https.onCall(async (data, context) => {
     return Promise.resolve();
   });
 });
+
+
+
+export const on_sound_update = functions.firestore
+  .document("")
+  .onUpdate(async (snap, context) => {
+    // check if has clones
+    const numClones = snap.after.data()![Root.clone]?.[Clone.clone_count];
+    if (numClones === undefined || numClones <= 0) return Promise.resolve();
+
+    // if has clones, update them
+    const clones_query = firestore()
+      .collection(Coll.sounds)
+      .doc(snap.after.id)
+      .collection(Coll.saves);
+
+    // prepare data to copy to clones
+    const sound_data = snap.after.data();
+    const necessary_sound_data: { [k: string]: any } = {
+      [Root.info]: sound_data[Root.info],
+      [Root.properties]: sound_data[Root.properties],
+      [Root.metrics]: sound_data[Root.metrics], // {} combined with below if too much storage
+    };
+    // only activate with above {} if too much storage
+    // for (const k in sound_data[Root.metrics]) {
+    //   // only keep total metrics
+    //   if (k == Metrics.timestamp_soonest_stale) continue;
+    //   necessary_sound_data[Root.metrics][k] = {
+    //     [Metrics.total]: sound_data[Root.metrics][k][Metrics.total],
+    //   };
+    // }
+    await firestore().runTransaction(async (t) => {
+      const docs = (await t.get(clones_query)).docs;
+
+      for (const d of docs) {
+        const clone_data = d.data();
+        // replace clone data with newest sound doc data
+        Object.assign(clone_data, necessary_sound_data);
+        t.update(d.ref, clone_data);
+      }
+      return Promise.resolve();
+    });
+  });

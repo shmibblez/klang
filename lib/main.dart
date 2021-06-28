@@ -1,11 +1,15 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:klang/http_helper.dart';
 import 'package:klang/objects/klang_sound.dart';
 import 'package:klang/page_router.dart';
 import 'package:klang/pages/add.dart';
@@ -106,12 +110,8 @@ class _InitialSetupState extends State<_InitialSetup> {
       // key: widget._blocKey,
       providers: [
         BlocProvider(
-          lazy: false,
+          lazy: true,
           create: (_) => DJCubit(),
-        ),
-        BlocProvider(
-          lazy: false,
-          create: (_) => SavedItemsCubit(),
         ),
         BlocProvider(
           // key: widget._authKey,
@@ -187,40 +187,17 @@ class DJCubit extends Cubit<String> {
   }
 }
 
-enum SavedItemsState { loading, ready }
-
-class SavedItemsCubit extends Cubit<SavedItemsState> {
-  SavedItemsCubit() : super(SavedItemsState.loading) {
-    _setup();
-  }
-
-  bool get isReady => state == SavedItemsState.ready;
-  Map<String, Object> sounds;
-
-  /// sets up user's saved items lists
-  /// if fails to load keeps retrying every 7 seconds
-  void _setup() async {
-    if (state == SavedItemsState.ready) return;
-    try {
-      // TODO: load saved items here
-      emit(SavedItemsState.ready);
-    } catch (e) {
-      await Future.delayed(Duration(seconds: 7));
-      _setup();
-    }
-  }
-
-  bool isSaved(String id) => sounds?.containsKey(id) ?? false;
-}
-
 class UserState {
   UserState(this.user) {
     // uid = user?.uid;
     // loggedIn = user?.uid != null && !user.isAnonymous;
+    if (this.loggedIn) _setupSavedItems();
   }
   User user;
   String get uid => user?.uid;
   bool get loggedIn => user?.uid != null && !user.isAnonymous;
+  Map<String, Timestamp> savedSounds;
+  bool get savedItemsReady => savedSounds != null;
 
   @override
   operator ==(Object o) {
@@ -228,7 +205,42 @@ class UserState {
   }
 
   @override
-  int get hashCode => "$uid$loggedIn".hashCode;
+  int get hashCode => "$uid+$loggedIn".hashCode;
+
+  bool isSoundSaved(String id) =>
+      loggedIn && (savedSounds?.containsKey(id) ?? false);
+
+  void notifySoundSaved(String id) {
+    savedSounds.putIfAbsent(
+        id,
+        () => Timestamp.fromMillisecondsSinceEpoch(
+            DateTime.now().millisecondsSinceEpoch));
+  }
+
+  void notifySoundUnsaved(String id) {
+    savedSounds.remove(id);
+  }
+
+  /// sets up user's saved items lists
+  /// if fails to load keeps retrying every 7 seconds
+  Future<void> _setupSavedItems() async {
+    debugPrint(
+        "UserState: _setupSavedItems(), savedItemsReady: $savedItemsReady");
+    if (savedItemsReady) return;
+    try {
+      final r = await FirePP.getSavedItems();
+      if (r.resultMsg == GetSavedItemsResultMsg.success) {
+        this.savedSounds = r.items[0];
+        debugPrint("***saved sounds: $savedSounds");
+      } else {
+        throw r.resultMsg;
+      }
+    } catch (e) {
+      debugPrint("***saved sounds error, e: $e");
+      await Future.delayed(Duration(seconds: 7));
+      await _setupSavedItems();
+    }
+  }
 }
 
 class AuthCubit extends Cubit<UserState> {
@@ -240,6 +252,7 @@ class AuthCubit extends Cubit<UserState> {
   Stream<UserState> _stream;
   bool get loggedIn => state?.loggedIn ?? false;
   String get uid => state?.uid;
+  Set<String> _soundsPendingSaveState = Set();
 
   void _resetAuth() {
     _streamSub?.cancel();
@@ -250,6 +263,18 @@ class AuthCubit extends Cubit<UserState> {
       debugPrint("AuthCubit: new user event");
       emit(event);
     });
+  }
+
+  void setSoundPendingSaveState(String id) {
+    _soundsPendingSaveState.add(id);
+  }
+
+  void setSoundNotPendingSaveState(String id) {
+    _soundsPendingSaveState.remove(id);
+  }
+
+  bool isSoundPendingSaveState(String id) {
+    return _soundsPendingSaveState.contains(id);
   }
 
   @override

@@ -1,6 +1,14 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { Coll, FunctionParams, Info, RTDB } from "./constants/constants";
+import {
+  Coll,
+  Docs,
+  FunctionParams,
+  FunctionResult,
+  Info,
+  Root,
+  RTDB,
+} from "./constants/constants";
 import {
   EmailTakenError,
   InvalidEmailError,
@@ -9,9 +17,17 @@ import {
   InvalidUsernameError,
   MissionFailedError,
   UidTakenError,
+  UnauthenticatedError,
 } from "./constants/errors";
-import { isEmailOk, isPswdOk, isUidOk, isUsernameOk } from "./field_checks";
+import {
+  isAuthorized,
+  isEmailOk,
+  isPswdOk,
+  isUidOk,
+  isUsernameOk,
+} from "./field_checks";
 import { FirestoreUser, FirestoreUsername } from "./data_models/user";
+import { firestore } from "firebase-admin";
 
 export const setEmailKey = functions.https.onCall((data, context) => {
   data;
@@ -156,4 +172,32 @@ export const create_user = functions.https.onCall(async (data, ctxt) => {
       );
     });
   }
+});
+
+export const get_saved_items = functions.https.onCall(async (data, context) => {
+  if (!isAuthorized(context)) throw new UnauthenticatedError();
+  const uid = context.auth!.uid!;
+  const timestamp_seconds =
+    data[FunctionParams.timestamp]?.[FunctionParams.timestamp_seconds] ?? 0;
+  const timestamp_nanoseconds =
+    data[FunctionParams.timestamp]?.[FunctionParams.timestamp_nanoseconds] ?? 0;
+  const timestamp_updated = new firestore.Timestamp(
+    timestamp_seconds,
+    timestamp_nanoseconds
+  );
+  const force_sound_query = Boolean(data[FunctionParams.force_sound_query]);
+
+  let saved_sounds_query: firestore.Query = firestore()
+    .collection(Coll.users)
+    .doc(uid)
+    .collection(Coll.user_saved);
+  if (!force_sound_query) {
+    saved_sounds_query = saved_sounds_query
+      .where(`${Root.info}.${Info.timestamp_updated}`, "!=", timestamp_updated)
+      .where(firestore.FieldPath.documentId(), "==", Docs.saved_sounds);
+  }
+
+  const sound_snap = await saved_sounds_query.get();
+
+  return { [FunctionResult.sounds]: sound_snap.docs[0]?.data() };
 });

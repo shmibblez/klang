@@ -58,7 +58,8 @@ samples, guidance on mobile development, and a full API reference.
 | search for sound     | ✅           | ✅           |       |
 | search for user      | ✅           | ✅           |       |
 | set user image       | ❌           | ❌           |       |
-| saved sounds         | ❌           | ❌           |       |
+| save sound           | ❌           | ❌           |       |
+| unsave sound         | ❌           | ❌           |       |
 | edit sound           | ❌           | ❌           |       |
 | sound metric updates | ❌           | 🚫           |       |
 | user metric updates  | ❌           | 🚫           |       |

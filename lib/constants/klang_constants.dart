@@ -2,12 +2,41 @@
 
 /// this file contains constants used by klang's db
 
+// import {
+
+//   addDays,
+
+//   addMonths,
+
+//   addWeeks,
+
+//   addYears,
+
+//   differenceInDays,
+
+//   differenceInHours,
+
+//   differenceInYears,
+
+//   endOfDay,
+
+//   lastDayOfDecade,
+
+//   lastDayOfMonth,
+
+//   lastDayOfWeek,
+
+//   lastDayOfYear,
+
+// } from "date-fns";
 class Root {
   static const info = "i";
   static const properties = "p";
   static const metrics = "m";
   static const legal = "f";
   static const deleted = "d";
+  static const clone = "c";
+  static const items = "t";
 }
 
 class Info {
@@ -22,6 +51,7 @@ class Info {
   static const creator_id = "cd";
   static const timestamp_created = "tc";
   static const timestamp_updated = "tu";
+  static const timestamp_checked = "te";
   static const storage = "st";
   static const audio_file_bucket = "ab";
   static const audio_file_path = "ap";
@@ -31,7 +61,7 @@ class Info {
 }
 
 class Deleted {
-  static const timestamp_deleted = "te";
+  static const timestamp_deleted = "tt";
 }
 
 class Properties {
@@ -71,16 +101,7 @@ class Metrics {
   static const millenium_stale = "Ms";
 }
 
-// export type KlangTimePeriod =
-//   | "tl"
-//   | "td"
-//   | "tw"
-//   | "tm"
-//   | "ty"
-//   | "tD"
-//   | "tC"
-//   | "tM";
-const KlangTimePeriodArr = [
+const KlangTimePeriods = [
   Metrics.total,
   Metrics.this_day,
   Metrics.this_week,
@@ -114,6 +135,13 @@ class Username {
   static const uid = "d";
 }
 
+class Clone {
+  static const ids = "z";
+  static const available_clone_ids = "ai";
+  static const space_available = "sa";
+  static const clone_count = "dc";
+}
+
 class RTDB {
   static const username = "n";
   static const metrics = "m";
@@ -128,10 +156,18 @@ class FunctionParams {
   static const password_confirmation = "pc";
   static const sound_file_bytes = "sb";
   static const sound_file_name = "sn";
+  static const timestamp = "t";
+  static const timestamp_seconds = "_seconds";
+  static const timestamp_nanoseconds = "_nanoseconds";
+  static const force_query = "fq";
+  static const force_sound_query = "fsq";
+  static const force_list_query = "flq";
 }
 
 class FunctionResult {
   static const items = "i";
+  static const sounds = "s";
+  static const lists = "l";
 }
 
 class Search {
@@ -144,8 +180,8 @@ class Search {
   static const sub_type = "y";
   static const sub_type_random = "r";
   static const sub_type_sk = "k";
-  static const sub_type_downloads = "d";
-  static const sub_type_best = "b";
+  static const sub_type_downloads = Metrics.downloads;
+  static const sub_type_best = Metrics.best;
   static const random_seed_num = "n";
   static const direction = "e";
   static const offset = "o";
@@ -158,6 +194,7 @@ class ErrorCodes {
   static const invalid_uid = "id";
   static const invalid_pswd = "ip";
   static const invalid_sound_name = "is";
+  static const invalid_doc_id = "ii";
   static const mission_failed = "mf";
   static const unauthenticated = "ua";
   static const internal = "internal";
@@ -168,14 +205,28 @@ class ErrorCodes {
   static const uid_taken = "ut";
   static const email_taken = "et";
   static const unsupported_query = "uq";
+  static const nonexistent_doc = "nd";
+  static const already_saved = "av";
+  static const not_saved = "nv";
+  static const limit_overflow = "lo";
 }
-
 // collection names
+
+// - root-level collections are denoted by 1 character
+
+// - sub-collections are denoted by 2 characters
 class Coll {
   static const sounds = "s";
   static const users = "u";
   static const lists = "l";
   static const usernames = "n";
+  static const saves = "sv";
+  static const user_saved = "sd";
+}
+
+class Docs {
+  static const saved_sounds = "ss";
+  static const saved_lists = "sl";
 }
 
 class StoragePaths {
@@ -201,6 +252,7 @@ class Lengths {
   static const max_pswd_length = 100;
   static const min_sound_name_length = 3;
   static const max_sound_name_length = 47;
+  static const max_saved_sounds = 100;
   // max file size is 2.5 MB
   static const max_sound_file_size_bytes = 2500000;
   static const max_sound_duration_millis = 30000;
@@ -210,6 +262,7 @@ class Lengths {
     ".flac",
     ".m4a"
   ];
+  static const max_clone_sound_uids = 1000;
 }
 
 class Misc {
@@ -217,4 +270,56 @@ class Misc {
   static const storage_sound_file_ext = ".aac";
   static const storage_sound_file_mime = "aac";
   static const wildcard_str = "?";
+}
+
+class FieldMasks {
+  // for sound list item
+  static const public_sound_search = [
+    '''${Root.info}.${Info.id}''',
+    '''${Root.info}.${Info.item_name}.${Info.item_name}''',
+    '''${Root.info}.${Info.tags}''',
+    '''${Root.info}.${Info.description}''',
+    '''${Root.info}.${Info.source_url}''',
+    '''${Root.info}.${Info.creator_id}''',
+    '''${Root.info}.${Info.timestamp_created}''',
+    '''${Root.info}.${Info.timestamp_updated}''',
+    '''${Root.info}.${Info.storage}''',
+    // `${Root.info}.${Info.storage}.${Info.audio_file_bucket}`,
+
+    // `${Root.info}.${Info.storage}.${Info.audio_file_path}`,
+    '''${Root.properties}.${Properties.explicit}''',
+    '''${Root.metrics}.${Metrics.downloads}''',
+    '''${Root.metrics}.${Metrics.best}''',
+    '''${Root.metrics}.${Metrics.saves}'''
+  ];
+  // for user list item
+  static const public_user_search = [
+    // TODO: what else?
+    '''${Root.info}.${Info.item_name}.${Info.item_name}''',
+    '''${Root.info}.${Info.tags}''',
+    '''${Root.info}.${Info.tag_history}''',
+    '''${Root.info}.${Info.description}''',
+    '''${Root.info}.${Info.timestamp_created}''',
+    '''${Root.info}.${Info.timestamp_updated}''',
+    '''${Root.info}.${Info.storage}''',
+    // `${Root.info}.${Info.storage}.${Info.audio_file_bucket}`,
+
+    // `${Root.info}.${Info.storage}.${Info.audio_file_path}`,
+    '''${Root.deleted}.${Deleted.timestamp_deleted}''',
+    '''${Root.properties}.${Properties.explicit}''',
+    '''${Root.metrics}.${Metrics.followers}''',
+    '''${Root.metrics}.${Metrics.following}'''
+  ];
+}
+
+class Dates {
+  static const reference_year = 2000;
+  // static const reference_date = new Date(2000, 0);
+  static const offset_for_day_in_hours = 6;
+  static const offset_for_week_in_days = 3;
+  static const offset_for_month_in_days = 7;
+  static const offset_for_year_in_days = 30;
+  static const offset_for_decade_in_years = 1;
+  static const offset_for_century_in_years = 10;
+  static const offset_for_millenium_in_years = 100;
 }
