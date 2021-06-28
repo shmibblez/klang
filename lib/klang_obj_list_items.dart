@@ -82,31 +82,49 @@ class _SoundListItemState extends State<SoundListItem> {
                   NavCubit.pushPath(context, PageRoutePath.login());
                   break;
                 case _SoundMenuOption.change_saved:
-                  AuthCubit ac = BlocProvider.of<AuthCubit>(context);
-                  bool isSaved =
-                      ac.loggedIn && ac.state.isSoundSaved(widget.sound.id);
-                  if (isSaved) {
-                    // TODO: implement sound unsave
-                    throw UnimplementedError(
-                        "unsave sound http function not setup yet");
-                    ac.state.notifySoundUnsaved(widget.sound.id);
-                  } else {
-                    try {
-                      ac.setSoundPendingSaveState(widget.sound.id);
-                      SaveSoundResultMsg r =
-                          await FirePP.saveSound(widget.sound.id);
-                      if (r == SaveSoundResultMsg.success) {
+                  {
+                    AuthCubit ac = BlocProvider.of<AuthCubit>(context);
+                    bool isSaved =
+                        ac.loggedIn && ac.state.isSoundSaved(widget.sound.id);
+                    ac.setSoundPendingSaveState(widget.sound.id);
+                    // TODO: after unsaving, sound shows as saving..., could still be pending state after unsaved?
+                    debugPrint("***isSaved: $isSaved");
+                    if (isSaved) {
+                      try {
+                        UnsaveSoundResultMsg r =
+                            await FirePP.unsaveSound(widget.sound.id);
+                        if (r == UnsaveSoundResultMsg.success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SuccessSnackbar("unsaved sound successfully"));
+                          ac.state.notifySoundUnsaved(widget.sound.id);
+                        } else {
+                          throw r;
+                        }
+                      } catch (e) {
+                        ac.setSoundNotPendingSaveState(widget.sound.id);
                         ScaffoldMessenger.of(context).showSnackBar(
-                            SuccessSnackbar("saved sound successfully"));
-                        ac.state.notifySoundSaved(widget.sound.id);
-                      } else {
-                        throw r;
+                            ErrorSnackbar(e is SaveSoundResultMsg
+                                ? FirePP.translateSaveSoundResultMsg(e)
+                                : e.toString()));
                       }
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(ErrorSnackbar(
-                          e is SaveSoundResultMsg
-                              ? FirePP.translateSaveSoundResultMsg(e)
-                              : e.toString()));
+                    } else {
+                      try {
+                        SaveSoundResultMsg r =
+                            await FirePP.saveSound(widget.sound.id);
+                        if (r == SaveSoundResultMsg.success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              SuccessSnackbar("saved sound successfully"));
+                          ac.state.notifySoundSaved(widget.sound.id);
+                        } else {
+                          throw r;
+                        }
+                      } catch (e) {
+                        ac.setSoundNotPendingSaveState(widget.sound.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            ErrorSnackbar(e is SaveSoundResultMsg
+                                ? FirePP.translateSaveSoundResultMsg(e)
+                                : e.toString()));
+                      }
                     }
                     ac.setSoundNotPendingSaveState(widget.sound.id);
                   }
@@ -175,6 +193,7 @@ class _SoundListItemState extends State<SoundListItem> {
     bool isSaved = ac.loggedIn && ac.state.isSoundSaved(widget.sound.id);
     bool isPendingSaveState =
         ac.loggedIn && ac.isSoundPendingSaveState(widget.sound.id);
+    debugPrint("&&&isSaved: $isSaved, isPendingSaveState: $isPendingSaveState");
     return <PopupMenuEntry<_SoundMenuOption>>[
       if (!ac.loggedIn)
         PopupMenuItem(

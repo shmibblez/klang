@@ -152,7 +152,7 @@ export class Username {
 
 export class Clone {
   static readonly ids = "z";
-  static readonly available_clone_ids = "ai";
+  // static readonly available_clone_ids = "ai"; // not necessary
   static readonly space_available = "sa";
   static readonly clone_count = "dc";
 }

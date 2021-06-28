@@ -89,6 +89,15 @@ enum SaveSoundResultMsg {
   internal,
 }
 
+enum UnsaveSoundResultMsg {
+  success,
+  unauthenticated,
+  invalid_sound_id,
+  not_saved,
+  mission_failed,
+  internal,
+}
+
 /// combo between Firebase and HTTP
 class FirePP {
   static final bool isTesting = true && kDebugMode;
@@ -525,7 +534,43 @@ class FirePP {
           default:
             debugPrint(
                 "**search_sounds_home: unknown error code: \"${e.message.toLowerCase()}\"");
-            return SaveSoundResultMsg.mission_failed;
+            throw e;
+        }
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  static Future<UnsaveSoundResultMsg> unsaveSound(String soundId) async {
+    FirebaseFunctions functions = FirebaseFunctions.instance;
+    if (isTesting) {
+      functions.useFunctionsEmulator(
+        origin: "http://localhost:$_functionsPort",
+      );
+    }
+    final data = {
+      Info.id: soundId,
+    };
+    try {
+      await functions.httpsCallable("us").call(data);
+      return UnsaveSoundResultMsg.success;
+    } catch (e) {
+      if (e is FirebaseFunctionsException) {
+        switch (e.message.toLowerCase()) {
+          case ErrorCodes.unauthenticated:
+            return UnsaveSoundResultMsg.unauthenticated;
+          case ErrorCodes.invalid_doc_id:
+            return UnsaveSoundResultMsg.invalid_sound_id;
+          case ErrorCodes.not_saved:
+            return UnsaveSoundResultMsg.not_saved;
+          case ErrorCodes.internal:
+          case ErrorCodes.mission_failed:
+            return UnsaveSoundResultMsg.mission_failed;
+          default:
+            debugPrint(
+                "**search_sounds_home: unknown error code: \"${e.message.toLowerCase()}\"");
+            throw e;
         }
       } else {
         throw e;
