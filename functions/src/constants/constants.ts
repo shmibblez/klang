@@ -197,6 +197,7 @@ export class Search {
   static readonly sub_type_sk = "k";
   static readonly sub_type_downloads = Metrics.downloads;
   static readonly sub_type_best = Metrics.best;
+  static readonly sub_type_item = "i";
   static readonly random_seed_num = "n";
   static readonly direction = "e";
   static readonly offset = "o";

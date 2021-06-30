@@ -58,6 +58,18 @@ class SearchSoundHomeResult {
   final List<KlangSound> sounds;
 }
 
+enum SearchItemResultMsg {
+  success,
+  mission_failed,
+  internal,
+}
+
+class SearchItemResult<O extends KlangObj> {
+  SearchItemResult._(this.resultMsg, this.item);
+  final SearchItemResultMsg resultMsg;
+  final O item;
+}
+
 enum SearchFromKeysResultMsg {
   success,
   mission_failed,
@@ -418,6 +430,56 @@ class FirePP {
         }
       } else {
         // probably error parsing function data
+        throw e;
+      }
+    }
+  }
+
+  static Future<SearchItemResult<O>> search_item<O extends KlangObj>({
+    @required String itemId,
+    bool isOwner = false,
+  }) async {
+    FirebaseFunctions functions = FirebaseFunctions.instance;
+    if (isTesting) {
+      functions.useFunctionsEmulator(
+        origin: "http://localhost:$_functionsPort",
+      );
+    }
+    String contentType;
+    if (O == KlangSound) {
+      contentType = Search.type_sound;
+    } else if (O == KlangUser) {
+      contentType = Search.type_user;
+    }
+    final data = {
+      Info.id: itemId,
+      Search.type: contentType,
+      Search.sub_type: Search.sub_type_item,
+      Properties.explicit:
+          true, // if explicit ok, true since need to get user profile
+    };
+    try {
+      final result = await functions.httpsCallable("s").call(data);
+      final rawItem = result.data[FunctionResult.items];
+      O i = KlangObj.fromJsonArr(rawItem)[0];
+      return SearchItemResult<O>._(SearchItemResultMsg.success, i);
+    } catch (e) {
+      if (e is FirebaseFunctionsException) {
+        switch (e.message.toLowerCase()) {
+          case ErrorCodes.mission_failed:
+            return SearchItemResult<O>._(
+              SearchItemResultMsg.mission_failed,
+              null,
+            );
+          case ErrorCodes.internal:
+            debugPrint(
+                "**search_sounds_home: unknown error code: \"${e.message.toLowerCase()}\"");
+            return SearchItemResult<O>._(
+              SearchItemResultMsg.mission_failed,
+              null,
+            );
+        }
+      } else {
         throw e;
       }
     }

@@ -182,6 +182,7 @@ class Search {
   static const sub_type_sk = "k";
   static const sub_type_downloads = Metrics.downloads;
   static const sub_type_best = Metrics.best;
+  static const sub_type_item = "i";
   static const random_seed_num = "n";
   static const direction = "e";
   static const offset = "o";

@@ -15,9 +15,9 @@ import {
   FieldMasks,
   FunctionResult,
 } from "./constants/constants";
-import { UnsupportedQueryError } from "./constants/errors";
+import { InvalidDocIdError, UnsupportedQueryError } from "./constants/errors";
 import { reg_strings } from "./constants/regex";
-import { isTagOk } from "./field_checks";
+import { isDocIdOk, isTagOk } from "./field_checks";
 
 export const search = https.onCall(async (data, context) => {
   const search_type = data[Search.type];
@@ -28,7 +28,7 @@ export const search = https.onCall(async (data, context) => {
   let query: firestore.Query;
 
   // since all doc types have same doc structure, can reuse types. Still need to check if type - sub-type pair is valid, since users can't have downloads for example
-  query = await _itemSearch({ data: data, coll: coll, fieldMask: fieldMask });
+  query = _itemSearch({ data: data, coll: coll, fieldMask: fieldMask });
   query = query.limit(limit);
 
   const snap = await query.get();
@@ -40,7 +40,7 @@ export const search = https.onCall(async (data, context) => {
   };
 });
 
-async function _itemSearch({
+function _itemSearch({
   data,
   coll,
   fieldMask,
@@ -48,7 +48,7 @@ async function _itemSearch({
   data: any;
   coll: string;
   fieldMask: string[];
-}): Promise<firestore.Query> {
+}): firestore.Query {
   const explicit_ok = data[Properties.explicit] == true ? true : false;
   const explicit_property = explicit_ok
     ? Properties.explicit_and_not_hidden
@@ -134,6 +134,13 @@ async function _itemSearch({
         // offset should be ["random seed value", "doc id"]
         query = query.startAfter(...offset);
       }
+      break;
+
+    case Search.sub_type_item:
+      // TODO: will it work with tag filters?
+      let item_id = data[Info.id];
+      if (!isDocIdOk(item_id)) throw new InvalidDocIdError();
+      query = query.where(firestore.FieldPath.documentId(), "==", item_id);
       break;
 
     default:

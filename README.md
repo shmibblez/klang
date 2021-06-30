@@ -48,25 +48,25 @@ samples, guidance on mobile development, and a full API reference.
 - 
 
 # checklist
-| stuff to do          | server side | client side | notes |
-| -------------------- | ----------- | ----------- | ----- |
-| navigation           | 🚫           | ✅           |       |
-| play sound           | 🚫           | ✅           |       |
-| user sign up         | ✅           | ✅           |       |
-| user sign in         | 🚫           | ✅           |       |
-| create sound         | ✅           | ✅           |       |
-| search for sound     | ✅           | ✅           |       |
-| search for user      | ✅           | ✅           |       |
-| set user image       | ❌           | ❌           |       |
-| save sound           | ❌           | ❌           |       |
-| unsave sound         | ❌           | ❌           |       |
-| edit sound           | ❌           | ❌           |       |
-| sound metric updates | ❌           | 🚫           |       |
-| user metric updates  | ❌           | 🚫           |       |
-| follow user          | ❌           | ❌           |       |
-| unfollow user        | ❌           | ❌           |       |
-| content reporting    | ❌           | ❌           |       |
-| delete user          | ❌           | ❌           |       |
+| stuff to do          | server side | client side | tested | notes |
+| -------------------- | ----------- | ----------- | ------ | ----- |
+| navigation           | 🚫           | ✅           |        |       |
+| play sound           | 🚫           | ✅           |        |       |
+| user sign up         | ✅           | ✅           |        |       |
+| user sign in         | 🚫           | ✅           |        |       |
+| create sound         | ✅           | ✅           |        |       |
+| search for sound     | ✅           | ✅           |        |       |
+| search for user      | ✅           | ✅           |        |       |
+| set user image       | ❌           | ❌           |        |       |
+| save sound           | ✅           | ✅           |        |       |
+| unsave sound         | ✅           | ✅           |        |       |
+| edit sound           | ❌           | ❌           |        |       |
+| sound metric updates | ❌           | 🚫           |        |       |
+| user metric updates  | ❌           | 🚫           |        |       |
+| follow user          | ❌           | ❌           |        |       |
+| unfollow user        | ❌           | ❌           |        |       |
+| content reporting    | ❌           | ❌           |        |       |
+| delete user          | ❌           | ❌           |        |       |
 
 
 # future features

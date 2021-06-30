@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:klang/http_helper.dart';
+import 'package:klang/objects/klang_user.dart';
 import 'package:klang/page_router.dart';
 import 'package:klang/pages/klang_page.dart';
 
@@ -11,8 +13,11 @@ class UserPage extends StatelessWidget implements KlangPage {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(uid ?? "profile")),
-      body: Center(
-        child: Text("user page"),
+      body: FutureBuilder(
+        future: FirePP.search_item<KlangUser>(itemId: uid),
+        builder: (c, snap) {
+          return Center(child: Text("profile, uid: $uid"));
+        },
       ),
     );
   }
