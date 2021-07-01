@@ -455,15 +455,17 @@ class FirePP {
       Info.id: itemId,
       Search.type: contentType,
       Search.sub_type: Search.sub_type_item,
-      Properties.explicit:
-          true, // if explicit ok, true since need to get user profile
+      // if explicit ok, true since need to get user profile
+      Properties.explicit: true,
     };
     try {
       final result = await functions.httpsCallable("s").call(data);
       final rawItem = result.data[FunctionResult.items];
-      O i = KlangObj.fromJsonArr(rawItem)[0];
+      List<O> itemArr = KlangObj.fromJsonArr<O>(rawItem);
+      O i = itemArr.isEmpty ? null : itemArr[0];
       return SearchItemResult<O>._(SearchItemResultMsg.success, i);
     } catch (e) {
+      debugPrint("***error: $e");
       if (e is FirebaseFunctionsException) {
         switch (e.message.toLowerCase()) {
           case ErrorCodes.mission_failed:
@@ -478,6 +480,8 @@ class FirePP {
               SearchItemResultMsg.mission_failed,
               null,
             );
+          default:
+            throw "this shouldn't happen";
         }
       } else {
         throw e;

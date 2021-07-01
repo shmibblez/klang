@@ -4,6 +4,7 @@ import {
   Properties,
   Username,
   Metrics,
+  Misc,
 } from "../constants/constants";
 import {
   indexName,
@@ -47,6 +48,9 @@ export class FirestoreUser {
           [Info.timestamp_updated]:
             admin.firestore.FieldValue.serverTimestamp(),
         },
+        [Info.tags]: [Misc.wildcard_str],
+        [Info.tag_keys]: [Misc.wildcard_str],
+        [Info.tag_history]: { [Misc.wildcard_str]: 0 },
         [Info.timestamp_created]: admin.firestore.FieldValue.serverTimestamp(),
         [Info.timestamp_updated]: admin.firestore.FieldValue.serverTimestamp(),
       },

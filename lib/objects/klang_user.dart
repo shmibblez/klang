@@ -13,8 +13,8 @@ class KlangUser extends KlangObj {
     this.source_url,
     this.timestamp_created,
     this.timestamp_updated,
-    this.audio_file_bucket,
-    this.audio_file_path,
+    this.image_file_bucket,
+    this.image_file_path,
     this.timestamp_deleted,
     this.explicit,
     this.total_downloads,
@@ -29,8 +29,8 @@ class KlangUser extends KlangObj {
   final String source_url;
   final Timestamp timestamp_created;
   final Timestamp timestamp_updated;
-  final String audio_file_bucket;
-  final String audio_file_path;
+  final String image_file_bucket;
+  final String image_file_path;
   final Timestamp timestamp_deleted;
   final bool explicit;
   final int total_downloads;
@@ -69,8 +69,10 @@ class KlangUser extends KlangObj {
       source_url: map[Root.info][Info.source_url] ?? "",
       timestamp_created: Timestamp(created_secs, created_nano),
       timestamp_updated: Timestamp(updated_secs, updated_nano),
-      audio_file_bucket: map[Root.info][Info.storage][Info.audio_file_bucket],
-      audio_file_path: map[Root.info][Info.storage][Info.audio_file_path],
+      image_file_bucket:
+          (map[Root.info][Info.storage] ?? const {})[Info.audio_file_bucket],
+      image_file_path:
+          (map[Root.info][Info.storage] ?? const {})[Info.audio_file_path],
       timestamp_deleted:
           deleted_secs != null ? Timestamp(deleted_secs, deleted_nano) : null,
       explicit: map[Root.properties][Properties.explicit],

@@ -50,10 +50,15 @@ function _itemSearch({
   fieldMask: string[];
 }): firestore.Query {
   const explicit_ok = data[Properties.explicit] == true ? true : false;
-  const explicit_property = explicit_ok
-    ? Properties.explicit_and_not_hidden
-    : Properties.not_explicit_and_not_hidden;
+  const explicit_property = [
+    explicit_ok
+      ? Properties.explicit_and_not_hidden
+      : Properties.not_explicit_and_not_hidden,
+  ];
+  if (explicit_ok)
+    explicit_property.push(Properties.not_explicit_and_not_hidden);
   const tags_sk = _tagsSearchKey(data[Info.tags]);
+  tags_sk;
   const sub_type = data[Search.sub_type];
   const offset = data[Search.offset];
 
@@ -64,13 +69,13 @@ function _itemSearch({
   // set explicit & tag filters (common for all user/sound/list queries)
   query = query.where(
     `${Root.properties}.${Properties.search_keys}`,
-    "==",
+    "in",
     explicit_property
   );
   query = query.where(
     `${Root.info}.${Info.tag_keys}`,
     "array-contains",
-    tags_sk ?? Misc.wildcard_str
+    tags_sk !== undefined ? tags_sk : Misc.wildcard_str
   );
 
   switch (sub_type) {
@@ -139,6 +144,7 @@ function _itemSearch({
     case Search.sub_type_item:
       // TODO: will it work with tag filters?
       let item_id = data[Info.id];
+      console.log("search: item_id: " + item_id);
       if (!isDocIdOk(item_id)) throw new InvalidDocIdError();
       query = query.where(firestore.FieldPath.documentId(), "==", item_id);
       break;
