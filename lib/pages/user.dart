@@ -85,6 +85,21 @@ class _UserPageState extends State<UserPage> {
               data.item.name,
               textAlign: TextAlign.center,
             ),
+            GestureDetector(
+              onTap: () {
+                NavCubit.pushPath(
+                    context,
+                    PageRoutePath.savedSounds(
+                      BlocProvider.of<AuthCubit>(context).uid,
+                    ));
+              },
+              child: Row(
+                children: [
+                  Text("saved sounds"),
+                  Icon(Icons.chevron_right_sharp),
+                ],
+              ),
+            ),
           ],
         ),
       ),

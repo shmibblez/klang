@@ -10,6 +10,7 @@ import 'package:klang/pages/auth_page.dart';
 import 'package:klang/pages/create_account.dart';
 import 'package:klang/pages/klang_page.dart';
 import 'package:klang/pages/log_in.dart';
+import 'package:klang/pages/saved_sounds.dart';
 import 'package:klang/pages/search_results.dart';
 import 'package:klang/pages/unknown.dart';
 import 'package:klang/pages/user.dart';
@@ -243,6 +244,14 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
         );
       case "user":
         final String uid = path.elements.length >= 2 ? path.elements[1] : null;
+        final bool isSavedSounds =
+            (path.elements.length >= 3 ? path.elements[2] : "").toLowerCase() ==
+                "savedsounds";
+        if (uid != null && isSavedSounds)
+          return AuthPage(
+            child: SavedSoundsPage(uid: uid),
+            authFallbackPage: LoginPage(),
+          );
         return UserPage(uid: uid);
         break;
       case "createaccount":
@@ -343,13 +352,16 @@ class PageRoutePath {
   //     : elements = ["shuffle", _contentTypeToStr(ct)];
 
   PageRoutePath.user(String uid)
-      : elements = uid == null ? ["createAccount"] : ["user", "$uid"];
+      : elements = uid == null ? ["createAccount"] : ["user", uid];
 
   PageRoutePath.unknown() : elements = ["404"];
 
   PageRoutePath.createAccount() : elements = ["createAccount"];
 
   PageRoutePath.login() : elements = ["login"];
+
+  PageRoutePath.savedSounds(String uid)
+      : elements = ["user", uid, "savedSounds"];
 
   bool get isMain {
     return this.elements.length == 1 &&
