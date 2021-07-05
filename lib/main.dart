@@ -228,7 +228,7 @@ class UserState {
         "UserState: _setupSavedItems(), savedItemsReady: $savedItemsReady");
     if (savedItemsReady) return;
     try {
-      final r = await FirePP.getSavedItems();
+      final r = await FirePP.get_saved_items_doc();
       if (r.resultMsg == GetSavedItemsResultMsg.success) {
         this.savedSounds = r.items[0];
         debugPrint("***saved sounds: $savedSounds");

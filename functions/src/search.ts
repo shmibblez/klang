@@ -66,12 +66,25 @@ function _itemSearch({
 
   let query: firestore.Query = firestore().collection(coll);
 
-  // set explicit & tag filters (common for all user/sound/list queries)
+  /// set explicit filters (supported by all queries)
   query = query.where(
     `${Root.properties}.${Properties.search_keys}`,
     "in",
     explicit_property
   );
+
+  /// queries that don't support tag filters, need to set field mask and return
+  switch (sub_type) {
+    case Search.sub_type_item:
+      let item_id = data[Info.id];
+      console.log("search: item_id: " + item_id);
+      if (!isDocIdOk(item_id)) throw new InvalidDocIdError();
+      query = query.where(firestore.FieldPath.documentId(), "==", item_id);
+      query = query.select(...fieldMask);
+      return query;
+  }
+
+  /// set tag filters for queries that support them
   query = query.where(
     `${Root.info}.${Info.tag_keys}`,
     "array-contains",
@@ -139,14 +152,6 @@ function _itemSearch({
         // offset should be ["random seed value", "doc id"]
         query = query.startAfter(...offset);
       }
-      break;
-
-    case Search.sub_type_item:
-      // TODO: will it work with tag filters?
-      let item_id = data[Info.id];
-      console.log("search: item_id: " + item_id);
-      if (!isDocIdOk(item_id)) throw new InvalidDocIdError();
-      query = query.where(firestore.FieldPath.documentId(), "==", item_id);
       break;
 
     default:

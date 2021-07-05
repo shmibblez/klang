@@ -1,13 +1,18 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import {
+  Clone,
   Coll,
   Docs,
+  FieldMasks,
   FunctionParams,
   FunctionResult,
+  GetSavedItems,
   Info,
+  Metrics,
   Root,
   RTDB,
+  Search,
 } from "./constants/constants";
 import {
   EmailTakenError,
@@ -18,6 +23,7 @@ import {
   MissionFailedError,
   UidTakenError,
   UnauthenticatedError,
+  UnsupportedQueryError,
 } from "./constants/errors";
 import {
   isAuthorized,
@@ -176,28 +182,73 @@ export const create_user = functions.https.onCall(async (data, ctxt) => {
 
 export const get_saved_items = functions.https.onCall(async (data, context) => {
   if (!isAuthorized(context)) throw new UnauthenticatedError();
+
   const uid = context.auth!.uid!;
-  const timestamp_seconds =
-    data[FunctionParams.timestamp]?.[FunctionParams.timestamp_seconds] ?? 0;
-  const timestamp_nanoseconds =
-    data[FunctionParams.timestamp]?.[FunctionParams.timestamp_nanoseconds] ?? 0;
-  const timestamp_updated = new firestore.Timestamp(
-    timestamp_seconds,
-    timestamp_nanoseconds
-  );
-  const force_sound_query = Boolean(data[FunctionParams.force_sound_query]);
 
-  let saved_sounds_query: firestore.Query = firestore()
-    .collection(Coll.users)
-    .doc(uid)
-    .collection(Coll.user_saved);
-  if (!force_sound_query) {
-    saved_sounds_query = saved_sounds_query
-      .where(`${Root.info}.${Info.timestamp_updated}`, "!=", timestamp_updated)
-      .where(firestore.FieldPath.documentId(), "==", Docs.saved_sounds);
+  const type = data[GetSavedItems.type];
+  // TODO: need to setup for lists when ready, Metrics.downloads not supported for lists (lists can't be downloaded)
+
+  switch (type) {
+    case GetSavedItems.type_saved_items_doc: {
+      // TODO: setup query type, and based on that, get either saved items doc or saved item clones (from metric, need offset too)
+      const timestamp_seconds =
+        data[FunctionParams.timestamp]?.[FunctionParams.timestamp_seconds] ?? 0;
+      const timestamp_nanoseconds =
+        data[FunctionParams.timestamp]?.[
+          FunctionParams.timestamp_nanoseconds
+        ] ?? 0;
+      const timestamp_updated = new firestore.Timestamp(
+        timestamp_seconds,
+        timestamp_nanoseconds
+      );
+      const force_sound_query = Boolean(data[FunctionParams.force_sound_query]);
+
+      let saved_sounds_query: firestore.Query = firestore()
+        .collection(Coll.users)
+        .doc(uid)
+        .collection(Coll.user_saved);
+      if (!force_sound_query) {
+        saved_sounds_query = saved_sounds_query
+          .where(
+            `${Root.info}.${Info.timestamp_updated}`,
+            "!=",
+            timestamp_updated
+          )
+          .where(firestore.FieldPath.documentId(), "==", Docs.saved_sounds);
+      }
+
+      const sound_snap = await saved_sounds_query.get();
+
+      return { [FunctionResult.sounds]: sound_snap.docs[0]?.data() };
+    }
+    case GetSavedItems.type_saved_items_sort: {
+      // TODO: saved item clones query here
+      const offset = data[Search.offset];
+      let query = firestore()
+        .collectionGroup(Coll.saves)
+        .where(`${Root.clone}.${Clone.ids}`, "array-contains", uid);
+
+      const metric = data[GetSavedItems.metric];
+      if (
+        typeof metric !== "string" ||
+        !GetSavedItems.supported_metrics.includes(metric)
+      )
+        throw new UnsupportedQueryError();
+
+      // order by total
+      query = query.orderBy(
+        `${Root.metrics}.${metric}.${Metrics.total}`,
+        "desc"
+      );
+      query = query.select(...FieldMasks.public_sound_search);
+      const result = await query.get();
+      return {
+        [FunctionResult.sounds]: result.docs.map<firestore.DocumentData>(
+          (doc) => doc.data()
+        ),
+      };
+    }
+    default:
+      throw new UnsupportedQueryError();
   }
-
-  const sound_snap = await saved_sounds_query.get();
-
-  return { [FunctionResult.sounds]: sound_snap.docs[0]?.data() };
 });

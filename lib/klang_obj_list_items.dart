@@ -92,7 +92,7 @@ class _SoundListItemState extends State<SoundListItem> {
                     if (isSaved) {
                       try {
                         UnsaveSoundResultMsg r =
-                            await FirePP.unsaveSound(widget.sound.id);
+                            await FirePP.unsave_sound(widget.sound.id);
                         if (r == UnsaveSoundResultMsg.success) {
                           ScaffoldMessenger.of(context).showSnackBar(
                               SuccessSnackbar("unsaved sound successfully"));
@@ -110,7 +110,7 @@ class _SoundListItemState extends State<SoundListItem> {
                     } else {
                       try {
                         SaveSoundResultMsg r =
-                            await FirePP.saveSound(widget.sound.id);
+                            await FirePP.save_sound(widget.sound.id);
                         if (r == SaveSoundResultMsg.success) {
                           ScaffoldMessenger.of(context).showSnackBar(
                               SuccessSnackbar("saved sound successfully"));

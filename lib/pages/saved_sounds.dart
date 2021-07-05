@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:klang/http_helper.dart';
+import 'package:klang/klang_obj_list.dart';
+import 'package:klang/klang_obj_list_items.dart';
 import 'package:klang/main.dart';
 import 'package:klang/objects/klang_sound.dart';
 import 'package:klang/page_router.dart';
@@ -45,8 +48,15 @@ class _SavedSoundsPageState extends State<SavedSoundsPage> {
     return StreamBuilder(
       stream: savedController.stream,
       builder: (c, snap) {
-        // TODO: depending on query, get saved sounds
-        //
+        // TODO: depending on sounds, build page
+        switch (snap.connectionState) {
+          case ConnectionState.active:
+          case ConnectionState.done:
+            return _buildPage();
+          case ConnectionState.none:
+          case ConnectionState.waiting:
+            return CircularProgressIndicator();
+        }
         return null;
       },
     );
@@ -59,5 +69,28 @@ class _SavedSoundsPageState extends State<SavedSoundsPage> {
     //   - if not loaded yet, wait to load (need to setup I think)
     // - if query is ordered by metric
     //   - get saved sounds from http function from local params -> this will be clone query with fieldMask to not get whole clone uid list
+  }
+
+  Widget _buildPage() {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("saved sounds"),
+      ),
+      // // TODO: only for clone query, need to make KlangItemIdList that loads items from ids -> add entry to search http function that uses getAll and applies fieldMask
+      body: KlangItemList<KlangSound, KlangListItem>(
+        loadMore: (offset) {
+          // TODO
+          return FirePP.saved_items<KlangSound>(metric: metric);
+        },
+        buildItem: (s) => SoundListItem(sound: s),
+        buildLoadingItem: () => LoadingListItem(),
+        buildFailedToLoadItem: (msg, onRetry) =>
+            RetryLoadingListItem(msg: msg, onRetry: onRetry),
+        queryOffset: (s) {
+          // TODO
+          return [];
+        },
+      ),
+    );
   }
 }

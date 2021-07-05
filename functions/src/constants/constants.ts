@@ -204,6 +204,18 @@ export class Search {
   static readonly time_period = "m";
 }
 
+export class GetSavedItems {
+  static readonly type = "t";
+  static readonly type_saved_items_doc = "d";
+  static readonly type_saved_items_sort = "c"; // c for clones
+  static readonly metric = "m";
+  static readonly supported_metrics = [
+    Metrics.downloads,
+    Metrics.saves,
+    Metrics.best,
+  ];
+}
+
 export class ErrorCodes {
   static readonly invalid_username = "iu";
   static readonly invalid_email = "ie";

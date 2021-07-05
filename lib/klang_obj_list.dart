@@ -3,8 +3,8 @@ import 'package:klang/klang_obj_list_items.dart';
 import 'package:klang/objects/klang_obj.dart';
 import 'package:klang/presets.dart';
 
-class KlangItemList<@required O extends KlangObj,
-    @required I extends KlangListItem> extends StatefulWidget {
+class KlangItemList<O extends KlangObj, I extends KlangListItem>
+    extends StatefulWidget {
   KlangItemList({
     @required this.loadMore,
     @required this.buildItem,
@@ -119,3 +119,20 @@ class _KlangItemListState<@required O extends KlangObj,
 
 // and thats it, some other important stuff:
 // - need to have loading threshold: if within last 3 items, load more sounds
+
+class KlangIdItemList<O extends KlangObj, I extends KlangListItem>
+    extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() {
+    // TODO: implement createState
+    throw UnimplementedError();
+  }
+}
+
+class _KlangIdItemListState<O extends KlangObj, I extends KlangListItem>
+    extends State<KlangIdItemList<O, I>> {
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(itemBuilder: (c, i) {});
+  }
+}

@@ -103,6 +103,8 @@ note: rtdb stores "new metrics", and firestore doc stores current metrics
 | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | hidden & explicit filters, filter by tags, order by random seeds | ("in"), ("array-contains" tags), ("orderBy" randomSeeds.[1, 2, 3, or 4] "asc or desc") |
 
+### sound clones (composite)
+
 ## sound doc search keys
 sound doc search keys index sound names in the following way.
   - preparation

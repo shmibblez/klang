@@ -82,6 +82,18 @@ class SearchFromKeysResult<O extends KlangObj> {
   final List<O> items;
 }
 
+enum SavedItemsResultMsg {
+  success,
+  mission_failed,
+  internal,
+}
+
+class SavedItemsResult<O extends KlangObj> {
+  SavedItemsResult._(this.resultMsg, this.items);
+  final SavedItemsResultMsg resultMsg;
+  final List<O> items;
+}
+
 enum GetSavedItemsResultMsg { success, mission_failed, internal }
 
 class GetSavedItemsResult {
@@ -524,8 +536,63 @@ class FirePP {
     }
   }
 
+  static Future<SavedItemsResult<O>> saved_items<O extends KlangObj>({
+    @required String itemId,
+    bool isOwner = false,
+  }) async {
+    FirebaseFunctions functions = FirebaseFunctions.instance;
+    if (isTesting) {
+      functions.useFunctionsEmulator(
+        origin: "http://localhost:$_functionsPort",
+      );
+    }
+    String contentType;
+    if (O == KlangSound) {
+      contentType = Search.type_sound;
+    }
+    // else if (O == KlangList) {
+    //   contentType = Search.type_user;
+    // }
+    // TODO: http function setup, now need to setup app-side
+    // need to also change data sent here & in get_saved_items_doc
+    final data = {
+      Info.id: itemId,
+      Search.type: contentType,
+      Search.sub_type: Search.sub_type_item,
+      // if explicit ok, true since need to get user profile
+      Properties.explicit: true,
+    };
+    try {
+      final result = await functions.httpsCallable("s").call(data);
+      // TODO
+      return SavedItemsResult<O>._(SavedItemsResultMsg.success, i);
+    } catch (e) {
+      debugPrint("***error: $e");
+      if (e is FirebaseFunctionsException) {
+        switch (e.message.toLowerCase()) {
+          case ErrorCodes.mission_failed:
+            return SavedItemsResult<O>._(
+              SavedItemsResultMsg.mission_failed,
+              null,
+            );
+          case ErrorCodes.internal:
+            debugPrint(
+                "**search_sounds_home: unknown error code: \"${e.message.toLowerCase()}\"");
+            return SavedItemsResult<O>._(
+              SavedItemsResultMsg.mission_failed,
+              null,
+            );
+          default:
+            throw "this shouldn't happen";
+        }
+      } else {
+        throw e;
+      }
+    }
+  }
+
   /// returns list of saved items: [saved sounds, saved lists]
-  static Future<GetSavedItemsResult> getSavedItems() async {
+  static Future<GetSavedItemsResult> get_saved_items_doc() async {
     FirebaseFunctions functions = FirebaseFunctions.instance;
     if (isTesting) {
       functions.useFunctionsEmulator(
@@ -568,7 +635,7 @@ class FirePP {
     }
   }
 
-  static Future<SaveSoundResultMsg> saveSound(String soundId) async {
+  static Future<SaveSoundResultMsg> save_sound(String soundId) async {
     FirebaseFunctions functions = FirebaseFunctions.instance;
     if (isTesting) {
       functions.useFunctionsEmulator(
@@ -608,7 +675,7 @@ class FirePP {
     }
   }
 
-  static Future<UnsaveSoundResultMsg> unsaveSound(String soundId) async {
+  static Future<UnsaveSoundResultMsg> unsave_sound(String soundId) async {
     FirebaseFunctions functions = FirebaseFunctions.instance;
     if (isTesting) {
       functions.useFunctionsEmulator(

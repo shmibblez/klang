@@ -189,6 +189,13 @@ class Search {
   static const time_period = "m";
 }
 
+class GetSavedItems {
+  static const type = "t";
+  static const type_saved_items_doc = "d";
+  static const type_saved_items_sort = "c"; // c for clones
+  static const metric = "m";
+}
+
 class ErrorCodes {
   static const invalid_username = "iu";
   static const invalid_email = "ie";
