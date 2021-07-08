@@ -418,7 +418,7 @@ class FirePP {
     try {
       final result = await functions.httpsCallable("s").call(data);
       List<KlangSound> sounds =
-          KlangSound.fromJsonArr(result.data[FunctionResult.items] as List);
+          KlangSound.fromJsonArr(result.data[FunctionResult.items]);
       return SearchSoundHomeResult._(
         SearchSoundHomeResultMsg.success,
         sounds,
@@ -472,8 +472,8 @@ class FirePP {
     };
     try {
       final result = await functions.httpsCallable("s").call(data);
-      final rawItem = result.data[FunctionResult.items];
-      List<O> itemArr = KlangObj.fromJsonArr<O>(rawItem);
+      List<O> itemArr =
+          KlangObj.fromJsonArr<O>(result.data[FunctionResult.items]);
       O i = itemArr.isEmpty ? null : itemArr[0];
       return SearchItemResult<O>._(SearchItemResultMsg.success, i);
     } catch (e) {
@@ -536,9 +536,11 @@ class FirePP {
     }
   }
 
+  /// [metric] in this case, other than those in [Metrics], can be "tims" (timestamp saved)
   static Future<SavedItemsResult<O>> saved_items<O extends KlangObj>({
     @required String itemId,
-    bool isOwner = false,
+    @required String metric,
+    List<dynamic> offset,
   }) async {
     FirebaseFunctions functions = FirebaseFunctions.instance;
     if (isTesting) {
@@ -553,19 +555,21 @@ class FirePP {
     // else if (O == KlangList) {
     //   contentType = Search.type_user;
     // }
-    // TODO: http function setup, now need to setup app-side
-    // need to also change data sent here & in get_saved_items_doc
+    if (metric == "tims") {
+      // TODO: if order by timestamp, then return cached sounds, or wait for cached sounds to load (need to setup)
+      return null; // for now
+    }
+
     final data = {
+      GetSavedItems.type: GetSavedItems.type_saved_items_sort,
       Info.id: itemId,
-      Search.type: contentType,
-      Search.sub_type: Search.sub_type_item,
-      // if explicit ok, true since need to get user profile
-      Properties.explicit: true,
+      Search.offset: offset,
+      GetSavedItems.content_type: contentType,
     };
     try {
       final result = await functions.httpsCallable("s").call(data);
-      // TODO
-      return SavedItemsResult<O>._(SavedItemsResultMsg.success, i);
+      final items = KlangObj.fromJsonArr<O>(result.data[FunctionResult.sounds]);
+      return SavedItemsResult<O>._(SavedItemsResultMsg.success, items);
     } catch (e) {
       debugPrint("***error: $e");
       if (e is FirebaseFunctionsException) {
@@ -602,6 +606,7 @@ class FirePP {
     // TODO: get from local storage, also check if has local list, if no list cached, then force_query should be true
     Timestamp timestampSoundsLastUpdated;
     final data = {
+      GetSavedItems.type: GetSavedItems.type_saved_items_sort,
       FunctionParams.timestamp: {
         FunctionParams.timestamp_seconds:
             timestampSoundsLastUpdated?.seconds ?? 0,

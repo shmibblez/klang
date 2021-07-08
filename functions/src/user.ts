@@ -235,12 +235,17 @@ export const get_saved_items = functions.https.onCall(async (data, context) => {
       )
         throw new UnsupportedQueryError();
 
-      // order by total
-      query = query.orderBy(
-        `${Root.metrics}.${metric}.${Metrics.total}`,
-        "desc"
-      );
+      // order by total, uid for offset
+      query = query
+        .orderBy(`${Root.metrics}.${metric}.${Metrics.total}`, "desc")
+        .orderBy(firestore.FieldPath.documentId(), "asc");
       query = query.select(...FieldMasks.public_sound_search);
+
+      /// set query offset if available
+      if (Array.isArray(offset) && offset.length === 2) {
+        query = query.startAfter(...offset);
+      }
+
       const result = await query.get();
       return {
         [FunctionResult.sounds]: result.docs.map<firestore.DocumentData>(

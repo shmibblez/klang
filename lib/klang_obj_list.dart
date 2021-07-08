@@ -111,28 +111,114 @@ class _KlangItemListState<@required O extends KlangObj,
   }
 }
 
-// TODO: don't need delegate, all SoundList needs is
-// - buildItem
-// - buildLoadingItem
-// - loadMore (callback function to load more sounds, should be async, show loading item while loads)
-// only other thing is, how to handle error? could have failed to load list item, and if failed to load, retry loading when retry pressed
+// TODO: load from ids, 10 at a time. Obj returned from http function should be: {[FunctionResult.sounds]: {[item_id]: [item doc data]} }
 
-// and thats it, some other important stuff:
-// - need to have loading threshold: if within last 3 items, load more sounds
-
-class KlangIdItemList<O extends KlangObj, I extends KlangListItem>
+class KlangItemIdList<O extends KlangObj, I extends KlangListItem>
     extends StatefulWidget {
+  KlangItemIdList({
+    @required this.ids,
+    @required this.loadObjs,
+    @required this.buildItem,
+    @required this.buildLoadingItem,
+    @required this.buildFailedToLoadItem,
+  });
+
+  final List<String> ids;
+  final Future<List<O>> Function(List<String> ids) loadObjs;
+  final I Function(O obj) buildItem;
+  final I Function() buildLoadingItem;
+
+  /// builds list item that shows [msg] and has button that calls [onRetry] when pressed
+  final I Function(
+    String msg,
+    void Function() onRetry,
+  ) buildFailedToLoadItem;
+
   @override
   State<StatefulWidget> createState() {
-    // TODO: implement createState
-    throw UnimplementedError();
+    return _KlangItemIdListState();
   }
 }
 
-class _KlangIdItemListState<O extends KlangObj, I extends KlangListItem>
-    extends State<KlangIdItemList<O, I>> {
+class _KlangItemIdListState<O extends KlangObj, I extends KlangListItem>
+    extends State<KlangItemIdList<O, I>> {
+  bool _loading;
+  bool _hasMore;
+  bool _failedToLoad;
+  String _failedToLoadMsg;
+  // void Function() _delegateListener;
+  List<O> _items;
+  final int _loadingThreshold = 3;
+
+  @override
+  void initState() {
+    super.initState();
+    _loading = false;
+    _hasMore = true;
+    _failedToLoad = false;
+    _failedToLoadMsg = "";
+    _items = [];
+    _loadMore();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(itemBuilder: (c, i) {});
+    return ListView.builder(
+        shrinkWrap: true,
+        itemBuilder: (_, i) {
+          if (_items.length - i - 1 <= _loadingThreshold &&
+              !_failedToLoad &&
+              _hasMore &&
+              !_loading) {
+            Future.delayed(Duration.zero, () async {
+              await _loadMore();
+            });
+          }
+          if (i == _items.length) {
+            if (!_hasMore)
+              return Padding(
+                padding: KlangPadding.listItemPadding,
+                child: Center(
+                  child: Text(_items.isEmpty ? "no items" : "no more items"),
+                ),
+              );
+            if (_failedToLoad)
+              return widget.buildFailedToLoadItem(_failedToLoadMsg, () {
+                _loadMore();
+              });
+            return widget.buildLoadingItem();
+          }
+
+          return widget.buildItem(_items[i]);
+        },
+        itemCount: _items.length + 1
+        // _loading || _failedToLoad || !_hasMore
+        //     ? _sounds.length + 1
+        //     : _sounds.length, // widget.delegate.itemCount,
+        );
+  }
+
+  // TODO: redo this and load items from id in groups
+  Future<void> _loadMore() async {
+    if (_failedToLoad) _failedToLoad = false;
+    if (_loading) return;
+    setState(() {
+      _loading = true;
+    });
+    List<O> newSounds;
+    try {
+      newSounds = await widget.loadObjs(ids);
+    } catch (msg) {
+      _failedToLoad = true;
+      _failedToLoadMsg = msg.toString();
+      newSounds = [];
+    }
+    setState(() {
+      if (!_failedToLoad && newSounds.isEmpty)
+        _hasMore = false;
+      else
+        _items.addAll(newSounds);
+      _loading = false;
+    });
   }
 }

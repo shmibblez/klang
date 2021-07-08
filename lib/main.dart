@@ -191,7 +191,7 @@ class UserState {
   UserState(this.user) {
     // uid = user?.uid;
     // loggedIn = user?.uid != null && !user.isAnonymous;
-    if (this.loggedIn) _setupSavedItems();
+    if (this.loggedIn) notifySetupSavedItems();
   }
   User user;
   String get uid => user?.uid;
@@ -223,22 +223,24 @@ class UserState {
 
   /// sets up user's saved items lists
   /// if fails to load keeps retrying every 7 seconds
-  Future<void> _setupSavedItems() async {
+  /// returns in case any other process depends on it
+  Future<Map<String, Timestamp>> notifySetupSavedItems() async {
     debugPrint(
         "UserState: _setupSavedItems(), savedItemsReady: $savedItemsReady");
-    if (savedItemsReady) return;
+    if (savedItemsReady) return savedSounds;
     try {
       final r = await FirePP.get_saved_items_doc();
       if (r.resultMsg == GetSavedItemsResultMsg.success) {
         this.savedSounds = r.items[0];
         debugPrint("***saved sounds: $savedSounds");
+        return savedSounds;
       } else {
         throw r.resultMsg;
       }
     } catch (e) {
       debugPrint("***saved sounds error, e: $e");
       await Future.delayed(Duration(seconds: 7));
-      await _setupSavedItems();
+      return await notifySetupSavedItems();
     }
   }
 }

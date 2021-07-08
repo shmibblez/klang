@@ -87,6 +87,15 @@ class KlangSound extends KlangObj {
     return [this.id];
   }
 
+  List<dynamic> getSavedQueryOffset(String metric) {
+    // don't need to worry about "tims" here
+    // if(metric == "tims" ) {}
+    return [
+      (_metrics[metric] ?? const {})[Metrics.total],
+      this.id,
+    ];
+  }
+
   static List<KlangSound> fromJsonArr(List data) {
     List<KlangSound> sounds = [];
     for (final Map<String, dynamic> m in data) {

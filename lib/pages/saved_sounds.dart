@@ -25,12 +25,15 @@ class SavedSoundsPage extends StatefulWidget implements KlangPage {
 
 class _SavedSoundsPageState extends State<SavedSoundsPage> {
   StreamController savedController;
+  String metric;
 
   @override
   void initState() {
     super.initState();
     savedController = StreamController();
     savedController.sink.addStream(_getSavedSounds().asStream());
+    metric =
+        "tims"; // # check if user preferences saved, if yes, then load based on that
   }
 
   @override
@@ -72,25 +75,29 @@ class _SavedSoundsPageState extends State<SavedSoundsPage> {
   }
 
   Widget _buildPage() {
+    // TODO: add metric picker (most downloads, most saves, timestamp saved)
     return Scaffold(
       appBar: AppBar(
         title: Text("saved sounds"),
       ),
       // // TODO: only for clone query, need to make KlangItemIdList that loads items from ids -> add entry to search http function that uses getAll and applies fieldMask
-      body: KlangItemList<KlangSound, KlangListItem>(
-        loadMore: (offset) {
-          // TODO
-          return FirePP.saved_items<KlangSound>(metric: metric);
-        },
-        buildItem: (s) => SoundListItem(sound: s),
-        buildLoadingItem: () => LoadingListItem(),
-        buildFailedToLoadItem: (msg, onRetry) =>
-            RetryLoadingListItem(msg: msg, onRetry: onRetry),
-        queryOffset: (s) {
-          // TODO
-          return [];
-        },
-      ),
+      body: metric == "tims"
+          ? KlangItemIdList()
+          : KlangItemList<KlangSound, KlangListItem>(
+              loadMore: (offset) async {
+                final r = await FirePP.saved_items<KlangSound>(
+                  itemId: widget.uid,
+                  metric: "tims",
+                  offset: offset,
+                );
+                return r.items;
+              },
+              buildItem: (s) => SoundListItem(sound: s),
+              buildLoadingItem: () => LoadingListItem(),
+              buildFailedToLoadItem: (msg, onRetry) =>
+                  RetryLoadingListItem(msg: msg, onRetry: onRetry),
+              queryOffset: (s) => s.getSavedQueryOffset(metric),
+            ),
     );
   }
 }

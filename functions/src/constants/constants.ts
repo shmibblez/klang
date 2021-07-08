@@ -205,10 +205,11 @@ export class Search {
 }
 
 export class GetSavedItems {
-  static readonly type = "t";
+  static readonly type = "ty";
   static readonly type_saved_items_doc = "d";
   static readonly type_saved_items_sort = "c"; // c for clones
   static readonly metric = "m";
+  static readonly content_type = "ct";
   static readonly supported_metrics = [
     Metrics.downloads,
     Metrics.saves,
