@@ -536,10 +536,10 @@ class FirePP {
     }
   }
 
-  /// [metric] in this case, other than those in [Metrics], can be "tims" (timestamp saved)
+  /// [metric] in this case, other than those in [Metrics], can be GetSavedItems.type_saved_items_sort
   static Future<SavedItemsResult<O>> saved_items<O extends KlangObj>({
-    @required String itemId,
     @required String metric,
+    List<String> itemIds,
     List<dynamic> offset,
   }) async {
     FirebaseFunctions functions = FirebaseFunctions.instance;
@@ -555,19 +555,23 @@ class FirePP {
     // else if (O == KlangList) {
     //   contentType = Search.type_user;
     // }
-    if (metric == "tims") {
-      // TODO: if order by timestamp, then return cached sounds, or wait for cached sounds to load (need to setup)
-      return null; // for now
+    Map data;
+    if (metric == GetSavedItems.type_saved_items_sort) {
+      data = {
+        GetSavedItems.type: GetSavedItems.type_saved_items_sort,
+        GetSavedItems.ids: itemIds,
+        GetSavedItems.content_type: contentType,
+      };
+    } else {
+      data = {
+        GetSavedItems.type: GetSavedItems.type_saved_items_sort,
+        Search.offset: offset,
+        GetSavedItems.content_type: contentType,
+      };
     }
 
-    final data = {
-      GetSavedItems.type: GetSavedItems.type_saved_items_sort,
-      Info.id: itemId,
-      Search.offset: offset,
-      GetSavedItems.content_type: contentType,
-    };
     try {
-      final result = await functions.httpsCallable("s").call(data);
+      final result = await functions.httpsCallable("gsi").call(data);
       final items = KlangObj.fromJsonArr<O>(result.data[FunctionResult.sounds]);
       return SavedItemsResult<O>._(SavedItemsResultMsg.success, items);
     } catch (e) {

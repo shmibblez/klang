@@ -190,9 +190,11 @@ class Search {
 }
 
 class GetSavedItems {
+  static const ids = "ds";
   static const type = "ty";
   static const type_saved_items_doc = "d";
   static const type_saved_items_sort = "c"; // c for clones
+  static const type_saved_items_timestamp_saved = "tm";
   static const metric = "m";
   static const content_type = "ct";
 }

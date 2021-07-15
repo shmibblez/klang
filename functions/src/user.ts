@@ -221,6 +221,24 @@ export const get_saved_items = functions.https.onCall(async (data, context) => {
 
       return { [FunctionResult.sounds]: sound_snap.docs[0]?.data() };
     }
+    case GetSavedItems.type_saved_items_timestamp_saved: {
+      // get docs, returned in same order as ids passed
+      // null is returned for nonexistent docs, # in future remove from users saved sounds doc
+      const ids: string[] = data[GetSavedItems.ids];
+      if (!Array.isArray(ids)) throw new UnsupportedQueryError();
+      if (ids.length > 20) ids.length = 20;
+      const refs = [];
+      for (const id of ids) {
+        if (typeof id !== "string") throw new UnsupportedQueryError();
+        refs.push(firestore().collection(Coll.sounds).doc(id));
+      }
+      const snaps = await firestore().getAll(...refs);
+      return {
+        [FunctionResult.sounds]: snaps.map<firestore.DocumentData | null>(
+          (doc) => (doc.exists ? doc.data()! : null)
+        ),
+      };
+    }
     case GetSavedItems.type_saved_items_sort: {
       // TODO: saved item clones query here
       const offset = data[Search.offset];

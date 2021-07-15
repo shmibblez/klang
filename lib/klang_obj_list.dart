@@ -198,7 +198,6 @@ class _KlangItemIdListState<O extends KlangObj, I extends KlangListItem>
         );
   }
 
-  // TODO: redo this and load items from id in groups
   Future<void> _loadMore() async {
     if (_failedToLoad) _failedToLoad = false;
     if (_loading) return;
@@ -207,7 +206,18 @@ class _KlangItemIdListState<O extends KlangObj, I extends KlangListItem>
     });
     List<O> newSounds;
     try {
-      newSounds = await widget.loadObjs(ids);
+      int start = _items.length;
+      int end = start + 20;
+      if (end >= widget.ids.length) {
+        end = widget.ids.length - 1;
+      }
+      if (start == end) {
+        // if all ids loaded already
+        newSounds = [];
+      } else {
+        final idsToLoad = widget.ids.getRange(start, end).toList();
+        newSounds = await widget.loadObjs(idsToLoad);
+      }
     } catch (msg) {
       _failedToLoad = true;
       _failedToLoadMsg = msg.toString();

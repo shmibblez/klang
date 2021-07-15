@@ -88,8 +88,8 @@ class KlangSound extends KlangObj {
   }
 
   List<dynamic> getSavedQueryOffset(String metric) {
-    // don't need to worry about "tims" here
-    // if(metric == "tims" ) {}
+    // don't need to worry about [GetSavedItems.type_saved_items_sort] here
+    // if(metric == GetSavedItems.type_saved_items_sort ) {}
     return [
       (_metrics[metric] ?? const {})[Metrics.total],
       this.id,

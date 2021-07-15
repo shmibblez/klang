@@ -221,6 +221,29 @@ class UserState {
     savedSounds.remove(id);
   }
 
+  List<String> soundIdsTSDesc() {
+    if (!savedItemsReady) return [];
+
+    final List<String> ids = savedSounds.keys;
+    final List<String> orderedIds = [];
+    for (String id in ids) {
+      for (int i = 0; i < ids.length; i++) {
+        final currentTimestamp = savedSounds[id].millisecondsSinceEpoch;
+        final otherTimestamp = savedSounds[ids[i]].millisecondsSinceEpoch;
+        if (i >= orderedIds.length || currentTimestamp > otherTimestamp) {
+          orderedIds.insert(i - 1, id);
+          break;
+        }
+      }
+    }
+    return ids;
+  }
+
+  List<String> soundIdsTSAsc() {
+    if (!savedItemsReady) return [];
+    return soundIdsTSDesc().reversed.toList();
+  }
+
   /// sets up user's saved items lists
   /// if fails to load keeps retrying every 7 seconds
   /// returns in case any other process depends on it

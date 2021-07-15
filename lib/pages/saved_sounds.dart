@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:klang/constants/klang_constants.dart';
 import 'package:klang/http_helper.dart';
 import 'package:klang/klang_obj_list.dart';
 import 'package:klang/klang_obj_list_items.dart';
 import 'package:klang/main.dart';
 import 'package:klang/objects/klang_sound.dart';
 import 'package:klang/page_router.dart';
+import 'package:klang/pages/error.dart';
 import 'package:klang/pages/klang_page.dart';
 
 class SavedSoundsPage extends StatefulWidget implements KlangPage {
@@ -32,8 +34,8 @@ class _SavedSoundsPageState extends State<SavedSoundsPage> {
     super.initState();
     savedController = StreamController();
     savedController.sink.addStream(_getSavedSounds().asStream());
-    metric =
-        "tims"; // # check if user preferences saved, if yes, then load based on that
+    metric = GetSavedItems
+        .type_saved_items_sort; // # check if user preferences saved, if yes, then load based on that
   }
 
   @override
@@ -76,18 +78,42 @@ class _SavedSoundsPageState extends State<SavedSoundsPage> {
 
   Widget _buildPage() {
     // TODO: add metric picker (most downloads, most saves, timestamp saved)
+    final user = BlocProvider.of<AuthCubit>(context).state;
+    // if saved items not loaded, show error page, temporary while setup load ids when ready
+    if (!user.savedItemsReady) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text("saved sounds"),
+        ),
+        body: ErrorPage(onHandleError: () {
+          setState(() {});
+        }),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text("saved sounds"),
       ),
-      // // TODO: only for clone query, need to make KlangItemIdList that loads items from ids -> add entry to search http function that uses getAll and applies fieldMask
-      body: metric == "tims"
-          ? KlangItemIdList()
+      body: metric == GetSavedItems.type_saved_items_sort
+          ? KlangItemIdList(
+              ids: user.soundIdsTSDesc(),
+              loadObjs: (ids) async {
+                FirePP.saved_items(
+                  itemIds: user.soundIdsTSDesc(),
+                  metric: metric,
+                );
+
+                // FIXME: huge misunderstanding, sounds aren't cached, saved sound ids are, need to load sounds anyway
+              },
+              buildItem: (s) => SoundListItem(sound: s),
+              buildLoadingItem: () => LoadingListItem(),
+              buildFailedToLoadItem: (msg, onRetry) =>
+                  RetryLoadingListItem(msg: msg, onRetry: onRetry),
+            )
           : KlangItemList<KlangSound, KlangListItem>(
               loadMore: (offset) async {
                 final r = await FirePP.saved_items<KlangSound>(
-                  itemId: widget.uid,
-                  metric: "tims",
+                  metric: GetSavedItems.type_saved_items_sort,
                   offset: offset,
                 );
                 return r.items;
