@@ -190,6 +190,7 @@ export const get_saved_items = functions.https.onCall(async (data, context) => {
 
   switch (type) {
     case GetSavedItems.type_saved_items_doc: {
+      console.log("get_saved_items: getting saved items doc");
       // TODO: setup query type, and based on that, get either saved items doc or saved item clones (from metric, need offset too)
       const timestamp_seconds =
         data[FunctionParams.timestamp]?.[FunctionParams.timestamp_seconds] ?? 0;
@@ -222,6 +223,7 @@ export const get_saved_items = functions.https.onCall(async (data, context) => {
       return { [FunctionResult.sounds]: sound_snap.docs[0]?.data() };
     }
     case GetSavedItems.type_saved_items_timestamp_saved: {
+      console.log("get_saved_items: getting timestamp saved");
       // get docs, returned in same order as ids passed
       // null is returned for nonexistent docs, # in future remove from users saved sounds doc
       const ids: string[] = data[GetSavedItems.ids];
@@ -240,6 +242,7 @@ export const get_saved_items = functions.https.onCall(async (data, context) => {
       };
     }
     case GetSavedItems.type_saved_items_sort: {
+      console.log("get_saved_items: getting items sort");
       // TODO: saved item clones query here
       const offset = data[Search.offset];
       let query = firestore()

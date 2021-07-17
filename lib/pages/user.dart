@@ -26,13 +26,19 @@ class UserPage extends StatefulWidget implements KlangPage {
 
 class _UserPageState extends State<UserPage> {
   StreamController<SearchItemResult<KlangUser>> streamController;
+  String _uid;
 
   @override
   void initState() {
     super.initState();
+    _uid = widget.uid;
+    if (_uid == null) {
+      _uid = BlocProvider.of<AuthCubit>(context).uid;
+    }
     streamController = StreamController();
     streamController.sink.addStream(
-        FirePP.search_item<KlangUser>(itemId: widget.uid).asStream());
+      FirePP.search_item<KlangUser>(itemId: _uid).asStream(),
+    );
   }
 
   @override
@@ -54,8 +60,8 @@ class _UserPageState extends State<UserPage> {
                 child: ErrorPage(
                   onHandleError: () {
                     streamController.sink.addStream(
-                        FirePP.search_item<KlangUser>(itemId: widget.uid)
-                            .asStream());
+                      FirePP.search_item<KlangUser>(itemId: _uid).asStream(),
+                    );
                   },
                 ),
               );

@@ -278,7 +278,6 @@ export const on_sound_update = functions.firestore
 
       for (const d of docs) {
         const clone_data = d.data();
-        clone_data["aaaaa"] = 999;
         // replace clone data with newest sound doc data
         Object.assign(clone_data, necessary_sound_data);
         t.update(d.ref, clone_data);

@@ -242,6 +242,17 @@ class FirePP {
     throw "unknown SaveSoundResultMsg: \"$r\"";
   }
 
+  static String translateSavedItemsResultMsg(SavedItemsResultMsg r) {
+    switch (r) {
+      case SavedItemsResultMsg.internal:
+      case SavedItemsResultMsg.mission_failed:
+        return "failed to get saved items";
+      case SavedItemsResultMsg.success:
+        return "successfully got saved items";
+    }
+    throw "unknown SavedItemsResultMsg: \"m\"";
+  }
+
   /// returns [LoginResultMsg] to inform result
   static Future<LoginResultMsg> login({
     @required String email,
@@ -556,9 +567,9 @@ class FirePP {
     //   contentType = Search.type_user;
     // }
     Map data;
-    if (metric == GetSavedItems.type_saved_items_sort) {
+    if (metric == GetSavedItems.type_saved_items_timestamp_saved) {
       data = {
-        GetSavedItems.type: GetSavedItems.type_saved_items_sort,
+        GetSavedItems.type: GetSavedItems.type_saved_items_timestamp_saved,
         GetSavedItems.ids: itemIds,
         GetSavedItems.content_type: contentType,
       };
@@ -610,7 +621,7 @@ class FirePP {
     // TODO: get from local storage, also check if has local list, if no list cached, then force_query should be true
     Timestamp timestampSoundsLastUpdated;
     final data = {
-      GetSavedItems.type: GetSavedItems.type_saved_items_sort,
+      GetSavedItems.type: GetSavedItems.type_saved_items_doc,
       FunctionParams.timestamp: {
         FunctionParams.timestamp_seconds:
             timestampSoundsLastUpdated?.seconds ?? 0,

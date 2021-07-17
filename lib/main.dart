@@ -221,22 +221,32 @@ class UserState {
     savedSounds.remove(id);
   }
 
+  // TODO: returning ids reversed (not desc, asc)
   List<String> soundIdsTSDesc() {
-    if (!savedItemsReady) return [];
+    if (!savedItemsReady) {
+      debugPrint("soundIdsTSDesc: saved sounds not ready");
+      return [];
+    }
 
-    final List<String> ids = savedSounds.keys;
     final List<String> orderedIds = [];
-    for (String id in ids) {
-      for (int i = 0; i < ids.length; i++) {
-        final currentTimestamp = savedSounds[id].millisecondsSinceEpoch;
-        final otherTimestamp = savedSounds[ids[i]].millisecondsSinceEpoch;
-        if (i >= orderedIds.length || currentTimestamp > otherTimestamp) {
-          orderedIds.insert(i - 1, id);
+    debugPrint("soundIdsTSDesc: starting id ordering process");
+    for (String id in savedSounds.keys.toList()) {
+      debugPrint("soundIdsTSDesc: checking timestamps for id: $id");
+      int i = 0;
+      while (true) {
+        final thisTimestamp = savedSounds[id].millisecondsSinceEpoch;
+        final otherTimestamp = i < orderedIds.length
+            ? savedSounds[orderedIds[i]].millisecondsSinceEpoch
+            : -1;
+        if (i >= orderedIds.length || thisTimestamp > otherTimestamp) {
+          debugPrint("soundIdsTSDesc: added id at indx $i");
+          orderedIds.insert(i, id);
           break;
         }
+        i++;
       }
     }
-    return ids;
+    return orderedIds;
   }
 
   List<String> soundIdsTSAsc() {
@@ -528,7 +538,7 @@ class _KlangMainPageState extends State<KlangMainPage>
           // AddPage(),
           // ShufflePage(),
           AuthPage(
-            child: UserPage(uid: null),
+            child: UserPage(uid: BlocProvider.of<AuthCubit>(context).uid),
             authFallbackPage: LoginPage(),
           ),
         ],

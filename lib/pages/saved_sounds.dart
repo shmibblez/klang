@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:klang/constants/klang_constants.dart';
@@ -22,26 +20,26 @@ class SavedSoundsPage extends StatefulWidget implements KlangPage {
   }
 
   @override
-  PageRoutePath get route => throw UnimplementedError();
+  PageRoutePath get route => PageRoutePath.savedSounds(uid);
 }
 
 class _SavedSoundsPageState extends State<SavedSoundsPage> {
-  StreamController savedController;
+  // StreamController savedController;
   String metric;
 
   @override
   void initState() {
     super.initState();
-    savedController = StreamController();
-    savedController.sink.addStream(_getSavedSounds().asStream());
+    // savedController = StreamController();
+    // savedController.sink.addStream(_getSavedSounds().asStream());
     metric = GetSavedItems
-        .type_saved_items_sort; // # check if user preferences saved, if yes, then load based on that
+        .type_saved_items_timestamp_saved; // # check if user preferences saved, if yes, then load based on that
   }
 
   @override
   void dispose() {
     super.dispose();
-    savedController.close();
+    // savedController.close();
   }
 
   @override
@@ -49,34 +47,8 @@ class _SavedSoundsPageState extends State<SavedSoundsPage> {
     // if not list owner
     if (BlocProvider.of<AuthCubit>(context).uid != widget.uid)
       return Center(child: Text("users can only view their own saved sounds"));
-    // if list owner, get saved sounds
-    return StreamBuilder(
-      stream: savedController.stream,
-      builder: (c, snap) {
-        // TODO: depending on sounds, build page
-        switch (snap.connectionState) {
-          case ConnectionState.active:
-          case ConnectionState.done:
-            return _buildPage();
-          case ConnectionState.none:
-          case ConnectionState.waiting:
-            return CircularProgressIndicator();
-        }
-        return null;
-      },
-    );
-  }
 
-  Future<List<KlangSound>> _getSavedSounds() {
-    // TODO: get saved sounds based on query (local params)
-    // - if query is ordered by timestamp saved:
-    //   - get saved sounds locally, ordered by timestamp (increasing or decreasing based on local params)
-    //   - if not loaded yet, wait to load (need to setup I think)
-    // - if query is ordered by metric
-    //   - get saved sounds from http function from local params -> this will be clone query with fieldMask to not get whole clone uid list
-  }
-
-  Widget _buildPage() {
+    // # add lastItemMessage to id list to show custom message for each list, ex: "no more saved sounds", instead of only "no more items for now"
     // TODO: add metric picker (most downloads, most saves, timestamp saved)
     final user = BlocProvider.of<AuthCubit>(context).state;
     // if saved items not loaded, show error page, temporary while setup load ids when ready
@@ -94,16 +66,20 @@ class _SavedSoundsPageState extends State<SavedSoundsPage> {
       appBar: AppBar(
         title: Text("saved sounds"),
       ),
-      body: metric == GetSavedItems.type_saved_items_sort
+      body: metric == GetSavedItems.type_saved_items_timestamp_saved
           ? KlangItemIdList(
               ids: user.soundIdsTSDesc(),
               loadObjs: (ids) async {
-                FirePP.saved_items(
-                  itemIds: user.soundIdsTSDesc(),
+                final r = await FirePP.saved_items<KlangSound>(
                   metric: metric,
+                  itemIds: user.soundIdsTSDesc(),
                 );
-
-                // FIXME: huge misunderstanding, sounds aren't cached, saved sound ids are, need to load sounds anyway
+                if (r.resultMsg != SavedItemsResultMsg.success) {
+                  debugPrint(
+                      "**FirePP.search_sounds_home failed, resultMsg: ${r.resultMsg}");
+                  throw FirePP.translateSavedItemsResultMsg(r.resultMsg);
+                }
+                return r.items;
               },
               buildItem: (s) => SoundListItem(sound: s),
               buildLoadingItem: () => LoadingListItem(),
@@ -113,9 +89,14 @@ class _SavedSoundsPageState extends State<SavedSoundsPage> {
           : KlangItemList<KlangSound, KlangListItem>(
               loadMore: (offset) async {
                 final r = await FirePP.saved_items<KlangSound>(
-                  metric: GetSavedItems.type_saved_items_sort,
+                  metric: metric,
                   offset: offset,
                 );
+                if (r.resultMsg != SavedItemsResultMsg.success) {
+                  debugPrint(
+                      "**FirePP.search_sounds_home failed, resultMsg: ${r.resultMsg}");
+                  throw FirePP.translateSavedItemsResultMsg(r.resultMsg);
+                }
                 return r.items;
               },
               buildItem: (s) => SoundListItem(sound: s),

@@ -60,6 +60,7 @@ samples, guidance on mobile development, and a full API reference.
 | set user image       | ❌           | ❌           |        |       |
 | save sound           | ✅           | ✅           |        |       |
 | unsave sound         | ✅           | ✅           |        |       |
+| view saved sounds    | 🚫           | ✅           |        |       |
 | edit sound           | ❌           | ❌           |        |       |
 | sound metric updates | ❌           | 🚫           |        |       |
 | user metric updates  | ❌           | 🚫           |        |       |

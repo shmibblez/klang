@@ -206,16 +206,16 @@ class _KlangItemIdListState<O extends KlangObj, I extends KlangListItem>
     });
     List<O> newSounds;
     try {
-      int start = _items.length;
+      int start = _items.length == 0 ? 0 : _items.length - 1;
       int end = start + 20;
       if (end >= widget.ids.length) {
-        end = widget.ids.length - 1;
+        end = widget.ids.length == 0 ? 0 : widget.ids.length - 1;
       }
       if (start == end) {
         // if all ids loaded already
         newSounds = [];
       } else {
-        final idsToLoad = widget.ids.getRange(start, end).toList();
+        final idsToLoad = widget.ids.getRange(start + 1, end).toList();
         newSounds = await widget.loadObjs(idsToLoad);
       }
     } catch (msg) {
