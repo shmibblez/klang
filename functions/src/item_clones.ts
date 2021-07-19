@@ -169,82 +169,85 @@ export const save_sound = functions.https.onCall(async (data, context) => {
  * 2. add sound to user's saved sounds doc
  * 3. add uid to clone doc, update sound data
  */
-export const unsave_sound = functions.https.onCall(async (data, context) => {
-  /// check params
-  if (!isAuthorized(context)) throw new UnauthenticatedError();
-  const uid = context.auth?.uid!;
-  const sound_id = data[Info.id];
-  if (!isDocIdOk(sound_id)) throw new InvalidDocIdError();
+export const unsave_sound = functions
+  .runWith({ timeoutSeconds: 5 })
+  .https.onCall(async (data, context) => {
+    /// check params
+    if (!isAuthorized(context)) throw new UnauthenticatedError();
+    const uid = context.auth?.uid!;
+    const sound_id = data[Info.id];
+    if (!isDocIdOk(sound_id)) throw new InvalidDocIdError();
 
-  /// setup queries
-  // user's saved sounds doc
-  const saved_sounds_ref = firestore()
-    .collection(Coll.users)
-    .doc(uid)
-    .collection(Coll.user_saved)
-    .doc(Docs.saved_sounds);
-  // finds clone doc containing uid
-  const clone_query = firestore()
-    .collection(Coll.sounds)
-    .doc(sound_id)
-    .collection(Coll.saves)
-    .where(`${Root.clone}.${Clone.ids}`, "array-contains", uid);
-  // original sound doc
-  const sound_doc_ref = firestore().collection(Coll.sounds).doc(sound_id);
+    /// setup queries
+    // user's saved sounds doc
+    const saved_sounds_ref = firestore()
+      .collection(Coll.users)
+      .doc(uid)
+      .collection(Coll.user_saved)
+      .doc(Docs.saved_sounds);
+    // finds clone doc containing uid
+    const clone_query = firestore()
+      .collection(Coll.sounds)
+      .doc(sound_id)
+      .collection(Coll.saves)
+      .where(`${Root.clone}.${Clone.ids}`, "array-contains", uid);
+    // original sound doc
+    const sound_doc_ref = firestore().collection(Coll.sounds).doc(sound_id);
 
-  /// unsave sound if already saved
-  await firestore().runTransaction(async (t) => {
-    /// check user's saved sounds doc
-    const saved_sounds_snap = await t.get(saved_sounds_ref);
-    if (!saved_sounds_snap.exists) throw new NotSavedError(); // if user's saved sounds doc doesn't exist, then no saved sounds
-    let saved_sounds_data = saved_sounds_snap.data()!;
-    if (saved_sounds_data[Root.items]?.[sound_id] === undefined)
-      throw new NotSavedError(); // if sound not saved
+    /// unsave sound if already saved
+    await firestore().runTransaction(async (t) => {
+      /// check user's saved sounds doc
+      const saved_sounds_snap = await t.get(saved_sounds_ref);
+      if (!saved_sounds_snap.exists) throw new NotSavedError(); // if user's saved sounds doc doesn't exist, then no saved sounds
+      let saved_sounds_data = saved_sounds_snap.data()!;
+      if (saved_sounds_data[Root.items]?.[sound_id] === undefined)
+        throw new NotSavedError(); // if sound not saved
 
-    /// get sound doc
-    const sound_snap = await t.get(sound_doc_ref);
+      /// get sound doc
+      const sound_snap = await t.get(sound_doc_ref);
 
-    /// if sound exists, update sound doc and clone doc, else, only remove from user's saved sounds doc
-    if (sound_snap.exists) {
-      let sound_doc_data = sound_snap.data()!;
-      /// check if already saved
-      const clone_snaps = (await t.get(clone_query)).docs;
-      if (clone_snaps.length <= 0) throw new NotSavedError(); // if no clone found, not saved
-      const clone_ref = clone_snaps[0].ref;
-      /// remove uid from clone doc
-      const clone_data = clone_snaps[0].data()!;
-      // find indx of uid
-      const uid_indx = (clone_data[Root.clone][Clone.ids] as string[]).indexOf(
-        uid
-      );
-      // remove item at uid indx
-      (clone_data[Root.clone][Clone.ids] as string[]).splice(uid_indx, 1);
-      // set clone space available to true
-      clone_data[Root.clone][Clone.space_available] = true;
+      /// if sound exists, update sound doc and clone doc, else, only remove from user's saved sounds doc
+      if (sound_snap.exists) {
+        let sound_doc_data = sound_snap.data()!;
+        /// check if already saved
+        const clone_snaps = (await t.get(clone_query)).docs;
+        if (clone_snaps.length <= 0) throw new NotSavedError(); // if no clone found, not saved
+        const clone_ref = clone_snaps[0].ref;
+        /// remove uid from clone doc
+        const clone_data = clone_snaps[0].data()!;
+        // find indx of uid
+        const uid_indx = (
+          clone_data[Root.clone][Clone.ids] as string[]
+        ).indexOf(uid);
+        // remove item at uid indx
+        (clone_data[Root.clone][Clone.ids] as string[]).splice(uid_indx, 1);
+        // set clone space available to true
+        clone_data[Root.clone][Clone.space_available] = true;
 
-      /// update sound metrics
-      // TODO: read this over to see if all good
-      FirestoreSound.updateMetric({
-        metric: Metrics.saves,
-        data: sound_doc_data,
-        change: -1,
-      });
-      t.update(sound_doc_ref, sound_doc_data);
-      t.update(clone_ref, clone_data);
-    }
+        /// update sound metrics
+        // TODO: read this over to see if all good
+        FirestoreSound.updateMetric({
+          metric: Metrics.saves,
+          data: sound_doc_data,
+          change: -1,
+        });
+        t.update(sound_doc_ref, sound_doc_data);
+        t.update(clone_ref, clone_data);
+      }
 
-    /// remove sound from user's saved sounds doc
-    saved_sounds_data![Root.info][Info.timestamp_updated] =
-      firestore.FieldValue.serverTimestamp();
-    delete saved_sounds_data![Root.items][sound_id];
-    t.update(saved_sounds_ref, saved_sounds_data!);
+      /// remove sound from user's saved sounds doc
+      saved_sounds_data![Root.info][Info.timestamp_updated] =
+        firestore.FieldValue.serverTimestamp();
+      delete saved_sounds_data![Root.items][sound_id];
+      t.update(saved_sounds_ref, saved_sounds_data!);
 
-    return Promise.resolve();
+      return Promise.resolve();
+    });
   });
-});
 
-export const on_sound_update = functions.firestore
-  .document(`${Coll.sounds}/{docId}`)
+export const on_sound_update = functions
+  .runWith({ timeoutSeconds: 5 })
+  .firestore.document(`${Coll.sounds}/{docId}`)
   .onUpdate(async (snap, context) => {
     // check if has clones
     const numClones = snap.after.data()![Root.clone]?.[Clone.clone_count];

@@ -8,6 +8,7 @@ import 'package:klang/objects/klang_obj.dart';
 
 class KlangSound extends KlangObj {
   KlangSound._({
+    raw_data,
     this.id,
     this.name,
     this.tags,
@@ -23,8 +24,10 @@ class KlangSound extends KlangObj {
     this.total_downloads,
     this.total_saves,
     metrics,
-  }) : this._metrics = metrics;
+  })  : this._metrics = metrics,
+        this._raw_data = raw_data;
 
+  final Map _raw_data;
   final String id;
   final String name;
   final List<String> tags;
@@ -49,6 +52,7 @@ class KlangSound extends KlangObj {
     final updated_nano = map[Root.info][Info.timestamp_created]["_nanoseconds"];
     // debugPrint("***sound map: $map");
     return KlangSound._(
+      raw_data: map,
       id: map[Root.info][Info.id],
       name: map[Root.info][Info.item_name][Info.item_name],
       tags: (map[Root.info][Info.tags] as List<dynamic>)
@@ -88,11 +92,8 @@ class KlangSound extends KlangObj {
   }
 
   List<dynamic> getSavedQueryOffset(String metric) {
-    // don't need to worry about [GetSavedItems.type_saved_items_sort] here
-    // if(metric == GetSavedItems.type_saved_items_sort ) {}
     return [
       (_metrics[metric] ?? const {})[Metrics.total],
-      this.id,
     ];
   }
 

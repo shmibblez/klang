@@ -488,7 +488,6 @@ class FirePP {
       O i = itemArr.isEmpty ? null : itemArr[0];
       return SearchItemResult<O>._(SearchItemResultMsg.success, i);
     } catch (e) {
-      debugPrint("***error: $e");
       if (e is FirebaseFunctionsException) {
         switch (e.message.toLowerCase()) {
           case ErrorCodes.mission_failed:
@@ -504,7 +503,7 @@ class FirePP {
               null,
             );
           default:
-            throw "this shouldn't happen";
+            throw "this shouldn't happen, error: $e";
         }
       } else {
         throw e;
@@ -576,6 +575,7 @@ class FirePP {
     } else {
       data = {
         GetSavedItems.type: GetSavedItems.type_saved_items_sort,
+        GetSavedItems.metric: metric,
         Search.offset: offset,
         GetSavedItems.content_type: contentType,
       };
@@ -602,7 +602,7 @@ class FirePP {
               null,
             );
           default:
-            throw "this shouldn't happen";
+            throw "this shouldn't happen, error: $e";
         }
       } else {
         throw e;

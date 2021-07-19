@@ -9,6 +9,7 @@ import 'package:klang/objects/klang_sound.dart';
 import 'package:klang/page_router.dart';
 import 'package:klang/pages/error.dart';
 import 'package:klang/pages/klang_page.dart';
+import 'package:klang/presets.dart';
 
 class SavedSoundsPage extends StatefulWidget implements KlangPage {
   SavedSoundsPage({this.uid});
@@ -25,15 +26,22 @@ class SavedSoundsPage extends StatefulWidget implements KlangPage {
 
 class _SavedSoundsPageState extends State<SavedSoundsPage> {
   // StreamController savedController;
-  String metric;
+  String _metric;
+  Map<String, int> _listIndices;
+  int _nextListIndx;
+  List<Widget> _lists;
 
   @override
   void initState() {
     super.initState();
     // savedController = StreamController();
     // savedController.sink.addStream(_getSavedSounds().asStream());
-    metric = GetSavedItems
-        .type_saved_items_timestamp_saved; // # check if user preferences saved, if yes, then load based on that
+    _metric = Metrics.best;
+    _listIndices = {};
+    _nextListIndx = 0;
+    _lists = [];
+    // GetSavedItems
+    // .type_saved_items_timestamp_saved; // # check if user preferences saved, if yes, then load based on that
   }
 
   @override
@@ -66,45 +74,110 @@ class _SavedSoundsPageState extends State<SavedSoundsPage> {
       appBar: AppBar(
         title: Text("saved sounds"),
       ),
-      body: metric == GetSavedItems.type_saved_items_timestamp_saved
-          ? KlangItemIdList(
-              ids: user.soundIdsTSDesc(),
-              loadObjs: (ids) async {
-                final r = await FirePP.saved_items<KlangSound>(
-                  metric: metric,
-                  itemIds: user.soundIdsTSDesc(),
-                );
-                if (r.resultMsg != SavedItemsResultMsg.success) {
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: KlangPadding.def),
+            child: DropdownButton<String>(
+              value: _metric,
+              items: [
+                GetSavedItems.type_saved_items_timestamp_saved,
+                Metrics.best,
+                Metrics.downloads,
+                Metrics.saves,
+              ]
+                  .map(
+                    (val) => DropdownMenuItem(
+                      value: val,
+                      child: Text(_metricCodeToMsg(val)),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (val) {
+                if (_metric == val) return;
+                setState(() {
+                  _metric = val;
                   debugPrint(
-                      "**FirePP.search_sounds_home failed, resultMsg: ${r.resultMsg}");
-                  throw FirePP.translateSavedItemsResultMsg(r.resultMsg);
-                }
-                return r.items;
+                      "***changed metric, new metric: ${_metricCodeToMsg(_metric)}");
+                });
               },
-              buildItem: (s) => SoundListItem(sound: s),
-              buildLoadingItem: () => LoadingListItem(),
-              buildFailedToLoadItem: (msg, onRetry) =>
-                  RetryLoadingListItem(msg: msg, onRetry: onRetry),
-            )
-          : KlangItemList<KlangSound, KlangListItem>(
-              loadMore: (offset) async {
-                final r = await FirePP.saved_items<KlangSound>(
-                  metric: metric,
-                  offset: offset,
-                );
-                if (r.resultMsg != SavedItemsResultMsg.success) {
-                  debugPrint(
-                      "**FirePP.search_sounds_home failed, resultMsg: ${r.resultMsg}");
-                  throw FirePP.translateSavedItemsResultMsg(r.resultMsg);
-                }
-                return r.items;
-              },
-              buildItem: (s) => SoundListItem(sound: s),
-              buildLoadingItem: () => LoadingListItem(),
-              buildFailedToLoadItem: (msg, onRetry) =>
-                  RetryLoadingListItem(msg: msg, onRetry: onRetry),
-              queryOffset: (s) => s.getSavedQueryOffset(metric),
             ),
+          ),
+          Expanded(
+            child: IndexedStack(
+              index: _getSelectedListIndx(user),
+              children: _lists,
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  int _getSelectedListIndx(UserState user) {
+    if (_listIndices[_metric] == null) {
+      _listIndices[_metric] = _nextListIndx++;
+      setState(() {
+        _lists.add(
+          _metric == GetSavedItems.type_saved_items_timestamp_saved
+              ? KlangItemIdList(
+                  ids: user.soundIdsTSDesc(),
+                  loadObjs: (ids) async {
+                    final r = await FirePP.saved_items<KlangSound>(
+                      metric: _metric,
+                      itemIds: user.soundIdsTSDesc(),
+                    );
+                    if (r.resultMsg != SavedItemsResultMsg.success) {
+                      debugPrint(
+                          "**FirePP.search_sounds_home failed, resultMsg: ${r.resultMsg}");
+                      throw FirePP.translateSavedItemsResultMsg(r.resultMsg);
+                    }
+                    return r.items;
+                  },
+                  buildItem: (s) => SoundListItem(sound: s),
+                  buildLoadingItem: () => LoadingListItem(),
+                  buildFailedToLoadItem: (msg, onRetry) =>
+                      RetryLoadingListItem(msg: msg, onRetry: onRetry),
+                )
+              : KlangItemList<KlangSound, KlangListItem>(
+                  loadMore: (offset) async {
+                    final r = await FirePP.saved_items<KlangSound>(
+                      metric: _metric,
+                      offset: offset,
+                    );
+                    if (r.resultMsg != SavedItemsResultMsg.success) {
+                      debugPrint(
+                          "**FirePP.search_sounds_home failed, resultMsg: ${r.resultMsg}");
+                      throw FirePP.translateSavedItemsResultMsg(r.resultMsg);
+                    }
+                    return r.items;
+                  },
+                  buildItem: (s) => SoundListItem(sound: s),
+                  buildLoadingItem: () => LoadingListItem(),
+                  buildFailedToLoadItem: (msg, onRetry) =>
+                      RetryLoadingListItem(msg: msg, onRetry: onRetry),
+                  queryOffset: (s) => s.getSavedQueryOffset(_metric),
+                ),
+        );
+      });
+    }
+    return _listIndices[_metric];
+  }
+
+  String _metricCodeToMsg(String metricCode) {
+    // TODO: finish setting up, need to set state when new metric set too
+    switch (metricCode) {
+      case Metrics.downloads:
+        return "most downloads";
+      case Metrics.best:
+        return "best";
+      case Metrics.saves:
+        return "most saves";
+      // TODO: need to setup ascending and descending, but for http function purposes they're both the same, only sound id order changes
+      case GetSavedItems.type_saved_items_timestamp_saved:
+      default:
+        return "latest saved";
+    }
   }
 }

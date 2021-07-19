@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 //   ErrorText(String text) : super(text);
 // }
 class KlangPadding {
+  static const double def = 8.0;
   static const EdgeInsetsGeometry formTextFieldPadding = EdgeInsets.all(8.0);
   static const EdgeInsetsGeometry formButtonPadding = EdgeInsets.all(8.0);
   static const EdgeInsetsGeometry formFieldPadding = EdgeInsets.all(8.0);

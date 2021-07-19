@@ -21,6 +21,11 @@ export class Root {
   static readonly deleted = "d";
   static readonly clone = "c";
   static readonly items = "t";
+  static readonly local_params = "lp"; // used for passing db data to client within returned doc data
+}
+
+export class LocalParams {
+  static readonly full_doc_ref = "fdr";
 }
 
 export class Info {

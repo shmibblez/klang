@@ -27,7 +27,6 @@ class SoundListItem extends StatefulWidget implements KlangListItem {
   }
 }
 
-// TODO: make sound background show progress, also fix progress listeners (closing wrong stream, not listening sometimes)
 class _SoundListItemState extends State<SoundListItem> {
   StreamSubscription<Duration> _onProgressStreamSub;
   StreamSubscription<String> _onPlayingSoundIdStreamSub;
@@ -87,7 +86,6 @@ class _SoundListItemState extends State<SoundListItem> {
                     bool isSaved =
                         ac.loggedIn && ac.state.isSoundSaved(widget.sound.id);
                     ac.setSoundPendingSaveState(widget.sound.id);
-                    // TODO: after unsaving, sound shows as saving..., could still be pending state after unsaved?
                     debugPrint("***isSaved: $isSaved");
                     if (isSaved) {
                       try {
@@ -178,17 +176,7 @@ class _SoundListItemState extends State<SoundListItem> {
   }
 
   List<PopupMenuEntry<_SoundMenuOption>> _buildMenuOptions(BuildContext c) {
-    //     // TODO: show sound popup menu & options
-    //     // what options? (depend on auth state)
-    //     // if logged in:
-    //     // - save / unsave
-    //     // - ...
-    //     // if logged out:
-    //     // - sign in
-    //     // - ...
-    //     // if logged in or out
-    //     // - download
-    //     // - view creator page
+    // TODO: make options work, ex: download option doesn't do anything currently
     AuthCubit ac = BlocProvider.of<AuthCubit>(c);
     bool isSaved = ac.loggedIn && ac.state.isSoundSaved(widget.sound.id);
     bool isPendingSaveState =

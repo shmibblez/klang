@@ -1,34 +1,5 @@
 // ignore_for_file: non_const Stringant_identifier_names
 
-/// this file contains constants used by klang's db
-
-// import {
-
-//   addDays,
-
-//   addMonths,
-
-//   addWeeks,
-
-//   addYears,
-
-//   differenceInDays,
-
-//   differenceInHours,
-
-//   differenceInYears,
-
-//   endOfDay,
-
-//   lastDayOfDecade,
-
-//   lastDayOfMonth,
-
-//   lastDayOfWeek,
-
-//   lastDayOfYear,
-
-// } from "date-fns";
 class Root {
   static const info = "i";
   static const properties = "p";
@@ -37,6 +8,12 @@ class Root {
   static const deleted = "d";
   static const clone = "c";
   static const items = "t";
+  static const local_params =
+      "lp"; // used for passing db data to client within returned doc data
+}
+
+class LocalParams {
+  static const full_doc_ref = "fdr";
 }
 
 class Info {

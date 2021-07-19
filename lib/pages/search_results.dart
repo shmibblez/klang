@@ -51,6 +51,7 @@ class _SearchResultsPageState extends State<SearchResultsPage> {
           onRetry: onRetry,
         ),
       ),
+      // FIXME: error in offset, for some reason is empty array with null: [null]
       KlangItemList<KlangUser, KlangListItem>(
         queryOffset: (user) => user.getSKQueryOffset(),
         loadMore: (offset) async {

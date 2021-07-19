@@ -7,6 +7,7 @@ import 'package:klang/klang_obj_list.dart';
 import 'package:klang/objects/klang_sound.dart';
 import 'package:klang/page_router.dart';
 import 'package:klang/pages/klang_page.dart';
+import 'package:klang/presets.dart';
 
 class HomePage extends StatefulWidget implements KlangPage {
   @override
@@ -62,22 +63,25 @@ class _HomePageState extends State<HomePage>
         children: [
           Row(
             children: [
-              DropdownButton<String>(
-                value: _metric,
-                items: [Metrics.best, Metrics.downloads]
-                    .map(
-                      (val) => DropdownMenuItem(
-                        value: val,
-                        child: Text(_metricCodeToMsg(val)),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (val) {
-                  if (_metric == val) return;
-                  setState(() {
-                    _metric = val;
-                  });
-                },
+              Padding(
+                padding: EdgeInsets.only(left: KlangPadding.def),
+                child: DropdownButton<String>(
+                  value: _metric,
+                  items: [Metrics.best, Metrics.downloads]
+                      .map(
+                        (val) => DropdownMenuItem(
+                          value: val,
+                          child: Text(_metricCodeToMsg(val)),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (val) {
+                    if (_metric == val) return;
+                    setState(() {
+                      _metric = val;
+                    });
+                  },
+                ),
               ),
               DropdownButton<String>(
                 value: _timePeriod,

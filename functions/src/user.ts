@@ -9,6 +9,7 @@ import {
   FunctionResult,
   GetSavedItems,
   Info,
+  LocalParams,
   Metrics,
   Root,
   RTDB,
@@ -242,7 +243,6 @@ export const get_saved_items = functions.https.onCall(async (data, context) => {
       };
     }
     case GetSavedItems.type_saved_items_sort: {
-      console.log("get_saved_items: getting items sort");
       // TODO: saved item clones query here
       const offset = data[Search.offset];
       let query = firestore()
@@ -250,29 +250,48 @@ export const get_saved_items = functions.https.onCall(async (data, context) => {
         .where(`${Root.clone}.${Clone.ids}`, "array-contains", uid);
 
       const metric = data[GetSavedItems.metric];
+      console.log("get_saved_items: getting items sort, metric: " + metric);
       if (
         typeof metric !== "string" ||
         !GetSavedItems.supported_metrics.includes(metric)
       )
         throw new UnsupportedQueryError();
 
-      // order by total, uid for offset
-      query = query
-        .orderBy(`${Root.metrics}.${metric}.${Metrics.total}`, "desc")
-        .orderBy(firestore.FieldPath.documentId(), "asc");
+      // order by total, don't need to also order by FieldPath.documentId() since collectionGroup queries work differently
+      query = query.orderBy(
+        `${Root.metrics}.${metric}.${Metrics.total}`,
+        "desc"
+      );
       query = query.select(...FieldMasks.public_sound_search);
 
       /// set query offset if available
-      if (Array.isArray(offset) && offset.length === 2) {
+      if (Array.isArray(offset) && offset.length === 1) {
         query = query.startAfter(...offset);
       }
+      console.log("\n\nquery: " + JSON.stringify(query, undefined, 2) + "\n\n");
+      query = query.limit(20);
+      console.log("\n\nquery: " + JSON.stringify(query, undefined, 2) + "\n\n");
 
       const result = await query.get();
-      return {
+      const sounds = {
         [FunctionResult.sounds]: result.docs.map<firestore.DocumentData>(
-          (doc) => doc.data()
+          (doc) => {
+            const d = doc.data();
+            d[Root.local_params] = { [LocalParams.full_doc_ref]: doc.ref.path };
+            return d;
+          }
         ),
       };
+      const _names: string[] = sounds[FunctionResult.sounds].map(
+        (v) =>
+          v[Root.info][Info.item_name][Info.item_name] +
+          ", " +
+          v[Root.metrics][metric][Metrics.total]
+      );
+      console.log(
+        "sound names in order: " + JSON.stringify(_names, undefined, 2)
+      );
+      return sounds;
     }
     default:
       throw new UnsupportedQueryError();
