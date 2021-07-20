@@ -67,7 +67,7 @@ class _HomePageState extends State<HomePage>
                 padding: EdgeInsets.only(left: KlangPadding.def),
                 child: DropdownButton<String>(
                   value: _metric,
-                  items: [Metrics.best, Metrics.downloads]
+                  items: [Metrics.best, Metrics.downloads, Metrics.saves]
                       .map(
                         (val) => DropdownMenuItem(
                           value: val,
@@ -146,6 +146,8 @@ class _HomePageState extends State<HomePage>
     switch (metricCode) {
       case Metrics.best:
         return "best";
+      case Metrics.saves:
+        return "saves";
       case Metrics.downloads:
       default:
         return "downloads";

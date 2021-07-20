@@ -431,7 +431,9 @@ class FirePP {
     @required List<dynamic> offset,
   }) async {
     assert(
-      metric == Metrics.best || metric == Metrics.downloads,
+      metric == Metrics.best ||
+          metric == Metrics.downloads ||
+          metric == Metrics.saves,
     );
     assert(KlangTimePeriods.contains(time));
 

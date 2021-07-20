@@ -159,6 +159,7 @@ class Search {
   static const sub_type_sk = "k";
   static const sub_type_downloads = Metrics.downloads;
   static const sub_type_best = Metrics.best;
+  static const sub_type_saves = Metrics.saves;
   static const sub_type_item = "i";
   static const sub_type_created_items = "cr";
   static const random_seed_num = "n";

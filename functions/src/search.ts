@@ -92,10 +92,11 @@ function _itemSearch({
   );
 
   switch (sub_type) {
+    case Search.sub_type_saves:
     case Search.sub_type_downloads:
     case Search.sub_type_best: {
       const time_period = _timePeriodFrom(data[Search.time_period]);
-      const metric = _metricFromSubType(sub_type);
+      const metric = _metricFrom(sub_type);
       /**
        *  explicit & tag filters already set
        **/
@@ -254,24 +255,13 @@ function _timePeriodFrom(t: string): KlangTimePeriod {
   return t as KlangTimePeriod;
 }
 
-function _metricFromSubType(sub_type: string): string {
+function _metricFrom(sub_type: string): string {
   switch (sub_type) {
     case Search.sub_type_downloads:
       return Metrics.downloads;
-
-    case Search.sub_type_best:
-    default:
-      return Metrics.best;
-  }
-}
-
-function _metricFrom(metric: string): string {
-  switch (metric) {
-    case Metrics.best:
-      return Metrics.best;
-    case Metrics.saves:
+    case Search.sub_type_saves:
       return Metrics.saves;
-    case Metrics.best:
+    case Search.sub_type_best:
     default:
       return Metrics.best;
   }
