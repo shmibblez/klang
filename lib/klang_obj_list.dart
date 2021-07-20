@@ -111,8 +111,6 @@ class _KlangItemListState<@required O extends KlangObj,
   }
 }
 
-// TODO: load from ids, 10 at a time. Obj returned from http function should be: {[FunctionResult.sounds]: {[item_id]: [item doc data]} }
-
 class KlangItemIdList<O extends KlangObj, I extends KlangListItem>
     extends StatefulWidget {
   KlangItemIdList({

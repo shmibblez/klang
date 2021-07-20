@@ -1,7 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 import 'package:klang/constants/klang_constants.dart';
 import 'package:klang/http_helper.dart';
 import 'package:klang/objects/klang_obj.dart';
@@ -27,6 +26,7 @@ class KlangSound extends KlangObj {
   })  : this._metrics = metrics,
         this._raw_data = raw_data;
 
+  // ignore: unused_field
   final Map _raw_data;
   final String id;
   final String name;

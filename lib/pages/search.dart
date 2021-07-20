@@ -14,6 +14,7 @@ class SearchPage extends StatefulWidget implements KlangPage {
 }
 
 class _SearchPageState extends State<SearchPage> {
+  // ignore: unused_field, in case use it in future
   bool _searching;
   FocusNode _searchFocusNode;
   TextEditingController _searchController;

@@ -81,7 +81,6 @@ class _UserPageState extends State<UserPage> {
       return Center(
         child: Material(child: Text("user not found")),
       );
-    // TODO: add created sounds page, just like saved sounds page
     return Scaffold(
       appBar: AppBar(title: Text(data.item.name)),
       body: SingleChildScrollView(

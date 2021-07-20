@@ -286,7 +286,6 @@ class FieldMasks {
   ];
   // for user list item
   static const public_user_search = [
-    // TODO: what else?
     '''${Root.info}.${Info.item_name}.${Info.item_name}''',
     '''${Root.info}.${Info.tags}''',
     '''${Root.info}.${Info.tag_history}''',

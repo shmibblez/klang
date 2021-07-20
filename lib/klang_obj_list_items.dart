@@ -176,7 +176,7 @@ class _SoundListItemState extends State<SoundListItem> {
   }
 
   List<PopupMenuEntry<_SoundMenuOption>> _buildMenuOptions(BuildContext c) {
-    // TODO: make options work, ex: download option doesn't do anything currently
+    // TODO: some options not working (ex: "download")
     AuthCubit ac = BlocProvider.of<AuthCubit>(c);
     bool isSaved = ac.loggedIn && ac.state.isSoundSaved(widget.sound.id);
     bool isPendingSaveState =
@@ -214,29 +214,69 @@ class _SoundListItemState extends State<SoundListItem> {
   }
 }
 
-class UserListItem extends StatelessWidget implements KlangListItem {
+// TODO: any other options?
+enum _UserMenuOption { visit }
+
+class UserListItem extends StatefulWidget implements KlangListItem {
   UserListItem({@required this.user});
 
   final KlangUser user;
 
   @override
+  State<StatefulWidget> createState() => _UserListItemState();
+}
+
+class _UserListItemState extends State<UserListItem> {
+  @override
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(Icons.account_box_rounded),
-      title: Text(user.name),
-      trailing: IconButton(
-        onPressed: () {
-          // TODO: show user popup menu & options
-          // what options? (depend on auth state)
-          // if logged out:
-          // - sign in
-          // - ...
-          // if logged in or out
-          // - view user's profile
+      title: Text(widget.user.name),
+      trailing: PopupMenuButton<_UserMenuOption>(
+        child: Icon(Icons.more_vert_rounded),
+        itemBuilder: _buildMenuOptions,
+        onSelected: (op) async {
+          switch (op) {
+            // case _UserMenuOption.log_in:
+            //   NavCubit.pushPath(context, PageRoutePath.login());
+            //   break;
+
+            case _UserMenuOption.visit:
+              NavCubit.pushPath(context, PageRoutePath.user(widget.user.id));
+              break;
+          }
         },
-        icon: Icon(Icons.more_vert_rounded),
       ),
     );
+  }
+
+  List<PopupMenuEntry<_UserMenuOption>> _buildMenuOptions(BuildContext c) {
+    // AuthCubit ac = BlocProvider.of<AuthCubit>(c);
+    return <PopupMenuEntry<_UserMenuOption>>[
+      // // if logged out
+      // if (!ac.loggedIn)
+      //   PopupMenuItem(
+      //     value: _UserMenuOption.log_in,
+      //     child: Text("log in to follow"),
+      //   ),
+      // // if logged in
+      // if (ac.loggedIn)
+      //   PopupMenuItem(
+      //     enabled:
+      //         ac.loggedIn && ac.state.savedItemsReady && !isPendingSaveState,
+      //     value: _SoundMenuOption.change_saved,
+      //     child: isPendingSaveState
+      //         ? Text(isSaved ? "unsaving..." : "saving...")
+      //         : ac.loggedIn && ac.state.savedItemsReady
+      //             ? Text(isSaved ? "unsave" : "save")
+      //             : Text("save / unsave loading..."),
+      //   ),
+      // push new route to
+      PopupMenuItem(
+        value: _UserMenuOption.visit,
+        child: Text("visit user"),
+      ),
+    ];
   }
 }
 

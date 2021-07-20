@@ -58,7 +58,6 @@ class _SavedSoundsPageState extends State<SavedSoundsPage> {
       return Center(child: Text("users can only view their own saved sounds"));
 
     // # add lastItemMessage to id list to show custom message for each list, ex: "no more saved sounds", instead of only "no more items for now"
-    // TODO: add metric picker (most downloads, most saves, timestamp saved)
     final user = BlocProvider.of<AuthCubit>(context).state;
     // if saved items not loaded, show error page, temporary while setup load ids when ready
     if (!user.savedItemsReady) {
@@ -167,7 +166,6 @@ class _SavedSoundsPageState extends State<SavedSoundsPage> {
   }
 
   String _metricCodeToMsg(String metricCode) {
-    // TODO: finish setting up, need to set state when new metric set too
     switch (metricCode) {
       case Metrics.downloads:
         return "most downloads";
@@ -175,7 +173,7 @@ class _SavedSoundsPageState extends State<SavedSoundsPage> {
         return "best";
       case Metrics.saves:
         return "most saves";
-      // TODO: need to setup ascending and descending, but for http function purposes they're both the same, only sound id order changes
+      // TODO: need to setup ascending and descending, only changes id order locally, then id list to http funciton
       case GetSavedItems.type_saved_items_timestamp_saved:
       default:
         return "latest saved";

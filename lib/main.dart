@@ -221,7 +221,6 @@ class UserState {
     savedSounds.remove(id);
   }
 
-  // TODO: returning ids reversed (not desc, asc)
   List<String> soundIdsTSDesc() {
     if (!savedItemsReady) {
       debugPrint("soundIdsTSDesc: saved sounds not ready");
