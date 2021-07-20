@@ -186,7 +186,7 @@ class _SoundListItemState extends State<SoundListItem> {
       if (!ac.loggedIn)
         PopupMenuItem(
           value: _SoundMenuOption.log_in,
-          child: Text("log in"),
+          child: Text("log in to save"),
         ),
       // for saved sounds could have saved sounds cubit that loads saved items. If not ready, show "save/unsave" greyed out, if already loaded, then check and show corresponding "save" or "unsave"
       if (ac.loggedIn)

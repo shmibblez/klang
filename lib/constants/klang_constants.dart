@@ -160,10 +160,13 @@ class Search {
   static const sub_type_downloads = Metrics.downloads;
   static const sub_type_best = Metrics.best;
   static const sub_type_item = "i";
+  static const sub_type_created_items = "cr";
   static const random_seed_num = "n";
   static const direction = "e";
   static const offset = "o";
   static const time_period = "m";
+  static const metric = "mt";
+  static const creator_id = Info.creator_id;
 }
 
 class GetSavedItems {

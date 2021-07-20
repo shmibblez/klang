@@ -36,6 +36,7 @@ class _SavedSoundsPageState extends State<SavedSoundsPage> {
     super.initState();
     // savedController = StreamController();
     // savedController.sink.addStream(_getSavedSounds().asStream());
+    // # cache _metric and get last used one
     _metric = Metrics.best;
     _listIndices = {};
     _nextListIndx = 0;

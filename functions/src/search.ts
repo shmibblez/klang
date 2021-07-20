@@ -93,9 +93,9 @@ function _itemSearch({
 
   switch (sub_type) {
     case Search.sub_type_downloads:
-    case Search.sub_type_best:
+    case Search.sub_type_best: {
       const time_period = _timePeriodFrom(data[Search.time_period]);
-      const metric = _metricFrom(sub_type);
+      const metric = _metricFromSubType(sub_type);
       /**
        *  explicit & tag filters already set
        **/
@@ -106,8 +106,9 @@ function _itemSearch({
         query = query.startAfter(...offset);
       }
       break;
+    }
 
-    case Search.sub_type_sk:
+    case Search.sub_type_sk: {
       const name = data[Info.item_name] ?? "";
       const keys = _searchKeysFrom(name);
       /**
@@ -134,8 +135,9 @@ function _itemSearch({
         query = query.startAfter(...offset);
       }
       break;
+    }
 
-    case Search.sub_type_random:
+    case Search.sub_type_random: {
       let seed_num = data[Search.random_seed_num] ?? 0;
       if (typeof seed_num != "number" || seed_num < 0 || seed_num > 4)
         seed_num = 0;
@@ -153,6 +155,31 @@ function _itemSearch({
         query = query.startAfter(...offset);
       }
       break;
+    }
+
+    case Search.sub_type_created_items: {
+      const uid = data[Search.creator_id];
+      console.log("search: created items sub type activated, uid: " + uid);
+      if (!isDocIdOk(uid))
+        throw new UnsupportedQueryError("doc id must be valid string");
+      let raw_metric = data[Search.metric];
+      if (typeof raw_metric !== "string") raw_metric = "";
+      const metric = _metricFrom(raw_metric);
+
+      /**
+       *  explicit & tag filters already set
+       **/
+      query = query.orderBy(
+        `${Root.metrics}.${metric}.${Metrics.total}`,
+        "desc"
+      );
+      query = query.orderBy(firestore.FieldPath.documentId(), "asc");
+      if (Array.isArray(offset) && offset.length == 2) {
+        // offset should be ["metric count for time period (total)", "doc id"]
+        query = query.startAfter(...offset);
+      }
+      break;
+    }
 
     default:
       throw new UnsupportedQueryError();
@@ -190,6 +217,7 @@ function _searchKeysFrom(name: unknown): string[] {
       keys[graphemes[i] + graphemes[i + 1]] = true;
     }
   }
+  keys[Misc.wildcard_str] = true; // in case empty string
 
   return Object.keys(keys);
 }
@@ -226,12 +254,24 @@ function _timePeriodFrom(t: string): KlangTimePeriod {
   return t as KlangTimePeriod;
 }
 
-function _metricFrom(sub_type: string): string {
+function _metricFromSubType(sub_type: string): string {
   switch (sub_type) {
     case Search.sub_type_downloads:
       return Metrics.downloads;
 
     case Search.sub_type_best:
+    default:
+      return Metrics.best;
+  }
+}
+
+function _metricFrom(metric: string): string {
+  switch (metric) {
+    case Metrics.best:
+      return Metrics.best;
+    case Metrics.saves:
+      return Metrics.saves;
+    case Metrics.best:
     default:
       return Metrics.best;
   }

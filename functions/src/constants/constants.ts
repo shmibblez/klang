@@ -203,10 +203,13 @@ export class Search {
   static readonly sub_type_downloads = Metrics.downloads;
   static readonly sub_type_best = Metrics.best;
   static readonly sub_type_item = "i";
+  static readonly sub_type_created_items = "cr";
   static readonly random_seed_num = "n";
   static readonly direction = "e";
   static readonly offset = "o";
   static readonly time_period = "m";
+  static readonly metric = "mt";
+  static readonly creator_id = Info.creator_id;
 }
 
 export class GetSavedItems {

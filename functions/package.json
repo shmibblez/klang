@@ -8,7 +8,7 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "run-emulators": "kill-port 9099 5001 8080 9000 5000 9199 && firebase emulators:start"
+    "run-emulators": "kill-port 9099 5001 8080 9000 5000 9199 8085 && firebase emulators:start"
   },
   "engines": {
     "node": "12"

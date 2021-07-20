@@ -44,7 +44,7 @@ export class FirestoreUser {
         [Info.id]: uid,
         [Info.item_name]: {
           [Info.item_name]: username,
-          [Info.search_keys]: indexName(username),
+          [Info.search_keys]: indexName(username + " " + uid), // index uid and username
           [Info.timestamp_updated]:
             admin.firestore.FieldValue.serverTimestamp(),
         },

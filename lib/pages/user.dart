@@ -71,6 +71,7 @@ class _UserPageState extends State<UserPage> {
           case ConnectionState.waiting:
             return LoadingPage();
         }
+        throw "this should not happen";
       },
     );
   }
@@ -80,6 +81,7 @@ class _UserPageState extends State<UserPage> {
       return Center(
         child: Material(child: Text("user not found")),
       );
+    // TODO: add created sounds page, just like saved sounds page
     return Scaffold(
       appBar: AppBar(title: Text(data.item.name)),
       body: SingleChildScrollView(
@@ -94,14 +96,31 @@ class _UserPageState extends State<UserPage> {
             GestureDetector(
               onTap: () {
                 NavCubit.pushPath(
-                    context,
-                    PageRoutePath.savedSounds(
-                      BlocProvider.of<AuthCubit>(context).uid,
-                    ));
+                  context,
+                  PageRoutePath.savedSounds(
+                    BlocProvider.of<AuthCubit>(context).uid,
+                  ),
+                );
               },
               child: Row(
                 children: [
                   Text("saved sounds"),
+                  Icon(Icons.chevron_right_sharp),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                NavCubit.pushPath(
+                  context,
+                  PageRoutePath.createdSounds(
+                    BlocProvider.of<AuthCubit>(context).uid,
+                  ),
+                );
+              },
+              child: Row(
+                children: [
+                  Text("created sounds"),
                   Icon(Icons.chevron_right_sharp),
                 ],
               ),

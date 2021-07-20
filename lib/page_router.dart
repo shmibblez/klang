@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:klang/main.dart';
 import 'package:klang/pages/auth_page.dart';
 import 'package:klang/pages/create_account.dart';
+import 'package:klang/pages/created_sounds.dart';
 import 'package:klang/pages/klang_page.dart';
 import 'package:klang/pages/log_in.dart';
 import 'package:klang/pages/saved_sounds.dart';
@@ -79,6 +80,17 @@ class PageRouteInformationParser extends RouteInformationParser<PageRoutePath> {
           final String uid = paths.length >= 2 ? paths[1] : null;
           if (kIsWeb && (uid == null || uid.length <= 0))
             return PageRoutePath.main("user");
+          final String subPg = paths.length >= 3 ? paths[2] : null;
+          if (subPg != null) {
+            switch (subPg.toLowerCase()) {
+              case "savedsounds":
+                return PageRoutePath.savedSounds(uid);
+              case "createdsounds":
+                return PageRoutePath.createdSounds(uid);
+              default:
+                return PageRoutePath.unknown();
+            }
+          }
           return PageRoutePath.user(uid);
         case "createaccount":
           return PageRoutePath.createAccount();
@@ -244,14 +256,24 @@ class PageRouterDelegate extends RouterDelegate<PageRoutePath>
         );
       case "user":
         final String uid = path.elements.length >= 2 ? path.elements[1] : null;
-        final bool isSavedSounds =
-            (path.elements.length >= 3 ? path.elements[2] : "").toLowerCase() ==
-                "savedsounds";
-        if (uid != null && isSavedSounds)
-          return AuthPage(
-            child: SavedSoundsPage(uid: uid),
-            authFallbackPage: LoginPage(),
-          );
+        final String subPg =
+            path.elements.length >= 3 ? path.elements[2] : null;
+        debugPrint("PageRouter._genPageFrom(): user -> subPg: $subPg");
+
+        if (subPg != null) {
+          switch (subPg.toLowerCase()) {
+            case "savedsounds":
+              return AuthPage(
+                child: SavedSoundsPage(uid: uid),
+                authFallbackPage: LoginPage(),
+              );
+            case "createdsounds":
+              return CreatedSoundsPage(uid: uid);
+
+            default:
+              return UnknownPage();
+          }
+        }
         return UserPage(uid: uid);
         break;
       case "createaccount":
@@ -362,6 +384,9 @@ class PageRoutePath {
 
   PageRoutePath.savedSounds(String uid)
       : elements = ["user", uid, "savedSounds"];
+
+  PageRoutePath.createdSounds(String uid)
+      : elements = ["user", uid, "createdSounds"];
 
   bool get isMain {
     return this.elements.length == 1 &&

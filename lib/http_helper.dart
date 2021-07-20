@@ -70,6 +70,18 @@ class SearchItemResult<O extends KlangObj> {
   final O item;
 }
 
+enum SearchUserCreatedItemsResultMsg {
+  success,
+  mission_failed,
+  internal,
+}
+
+class SearchUserCreatedItemsResult<O extends KlangObj> {
+  SearchUserCreatedItemsResult._(this.resultMsg, this.items);
+  final SearchUserCreatedItemsResultMsg resultMsg;
+  final List<O> items;
+}
+
 enum SearchFromKeysResultMsg {
   success,
   mission_failed,
@@ -150,7 +162,7 @@ class FirePP {
       case LoginResultMsg.network_request_failed:
         return "failed to send network request, make sure you're connected";
     }
-    throw "unknow LoginResult: \"$l\"";
+    throw "unknown LoginResultMsg: \"$l\"";
   }
 
   static String translateCreateAccountMsg(CreateAccountResultMsg c) {
@@ -175,7 +187,7 @@ class FirePP {
       case CreateAccountResultMsg.internal:
         return "something went wrong, please try again later or if you can, send us an email describing what went wrong and we'll try to fix it asap";
     }
-    throw "unknown CreateAccountResult: \"$c\"";
+    throw "unknown CreateAccountResultMsg: \"$c\"";
   }
 
   static String translateCreateSoundMsg(CreateSoundResultMsg r) {
@@ -207,7 +219,7 @@ class FirePP {
       case SearchSoundHomeResultMsg.mission_failed:
         return "failed to load, retry?";
     }
-    throw "unknown SearchSoundHomeResultMsg: \"m\"";
+    throw "unknown SearchSoundHomeResultMsg: \"$m\"";
   }
 
   static String translateSearchFromKeysResultMsg(SearchFromKeysResultMsg m) {
@@ -218,7 +230,7 @@ class FirePP {
       case SearchFromKeysResultMsg.mission_failed:
         return "failed to load, retry?";
     }
-    throw "unknown SearchFromKeysResultMsg: \"m\"";
+    throw "unknown SearchFromKeysResultMsg: \"$m\"";
   }
 
   static String translateSaveSoundResultMsg(SaveSoundResultMsg r) {
@@ -250,7 +262,19 @@ class FirePP {
       case SavedItemsResultMsg.success:
         return "successfully got saved items";
     }
-    throw "unknown SavedItemsResultMsg: \"m\"";
+    throw "unknown SavedItemsResultMsg: \"$r\"";
+  }
+
+  static String translateSearchUserCreatedItemsResultMsg(
+      SearchUserCreatedItemsResultMsg r) {
+    switch (r) {
+      case SearchUserCreatedItemsResultMsg.internal:
+      case SearchUserCreatedItemsResultMsg.mission_failed:
+        return "failed to get created items";
+      case SearchUserCreatedItemsResultMsg.success:
+        return "successfully got created items";
+    }
+    throw "unknown SearchUserCreatedItemsResultMsg: \"$r\"";
   }
 
   /// returns [LoginResultMsg] to inform result
@@ -500,6 +524,63 @@ class FirePP {
                 "**search_sounds_home: unknown error code: \"${e.message.toLowerCase()}\"");
             return SearchItemResult<O>._(
               SearchItemResultMsg.mission_failed,
+              null,
+            );
+          default:
+            throw "this shouldn't happen, error: $e";
+        }
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  static Future<SearchUserCreatedItemsResult<O>>
+      search_user_created_items<O extends KlangObj>({
+    @required String metric,
+    @required String creatorId,
+    @required bool explicitOk,
+    @required List<dynamic> offset,
+  }) async {
+    FirebaseFunctions functions = FirebaseFunctions.instance;
+    if (isTesting) {
+      functions.useFunctionsEmulator(
+        origin: "http://localhost:$_functionsPort",
+      );
+    }
+    String contentType;
+    if (O == KlangSound) {
+      contentType = Search.type_sound;
+    } else if (O == KlangUser) {
+      contentType = Search.type_user;
+    }
+    final data = {
+      Search.type: contentType,
+      Search.sub_type: Search.sub_type_created_items,
+      Properties.explicit: explicitOk,
+      Search.offset: offset,
+      Search.metric: metric,
+      Search.creator_id: creatorId,
+    };
+    try {
+      final result = await functions.httpsCallable("s").call(data);
+      List<O> itemArr =
+          KlangObj.fromJsonArr<O>(result.data[FunctionResult.items]);
+      return SearchUserCreatedItemsResult<O>._(
+          SearchUserCreatedItemsResultMsg.success, itemArr);
+    } catch (e) {
+      if (e is FirebaseFunctionsException) {
+        switch (e.message.toLowerCase()) {
+          case ErrorCodes.mission_failed:
+            return SearchUserCreatedItemsResult<O>._(
+              SearchUserCreatedItemsResultMsg.mission_failed,
+              null,
+            );
+          case ErrorCodes.internal:
+            debugPrint(
+                "**search_sounds_home: unknown error code: \"${e.message.toLowerCase()}\"");
+            return SearchUserCreatedItemsResult<O>._(
+              SearchUserCreatedItemsResultMsg.mission_failed,
               null,
             );
           default:
