@@ -4,6 +4,8 @@ klang is an app for sharing sounds. There are ringtone sounds, metronome sounds,
 
 klang means sound in german
 
+This was meant to be published to the google play store, but it was eventually abandoned due to lack of time because of university classes. This app however was functional, and although not 100% complete, it strengthened my understanding of Flutter, Dart, and non-relational databases thanks to firestore.
+
 # app structure
 - app will have main page/navigator that houses tabs (home, search, etc) in bottom nav, and has appbar with settings
 - each tab will have a child navigator that has pages, each one with its own stack
